@@ -1,0 +1,284 @@
+/* _________ IMPORT ________*/
+
+@import 'normalize.css'
+
+// _________ MIXINS _________
+
+@require 'mixins'
+
+$root = "../"
+
+$mainFont = Arial
+
+
+bg(filename, arguments=false)
+	if !arguments
+		arguments = no-repeat center center
+	background url($root + 'img/' + filename) arguments
+
+
+body
+	background #EEE
+	
+// datepicker!
+
+.ui-widget
+	font-family $mainFont !important
+
+.ui-widget-header
+	background none !important
+	font-weight normal !important
+	
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default
+	background #F2F2F2 !important
+
+.ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight
+	border 1px solid #d3d3d3 !important
+	background #FFF !important
+	
+
+
+
+.form .submit-disabled
+	background #A8ABAD !important
+	cursor wait !important
+	&:hover
+		background #A8ABAD !important
+
+
+.form
+		
+	input,textarea
+		-webkit-appearance none
+		-webkit-border-radius 0
+		borderbox()
+		
+		border 1px solid #CCC
+		padding 10px 15px
+		
+		font-size 14px
+
+	input:focus, textarea:focus, select:focus, button:focus
+		outline 0
+
+	input:-webkit-autofill,textarea:-webkit-autofill
+		-webkit-box-shadow: 0 0 0px 50px #ededed inset
+
+
+.form
+	
+	max-width 800px
+	margin 50px auto 0 auto
+
+	.field
+		clear both
+		padding 10px 0
+		
+
+	.field-group
+
+		block-left()
+		margin 0 20px 0 0
+
+		span
+			margin 0 0 0 20px
+			position relative
+			top 1px
+
+		.checkbox
+			block-left(15,15)
+			border 1px solid rgb(214,214,214)
+			background #FFF
+			cursor pointer
+			&.checked
+				bg 'checked.png'
+			&.error-field
+				border 1px solid red
+		
+		.radio
+			block-left(15,15)
+			border 1px solid rgb(214,214,214)
+			background #FFF
+			cursor pointer
+			&.checked
+				bg 'checked.png'
+			&.error-field
+				border 1px solid red
+
+	.label
+		padding 0 0 10px 0
+	
+	.error
+		clear both
+		color red
+		font-size 12px
+		height 24px
+		
+
+	.errors
+		height 30px
+	
+	.placeholder
+		color #CCC
+		
+	.select
+		width 100%
+		position relative
+		user-select none
+		background #FFF
+
+		.selected
+			block()
+			overflow hidden
+			height 50px
+			z-index 998
+			borderbox()
+			position relative
+			padding 15px 10px 0 10px
+			background #FFF
+			border 1px solid rgb(214,214,214)
+			cursor pointer
+			
+
+			&:after
+				content ''
+				position: absolute
+				right 10px
+				top 15px
+				bg "select-corner-down.png", center center
+				block()
+				width 16px
+				height 16px
+
+			&.default
+				color #8f8f8f
+		
+		&.error-field
+			.selected
+				border 1px solid red
+
+		&.open
+			.selected
+				&:after
+					bg "select-corner-up.png", center center
+		
+		.options
+			borderbox()
+			width 100%
+			z-index 999
+			position absolute
+			background #FFF
+			border 1px solid #CCC
+			margin-top -1px
+			padding 10px 0
+
+			.option
+				padding 15px 15px 15px 15px 
+				cursor pointer
+				color #060707
+				font-size 12px
+				span
+					width 100%
+					block()
+					position relative
+					&:after
+						content ''
+						position absolute
+						height 1px
+						width 100%
+						background #CCC
+						bottom -16px
+						left 0
+
+				&:first-child
+					color #a4a4a4
+				&:last-child
+					span
+						&:after
+							height 0px
+
+				&:hover
+					background #CCC
+					color #FFF
+					span:after
+						display none
+						
+
+		.search
+			position absolute
+			z-index 999
+			top 0
+			borderbox()
+			width 80%
+			height 33px
+			padding 5px 10px
+			// border 1px solid rgb(214,214,214)
+			border 0
+			margin 5px 10px
+			background #FFF
+
+		.scrollbar
+			// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
+			position: relative
+			background-position: 0 0
+			float: right
+			width 6px
+			margin 0 5px 0 0
+
+			&.disable
+				display none
+
+		.track
+			// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
+			position: relative
+			width 6px
+			height 100%
+
+		.thumb
+			background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
+			cursor: pointer
+			width 6px
+			// height 20px
+			overflow hidden
+			position absolute
+			top 0
+
+			.end
+				background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
+				height 5px
+				width 6px
+				// overflow hidden
+
+		.viewport
+			overflow hidden
+			height 175px
+			position relative
+
+			.overview
+				width 100%
+				position absolute
+
+
+	input[type='text'],input[type='password']
+		width 100%
+		height 50px
+		&.error-field
+			border 1px solid red
+
+	textarea
+		width 100%
+		height 150px
+		&.error-field
+			border 1px solid red
+
+
+	.submit,.reset
+		padding 10px 0
+		a 
+			block-inline(200)
+			padding 10px 20px 
+			text-align center
+			text-decoration none
+			color #000
+			background #DDD
+

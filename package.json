@@ -1,0 +1,17 @@
+{
+  "name": "form",
+  "version": "0.0.1",
+  "dependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-jade": "*",
+    "grunt-contrib-coffee": "*",
+    "grunt-contrib-stylus": "*",
+    "coffee-script": "*",
+    "stylus": "*",
+    "jade": "*",
+    "jstransformer-coffee-script": "*"
+  }
+}

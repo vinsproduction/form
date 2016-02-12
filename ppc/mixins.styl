@@ -1,0 +1,118 @@
+
+/*_________ MIXINS ________*/
+
+vendor(prop, args)
+	-webkit-{prop} args
+	   -moz-{prop} args
+	    -ms-{prop} args
+	     -o-{prop} args
+	        {prop} args
+
+border-radius()
+	vendor('border-radius', arguments)
+
+filter()
+	vendor('filter', arguments)
+
+box-shadow()
+	vendor('box-shadow', arguments)
+
+transition()
+	vendor('transition', arguments)
+
+transform()
+	vendor('transform', arguments)
+
+transform-origin()
+	vendor('transform-origin', arguments)
+
+user-select()
+	vendor('user-select', arguments)
+	
+background-size()
+	vendor('background-size', arguments)
+	
+background-fixed()
+	background-attachment fixed
+	background-size cover
+
+background-linear-gradient(startPoint, startColor, startInterval, endColor, endInterval)
+	background-color startColor
+	background-image -webkit-linear-gradient(startPoint, startColor startInterval, endColor endInterval)
+	background-image -moz-linear-gradient(startPoint, startColor startInterval, endColor endInterval)
+	background-image -ms-linear-gradient(startPoint, startColor startInterval, endColor endInterval)
+	background-image -o-linear-gradient(startPoint, startColor startInterval, endColor endInterval)
+	background-image linear-gradient(startPoint, startColor startInterval, endColor endInterval)
+
+opacity(n)
+	opacity n
+	filter unquote('progid:DXImageTransform.Microsoft.Alpha(Opacity=' + round(n * 100) + ')')
+
+rgb(r,g,b)
+	s('rgb(%s, %s, %s)', r, g, b)
+
+
+//background_rgba(#000000,'000000',0.5)
+background_rgba(color,colorms,a)
+
+	background transparent
+	filter unquote('progid:DXImageTransform.Microsoft.gradient(startColorstr=#' + round(a * 100) + replace('#','',colorms) + ',endColorstr=#' + round(a * 100) + replace('#','',colorms)  + ')')
+	background rgba(color,a)
+
+
+import-font(originalname, newname)
+
+	@font-face
+		font-family newname
+		src url(originalname +'.eot')
+		src url(originalname +'.eot?#iefix') format('embedded-opentype'), url(originalname +'.svg') format('svg'), url(originalname +'.woff') format('woff'), url(originalname +'.ttf') format('truetype')
+		font-weight normal
+		font-style normal
+		
+borderbox()
+	-moz-box-sizing border-box
+	box-sizing border-box
+
+
+clearfix()
+	&:before,&:after
+		content " "
+		display table
+	&:after
+		clear both
+
+size(w = false,h = false)
+	if w
+		width w
+	if h
+		height h
+
+sizepx(w = false,h = false)
+	if w
+		width (w)px
+	if h
+		height (h)px
+
+
+block(w = false,h = false)
+	display block
+	sizepx(w,h)
+
+
+block-inline(w = false,h = false)
+	display -moz-inline-stack
+	display inline-block
+	vertical-align top
+	zoom 1
+	*display inline
+	sizepx(w,h)
+
+block-left(w = false,h = false)
+	float left
+	block-inline(w,h)
+
+block-right(w = false,h = false)
+	float right
+	block-inline(w,h)
+
+

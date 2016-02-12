@@ -1,0 +1,295 @@
+/* _________ IMPORT ________*/
+@import 'normalize.css';
+body {
+  background: #eee;
+}
+.ui-widget {
+  font-family: Arial !important;
+}
+.ui-widget-header {
+  background: none !important;
+  font-weight: normal !important;
+}
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default {
+  background: #f2f2f2 !important;
+}
+.ui-state-highlight,
+.ui-widget-content .ui-state-highlight,
+.ui-widget-header .ui-state-highlight {
+  border: 1px solid #d3d3d3 !important;
+  background: #fff !important;
+}
+.form .submit-disabled {
+  background: #a8abad !important;
+  cursor: wait !important;
+}
+.form .submit-disabled:hover {
+  background: #a8abad !important;
+}
+.form input,
+.form textarea {
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  padding: 10px 15px;
+  font-size: 14px;
+}
+.form input:focus,
+.form textarea:focus,
+.form select:focus,
+.form button:focus {
+  outline: 0;
+}
+.form input:-webkit-autofill,
+.form textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 50px #ededed inset;
+}
+.form {
+  max-width: 800px;
+  margin: 50px auto 0 auto;
+}
+.form .field {
+  clear: both;
+  padding: 10px 0;
+}
+.form .field-group {
+  float: left;
+  display: -moz-inline-stack;
+  display: inline-block;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+  margin: 0 20px 0 0;
+}
+.form .field-group span {
+  margin: 0 0 0 20px;
+  position: relative;
+  top: 1px;
+}
+.form .field-group .checkbox {
+  float: left;
+  display: -moz-inline-stack;
+  display: inline-block;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgb(214, 214, 214);
+  background: #fff;
+  cursor: pointer;
+}
+.form .field-group .checkbox.checked {
+  background: url("../img/checked.png") no-repeat center center;
+}
+.form .field-group .checkbox.error-field {
+  border: 1px solid #f00;
+}
+.form .field-group .radio {
+  float: left;
+  display: -moz-inline-stack;
+  display: inline-block;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgb(214, 214, 214);
+  background: #fff;
+  cursor: pointer;
+}
+.form .field-group .radio.checked {
+  background: url("../img/checked.png") no-repeat center center;
+}
+.form .field-group .radio.error-field {
+  border: 1px solid #f00;
+}
+.form .label {
+  padding: 0 0 10px 0;
+}
+.form .error {
+  clear: both;
+  color: #f00;
+  font-size: 12px;
+  height: 24px;
+}
+.form .errors {
+  height: 30px;
+}
+.form .placeholder {
+  color: #ccc;
+}
+.form .select {
+  width: 100%;
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  background: #fff;
+}
+.form .select .selected {
+  display: block;
+  overflow: hidden;
+  height: 50px;
+  z-index: 998;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  position: relative;
+  padding: 15px 10px 0 10px;
+  background: #fff;
+  border: 1px solid rgb(214, 214, 214);
+  cursor: pointer;
+}
+.form .select .selected:after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 15px;
+  background: url("../img/select-corner-down.png") center center;
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.form .select .selected.default {
+  color: #8f8f8f;
+}
+.form .select.error-field .selected {
+  border: 1px solid #f00;
+}
+.form .select.open .selected:after {
+  background: url("../img/select-corner-up.png") center center;
+}
+.form .select .options {
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 100%;
+  z-index: 999;
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  margin-top: -1px;
+  padding: 10px 0;
+}
+.form .select .options .option {
+  padding: 15px 15px 15px 15px;
+  cursor: pointer;
+  color: #060707;
+  font-size: 12px;
+}
+.form .select .options .option span {
+  width: 100%;
+  display: block;
+  position: relative;
+}
+.form .select .options .option span:after {
+  content: '';
+  position: absolute;
+  height: 1px;
+  width: 100%;
+  background: #ccc;
+  bottom: -16px;
+  left: 0;
+}
+.form .select .options .option:first-child {
+  color: #a4a4a4;
+}
+.form .select .options .option:last-child span:after {
+  height: 0px;
+}
+.form .select .options .option:hover {
+  background: #ccc;
+  color: #fff;
+}
+.form .select .options .option:hover span:after {
+  display: none;
+}
+.form .select .search {
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 80%;
+  height: 33px;
+  padding: 5px 10px;
+  border: 0;
+  margin: 5px 10px;
+  background: #fff;
+}
+.form .select .scrollbar {
+  position: relative;
+  background-position: 0 0;
+  float: right;
+  width: 6px;
+  margin: 0 5px 0 0;
+}
+.form .select .scrollbar.disable {
+  display: none;
+}
+.form .select .track {
+  position: relative;
+  width: 6px;
+  height: 100%;
+}
+.form .select .thumb {
+  background: transparent url("../img/bg-scrollbar.png") no-repeat 0 100%;
+  cursor: pointer;
+  width: 6px;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+}
+.form .select .thumb .end {
+  background: transparent url("../img/bg-scrollbar.png") no-repeat 0 0;
+  height: 5px;
+  width: 6px;
+}
+.form .select .viewport {
+  overflow: hidden;
+  height: 175px;
+  position: relative;
+}
+.form .select .viewport .overview {
+  width: 100%;
+  position: absolute;
+}
+.form input[type='text'],
+.form input[type='password'] {
+  width: 100%;
+  height: 50px;
+}
+.form input[type='text'].error-field,
+.form input[type='password'].error-field {
+  border: 1px solid #f00;
+}
+.form textarea {
+  width: 100%;
+  height: 150px;
+}
+.form textarea.error-field {
+  border: 1px solid #f00;
+}
+.form .submit,
+.form .reset {
+  padding: 10px 0;
+}
+.form .submit a,
+.form .reset a {
+  display: -moz-inline-stack;
+  display: inline-block;
+  vertical-align: top;
+  zoom: 1;
+  *display: inline;
+  width: 200px;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  color: #000;
+  background: #ddd;
+}

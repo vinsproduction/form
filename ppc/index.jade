@@ -1,0 +1,353 @@
+
+head
+
+	script
+		:coffee-script
+			port = 777
+			url  = "http://localhost:#{port}/livereload.js"
+			window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>')
+			console.debug "[LiveReload] #{url}"
+
+	script(type="text/javascript", src="http://code.jquery.com/jquery-1.12.0.min.js")
+
+
+	script(type="text/javascript", src="js/jquery.tinyscrollbar.min.js")
+	script(type="text/javascript", src="js/jquery.maskedinput.min.js")
+
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+	link(rel="stylesheet", type="text/css", href="css/normalize.css")
+
+	script(type="text/javascript", src="js/form.js")
+	link(rel="stylesheet", type="text/css", href="css/form.css")
+
+	script
+		:coffee-script
+			$ ->
+
+				$form = $('.form')
+
+				fields = 
+
+					'login':
+						escape: true
+						placeholder: 'login'
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+							alpha:
+								reason: 'Допустимы только буквы'
+							min:
+								count: 2
+								reason: 'Минимум {count} символа'
+
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+					
+					'password':
+						escape: true
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+					'password-confirmation':
+						escape: true
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+
+					'phone':
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+					
+					'date':
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+					
+
+					'email':
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+							email:
+								reason: 'Неправильный E-mail'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+					
+					'text':
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("textarea[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+					'checkbox_1':
+						style: true
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+					'checkbox_2':
+						style: true
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+					'radiobutton':
+						style: true
+						rules:
+							required:
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find("input[name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+					
+					'dropdown':
+						style: true
+						rules:
+							required:
+								not: 'Выбрать'
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find(".select[data-name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+				formValidator = new Form
+
+					logs: true
+
+					formName: 'nice form'
+					formEl: $form
+					submitEl: $form.find('.submit a')
+					fields: fields
+
+					onInit: ->
+
+						$.datepicker.regional.ru =
+							closeText: "Закрыть",
+							prevText: "&#x3C;Пред",
+							nextText: "След&#x3E;",
+							currentText: "Сегодня",
+							monthNames: [ "Январь","Февраль","Март","Апрель","Май","Июнь",
+							"Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ],
+							monthNamesShort: [ "Янв","Фев","Мар","Апр","Май","Июн",
+							"Июл","Авг","Сен","Окт","Ноя","Дек" ],
+							dayNames: [ "воскресенье","понедельник","вторник","среда","четверг","пятница","суббота" ],
+							dayNamesShort: [ "вск","пнд","втр","срд","чтв","птн","сбт" ],
+							dayNamesMin: [ "Вс","Пн","Вт","Ср","Чт","Пт","Сб" ],
+							weekHeader: "Нед",
+							dateFormat: "yy-mm-dd",
+							firstDay: 1,
+							isRTL: false,
+							showMonthAfterYear: false,
+							yearSuffix: ""
+
+						$.datepicker.setDefaults($.datepicker.regional['ru'])
+
+						$form.find('input[name="date"]').datepicker()
+
+						$form.find('input[name="phone"]').mask("+7 (999) 999-99-99")
+
+						$form.find('.checkbox,.select').click ->
+							$form.find('.submit .error').empty()
+							$(@).removeClass 'error-field'
+							$form.find(".error-#{$(@).attr('data-name')}").empty().hide()
+
+
+						$form.find('input,textarea').focus ->
+							$form.find('.submit .error').empty()
+							$(@).removeClass 'error-field'
+							$form.find(".error-#{$(@).attr('name')}").empty().hide()
+
+
+
+						# Скролл бар
+
+						scrollbars = {}
+
+						scroll = (el) ->
+
+							select 	= if el then el else $form.find('.select')
+
+							select.each ->
+
+								$select = $(@)
+
+								selectName = $select.attr('data-name')
+
+								$selected = $select.find('.selected')
+								$options 	= $select.find('.options')
+								$options.wrapInner """
+									<div class="viewport"><div class="overview"></div></div>
+								"""
+								$options.prepend """
+									<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+								"""
+								scrollbars[selectName] = $options.tinyscrollbar()
+								$selected.click -> scrollbars[selectName].tinyscrollbar_update()
+
+						scroll()
+
+					onSubmit: (data) ->
+
+						$form.find('.errors').empty()
+						$form.find("input,select").removeClass 'error-field'
+						$form.find(".error").show().empty()
+
+					onSuccess: (data) ->
+
+						return if formValidator.submitEl.hasClass 'submit-disabled'
+						formValidator.submitEl.addClass('submit-disabled').find('span').html('Выполняется...')
+
+						#formValidator.submitEl.removeClass('submit-disabled').find('span').html('Войти')
+
+					onFail: (errors) ->
+
+						$form.find('.errors').html "Исправьте ошибки в форме"
+
+					onReset: ->
+
+						$form.find('.errors').empty()
+						$form.find("input,select,textarea").removeClass 'error-field'
+						$form.find(".error").show().empty()
+
+						formValidator.submitEl.removeClass('submit-disabled').find('span').html('Отправить')
+
+				formValidator.addRule 
+					field: 'password-confirmation'
+					rule: 'password confirmation rule'
+					reason: 'Пароли не совпадают'
+					condition: (val) ->
+						return $form.find('input[name="password"]').val() is val
+
+
+
+				window.reset = ->
+					formValidator.reset()
+
+				return
+
+
+body
+
+	.form
+
+		.field
+			.label login
+			input(type='text', name='login')
+			.error.error-login
+
+		.field
+			.label password
+			input(type='password', name='password')
+			.error.error-password
+
+		.field
+			.label password confirmation
+			input(type='password', name='password-confirmation')
+			.error.error-password-confirmation
+
+		.field
+			.label phone
+			input(type='text', name='phone')
+			.error.error-phone
+
+		.field
+			.label date
+			input(type='text', name='date')
+			.error.error-date
+
+		.field
+			.label email
+			input(type='text', name='email')
+			.error.error-email
+
+		.field
+			.label text
+			textarea(name='text')
+			.error.error-text
+
+		.field
+			.label checkbox 1
+			.field-group
+				span 1
+				input(type="checkbox", name="checkbox_1", value="1", checked=true)
+			.error.error-checkbox_1
+
+		.field
+			.label checkbox 2
+			.field-group
+				span 3
+				input(type="checkbox", name="checkbox_2", value="2")
+			.error.error-checkbox_2
+
+		.field
+			.label radio
+			.field-group
+				input(type="radio", name="radiobutton", value="1", checked=true)
+				span 1		
+			.field-group
+				input(type="radio", name="radiobutton", value="2")
+				span 2
+			.error.error-radiobutton
+
+		.field
+			.label dropdown
+			select(name="dropdown")
+				option(selected=true) Выбрать
+				option(value="1") 1
+				option(value="2") 2
+				option(value="3") 3
+				option(value="4") 4
+				option(value="5") 5
+				option(value="6") 6
+			.error.error-dropdown
+
+		.field
+			.errors-all
+
+
+		.field
+			.reset
+				a(href="#" onclick="reset();return false") Сбросить
+			.submit
+				a(href="#"): span Отправить
+
+
