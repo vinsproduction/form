@@ -1,205 +1,5 @@
 ### Form Validator ###
 
-###
-
-Правила валидации
-required — Обязательное поле
-numeric — Разрешены только цифры
-numericDash — Разрешены только цифры и подчеркивания
-alpha — Разрешены только буквы
-alphaDash — Разрешены только буквы и подчеркивания
-alphaNumeric — Разрешены только буквы и цифры
-max — Максимум символов
-min — Минимум символов
-email — Email
-url — Url
-ip — Ip
-
-###
-
-
-###
-
-Инициализация формы
-
-formValidator = new Form({
- 
- logs: true, // Логировать форму
- autoHideErrors: false // Автоматическое скрытие ошибок
- 
- formName: 'nice form', // Имя формы (опционально, проще дебажить если на странице много форм)
- formEl: '#form', // Элемент формы (можно передавать элемент DOM)
- submitEl: '.submit', // Элемент кнопки отправки (можно передавать элемент DOM)
- 
- fields:{
-  'firstname' : {
-   useErrorTemplate: true, // Использовать темплейт с ошибками
-   checkErrorsOnFocus: true, // Валидировать поле сразу в фокусе
-   placeholder: 'placeholder firstname', // Плейсхолдер (Не значение!)
-   rules: {
-    required:{ // Правило
-     reason: 'Обязательное поле для заполнения' // Установка причины ошибки (опционально)
-    },
-    min: {
-     count: 2, // Миниальное кол-во символов
-     reason: 'Минимум {count} символа' // Установка причины ошибки (опционально)
-    },
-    max: {
-     count: 10, // Максимальное кол-во символов
-     reason: 'Максимум {count} символов'
-    }
-   }
-  },
-  'password' : {
-   useErrorTemplate: true,
-   hideErrorsOnFocus: true, // Скрывать ошибки в фокусе
-   //focus: true, // Фокусировать на это поле
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    numeric:{
-     reason: 'Разрешены только цифры'
-    }
-   }
-  },
-  'url' : {
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    url: {
-     reason: 'Неправильно заполненный url'
-    }
-   },
-   
-   // Ручная работа над ошибками, без использования темплейтов
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-url").append(errors[i]);
-    };
-   }
-  },
-  'email' : {
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    email: {
-     reason: 'Неправильно заполненный email'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-email").append(errors[i]);
-    };
-   }
-  },
-  'text' : {
-   enterSubmit: true, // Отправка по Enter, если элмент в фокусе
-   hideErrorsOnFocus: true,
-   useErrorTemplate: true,
-   escape: true, // Экранировать ввод символов
-   placeholder: 'placeholder text',
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   }
-  },
-  'checkbox_1' : {
-  	style: true, // Стилизация элемента
-   	rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-checkbox_1").append(errors[i]);
-    };
-   }
-  },
-  'checkbox_2' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-checkbox_2").append(errors[i]);
-    };
-   }
-  },
-  'radiobutton' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-radiobutton").append(errors[i]);
-    };
-   }
-  },
-  'dropdown' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     not: '- Выбрать -', // Это значение НЕ валидируется!
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-dropdown").append(errors[i]);
-    };
-   }
-  }
- },
- 
- // Событие отправки формы
- onSubmit: function(data){
-  $(".error-custom-alert").empty();
- },
- 
- // Событие неудачной отправки формы
- onFail: function(errors){},
- 
- // Событие сброса формы
- onReset: function(){
-  $(".error-custom-alert").empty();
- },
- 
- // Событие загрузки формы
- onLoad: function(){},
- 
- // Событие инициализации формы. Полезно когда необходимо навешать на форму еще событий.
- // До и после отправки, происходит сброс формы и переинициализация, в также новый bind элементов
- onInit: function(){},
- 
- // Событие успешной отправки формы
- onSuccess: function(data){
-  $(".error-custom-alert").empty();
- }
-})
- 
-// Добавление нового правила
-formValidator.addRule({
- field: 'firstname', // Имя поля
- rule: 'custom rule', // Название правила
- reason: 'Введите слово "хорошо"', // Описание причины ошибки
- condition: function(val){ // Условие исполнения - должно возвращать или true или false
-  return val == 'хорошо';
- }
-});
-
-###
-
 
 class Form
 
@@ -209,17 +9,7 @@ class Form
 	formEl: false
 	submitEl: false
 
-	autoHideErrors: false
-
-	errorAlertClass: "error-alert"
-	errorAlertExtClass: "error"
-	errorInputClass: "error-field"
 	placeholderClass: "placeholder"
-
-	errorHideMethod: "display" # "visibility"
-
-	errorFadeIn: 300
-	errorFadeOut: 800
 
 	fields: {}
 	data: {}
@@ -232,18 +22,15 @@ class Form
 	onLoad: ->
 	onInit: ->
 
+	onChange: (fieldname, callback) ->
+		@form.on fieldname, (event,v) ->
+			callback(v)
+
 	constructor: (@options={}) ->
 
 		for k,v of @options
 			@[k] = v
 
-		@errorTemplate = """
-			<div class="#{@errorAlertClass}"></div>
-		"""
-
-		@errorTemplateList = """
-			{error}<br/>
-		"""
 
 		$ =>
 
@@ -281,9 +68,6 @@ class Form
 				@fields[name].originVal = el.val()
 
 			@fields[name].style = @fields[name].style ? false
-			@fields[name].useErrorTemplate = @fields[name].useErrorTemplate ? false
-			@fields[name].hideErrorsOnFocus = @fields[name].hideErrorsOnFocus ? false
-			@fields[name].checkErrorsOnFocus = @fields[name].checkErrorsOnFocus ? false
 			@fields[name].focus = @fields[name].focus ? false
 
 			if !@fields[name].onError then @fields[name].onError = (fieldName,errors) ->
@@ -298,58 +82,6 @@ class Form
 					if event.keyCode is 13
 						do @submit
 
-			if @fields[name].useErrorTemplate and @fields[name].rules
-
-				errorAlert = $(".#{@errorAlertExtClass}-#{name}")
-
-				if !errorAlert.size()
-
-					errorAlert = $(@errorTemplate)
-					errorAlert.addClass("#{@errorAlertExtClass}-#{name}")
-					el.after errorAlert
-					
-				errorAlert.unbind()
-
-				if @errorHideMethod is "visibility"
-					errorAlert.css('visibility','hidden').show()
-				else
-					errorAlert.hide()
-
-				if @fields[name].hideErrorsOnFocus 
-
-					el.focus ->
-
-						el 	= $(@)
-						name 	= el.attr('name')
-
-						self.removeErrorAlert(name)
-
-				if @fields[name].checkErrorsOnFocus
-
-					el.keyup ->
-
-						self.errors[name] = []
-						self.data[name] = []
-
-						el = $(@)
-						name 	= el.attr('name')
-						val 	= self.getVal(name)
-
-						self.setData(name,val)
-						self.removeErrorAlert(name)
-
-						for ruleName,rule of self.fields[name].rules
-							valid = self.validate[ruleName](val, rule)
-					
-							if !valid.state
-								self.setError(name,valid.reason)
-
-						if !self.isEmpty(self.errors[name])
-							self.log "onError", name, self.errors[name]
-							self.addErrorAlert(name)
-							self.fields[name].onError(name,self.errors[name])
-
-		
 			if @fields[name].style and el.is("select")
 
 				@createSelect(el)
@@ -363,12 +95,12 @@ class Form
 
 			el.focus() if @fields[name].focus
 
+
 		@form.submit (e) -> e.preventDefault()
 
 		@submitBtn.click =>
 			@submit()
 			return false
-
 
 		do @onInit
 
@@ -398,7 +130,7 @@ class Form
 		el.after $checkbox
 
 		$checkbox.click ->
-			if $(@).hasClass('checked')
+			if el.is(':checked')
 				$(@).removeClass 'checked'
 				self.setVal(name, false)
 			else
@@ -454,7 +186,12 @@ class Form
 			else
 				el.find('option:first-child').text()
 
-		$selected = $("<div class='selected default'>#{selectedText}</div>")
+		$selected = $("<div class='selected'>#{selectedText}</div>")
+
+		if el.find('option:selected').is(':first-child')
+			$selected.addClass 'default'
+
+
 		$select.append $selected
 		$select.append $options
 
@@ -506,9 +243,12 @@ class Form
 		el  = @form.find("[name='#{name}']")
 
 		if el.attr('type') in ['checkbox','radio']
-
 			el.prop("checked", false)
-			el.filter("[value='#{val}']").prop("checked", true)
+			el.filter("[value='#{val}']").prop("checked", val)
+
+		else if el.is("select")
+			el.val(val)
+
 		else
 			el.val(@trim(val))
 
@@ -518,12 +258,7 @@ class Form
 			else
 				el.removeClass(@placeholderClass)
 
-		if @fields[name].useErrorTemplate
-			# errorAlert = @form.find(".#{@errorAlertExtClass}-#{name}")
-			# errorAlert.empty()
-			# el.removeClass(@errorInputClass)
-
-			@removeErrorAlert(name)
+		@form.trigger(name,[{name,val}])
 
 	getVal: (name) ->
 
@@ -548,6 +283,49 @@ class Form
 
 		return val
 
+	set: (name,val=false) ->
+
+		el   = @form.find("[name='#{name}']")
+		sel  = @form.find("[data-name='#{name}']")
+
+		if el.is("select")
+			if !val
+				val = el.find('option').eq(0).val()
+			@setVal(name,val)
+			el.trigger('change')
+			return
+
+		if el.attr('type') is 'checkbox'
+			if val
+				sel.addClass('checked')
+			else
+				sel.removeClass('checked')
+
+		if el.attr('type') is 'radio'
+			sel.removeClass('checked')
+			if val
+				sel.filter("[data-value='#{val}']").addClass 'checked'
+			else
+				val = el.eq(0).val()
+				sel.eq(0).addClass 'checked'
+
+		@setVal(name,val)
+
+		@log "SET", name, '=', val
+
+	get: (name) ->
+
+		el  = @form.find("[name='#{name}']")
+
+		if el.attr('type') in ['checkbox','radio']
+			return el.filter(':checked').val()
+
+		val = el.val()
+
+		@log "GET", name, '=', val
+
+		return val
+
 	submit: ->
 
 		@log "SUBMIT!"
@@ -560,7 +338,6 @@ class Form
 			val = @getVal(name)
 	
 			@setData(name,val)
-			@removeErrorAlert(name)
 
 			# validate rules
 			if @fields[name].rules
@@ -583,15 +360,8 @@ class Form
 
 			if @errors[name]
 				@log "onError", name, @errors[name]
-				@addErrorAlert(name)
-				
+	
 				@fields[name].onError(name,@errors[name])
-
-		if @autoHideErrors	
-			setTimeout(=>
-				for name,field of @fields
-					@removeErrorAlert(name)
-			,1000)
 
 		@log "onFail","errors", @errors
 		@onFail(@errors)
@@ -630,49 +400,6 @@ class Form
 			@errors[name] = []
 
 		@errors[name].push val
-
-	addErrorAlert: (name) ->
-
-		if @fields[name].useErrorTemplate
-
-			el  = @form.find("[name='#{name}']")
-			el.addClass(@errorInputClass)
-
-			if el.is('select') and @fields[name].style
-				@form.find(".select[data-name='#{name}']").addClass(@errorInputClass)
-
-			errorAlert = @form.find(".#{@errorAlertExtClass}-#{name}")
-			errorAlert.stop().empty()
-
-			for i of @errors[name]
-				errorAlert.append(@errorTemplateList.replace(/\{error\}/g, @errors[name][i]))
-
-			if @errorHideMethod is "visibility"
-				errorAlert.css('visibility','visible')
-
-			if @errorFadeIn
-				errorAlert.hide().fadeIn @errorFadeIn
-
-	removeErrorAlert: (name) ->
-
-		if @fields[name].useErrorTemplate
-
-			el  = @form.find("[name='#{name}']")
-			el.removeClass(@errorInputClass)
-
-			if el.is('select') and @fields[name].style
-				@form.find(".select[data-name='#{name}']").removeClass(@errorInputClass)
-
-			errorAlert = @form.find(".#{@errorAlertExtClass}-#{name}")
-
-			if @errorHideMethod is "visibility"
-				errorAlert.css('visibility','hidden').show()
-				errorAlert.empty()
-			else if @errorFadeOut
-				errorAlert.stop().css('opacity':'1').fadeOut @errorFadeOut, -> errorAlert.empty()
-			else
-				errorAlert.empty()
-				errorAlert.hide()
 	
 	placeholder: (el,val) ->
 
@@ -796,9 +523,6 @@ class Form
 			for argument in arguments
 				newArgs.push argument
 			console.log.apply(console,newArgs)
-			
-			
-			
 
 	trim: (text="") -> text.replace(/^\s+|\s+$/g, '')
 	stripHTML: (text="") -> text.replace(/<(?:.|\s)*?>/g, '')

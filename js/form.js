@@ -1,202 +1,5 @@
 
 /* Form Validator */
-
-/*
-
-Правила валидации
-required — Обязательное поле
-numeric — Разрешены только цифры
-numericDash — Разрешены только цифры и подчеркивания
-alpha — Разрешены только буквы
-alphaDash — Разрешены только буквы и подчеркивания
-alphaNumeric — Разрешены только буквы и цифры
-max — Максимум символов
-min — Минимум символов
-email — Email
-url — Url
-ip — Ip
- */
-
-/*
-
-Инициализация формы
-
-formValidator = new Form({
- 
- logs: true, // Логировать форму
- autoHideErrors: false // Автоматическое скрытие ошибок
- 
- formName: 'nice form', // Имя формы (опционально, проще дебажить если на странице много форм)
- formEl: '#form', // Элемент формы (можно передавать элемент DOM)
- submitEl: '.submit', // Элемент кнопки отправки (можно передавать элемент DOM)
- 
- fields:{
-  'firstname' : {
-   useErrorTemplate: true, // Использовать темплейт с ошибками
-   checkErrorsOnFocus: true, // Валидировать поле сразу в фокусе
-   placeholder: 'placeholder firstname', // Плейсхолдер (Не значение!)
-   rules: {
-    required:{ // Правило
-     reason: 'Обязательное поле для заполнения' // Установка причины ошибки (опционально)
-    },
-    min: {
-     count: 2, // Миниальное кол-во символов
-     reason: 'Минимум {count} символа' // Установка причины ошибки (опционально)
-    },
-    max: {
-     count: 10, // Максимальное кол-во символов
-     reason: 'Максимум {count} символов'
-    }
-   }
-  },
-  'password' : {
-   useErrorTemplate: true,
-   hideErrorsOnFocus: true, // Скрывать ошибки в фокусе
-   //focus: true, // Фокусировать на это поле
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    numeric:{
-     reason: 'Разрешены только цифры'
-    }
-   }
-  },
-  'url' : {
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    url: {
-     reason: 'Неправильно заполненный url'
-    }
-   },
-   
-   // Ручная работа над ошибками, без использования темплейтов
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-url").append(errors[i]);
-    };
-   }
-  },
-  'email' : {
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    },
-    email: {
-     reason: 'Неправильно заполненный email'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-email").append(errors[i]);
-    };
-   }
-  },
-  'text' : {
-   enterSubmit: true, // Отправка по Enter, если элмент в фокусе
-   hideErrorsOnFocus: true,
-   useErrorTemplate: true,
-   escape: true, // Экранировать ввод символов
-   placeholder: 'placeholder text',
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   }
-  },
-  'checkbox_1' : {
-  	style: true, // Стилизация элемента
-   	rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-checkbox_1").append(errors[i]);
-    };
-   }
-  },
-  'checkbox_2' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-checkbox_2").append(errors[i]);
-    };
-   }
-  },
-  'radiobutton' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-radiobutton").append(errors[i]);
-    };
-   }
-  },
-  'dropdown' : {
-  	style: true, // Стилизация элемента
-   rules: {
-    required:{
-     not: '- Выбрать -', // Это значение НЕ валидируется!
-     reason: 'Обязательное поле для заполнения'
-    }
-   },
-   onError: function(fieldName,errors){
-    for(i in errors){
-     $(".error-custom-dropdown").append(errors[i]);
-    };
-   }
-  }
- },
- 
- // Событие отправки формы
- onSubmit: function(data){
-  $(".error-custom-alert").empty();
- },
- 
- // Событие неудачной отправки формы
- onFail: function(errors){},
- 
- // Событие сброса формы
- onReset: function(){
-  $(".error-custom-alert").empty();
- },
- 
- // Событие загрузки формы
- onLoad: function(){},
- 
- // Событие инициализации формы. Полезно когда необходимо навешать на форму еще событий.
- // До и после отправки, происходит сброс формы и переинициализация, в также новый bind элементов
- onInit: function(){},
- 
- // Событие успешной отправки формы
- onSuccess: function(data){
-  $(".error-custom-alert").empty();
- }
-})
- 
-// Добавление нового правила
-formValidator.addRule({
- field: 'firstname', // Имя поля
- rule: 'custom rule', // Название правила
- reason: 'Введите слово "хорошо"', // Описание причины ошибки
- condition: function(val){ // Условие исполнения - должно возвращать или true или false
-  return val == 'хорошо';
- }
-});
- */
 var Form;
 
 Form = (function() {
@@ -208,21 +11,7 @@ Form = (function() {
 
   Form.prototype.submitEl = false;
 
-  Form.prototype.autoHideErrors = false;
-
-  Form.prototype.errorAlertClass = "error-alert";
-
-  Form.prototype.errorAlertExtClass = "error";
-
-  Form.prototype.errorInputClass = "error-field";
-
   Form.prototype.placeholderClass = "placeholder";
-
-  Form.prototype.errorHideMethod = "display";
-
-  Form.prototype.errorFadeIn = 300;
-
-  Form.prototype.errorFadeOut = 800;
 
   Form.prototype.fields = {};
 
@@ -242,6 +31,12 @@ Form = (function() {
 
   Form.prototype.onInit = function() {};
 
+  Form.prototype.onChange = function(fieldname, callback) {
+    return this.form.on(fieldname, function(event, v) {
+      return callback(v);
+    });
+  };
+
   function Form(options) {
     var k, ref, v;
     this.options = options != null ? options : {};
@@ -250,8 +45,6 @@ Form = (function() {
       v = ref[k];
       this[k] = v;
     }
-    this.errorTemplate = "<div class=\"" + this.errorAlertClass + "\"></div>";
-    this.errorTemplateList = "{error}<br/>";
     $((function(_this) {
       return function() {
         if (!_this.formEl) {
@@ -276,7 +69,7 @@ Form = (function() {
   }
 
   Form.prototype.init = function() {
-    var el, errorAlert, name, ref, ref1, ref2, ref3, ref4, ref5, self;
+    var el, name, ref, ref1, ref2, self;
     self = this;
     this.form.unbind();
     this.submitBtn.unbind();
@@ -289,10 +82,7 @@ Form = (function() {
         this.fields[name].originVal = el.val();
       }
       this.fields[name].style = (ref1 = this.fields[name].style) != null ? ref1 : false;
-      this.fields[name].useErrorTemplate = (ref2 = this.fields[name].useErrorTemplate) != null ? ref2 : false;
-      this.fields[name].hideErrorsOnFocus = (ref3 = this.fields[name].hideErrorsOnFocus) != null ? ref3 : false;
-      this.fields[name].checkErrorsOnFocus = (ref4 = this.fields[name].checkErrorsOnFocus) != null ? ref4 : false;
-      this.fields[name].focus = (ref5 = this.fields[name].focus) != null ? ref5 : false;
+      this.fields[name].focus = (ref2 = this.fields[name].focus) != null ? ref2 : false;
       if (!this.fields[name].onError) {
         this.fields[name].onError = function(fieldName, errors) {};
       }
@@ -311,52 +101,6 @@ Form = (function() {
             }
           };
         })(this));
-      }
-      if (this.fields[name].useErrorTemplate && this.fields[name].rules) {
-        errorAlert = $("." + this.errorAlertExtClass + "-" + name);
-        if (!errorAlert.size()) {
-          errorAlert = $(this.errorTemplate);
-          errorAlert.addClass(this.errorAlertExtClass + "-" + name);
-          el.after(errorAlert);
-        }
-        errorAlert.unbind();
-        if (this.errorHideMethod === "visibility") {
-          errorAlert.css('visibility', 'hidden').show();
-        } else {
-          errorAlert.hide();
-        }
-        if (this.fields[name].hideErrorsOnFocus) {
-          el.focus(function() {
-            el = $(this);
-            name = el.attr('name');
-            return self.removeErrorAlert(name);
-          });
-        }
-        if (this.fields[name].checkErrorsOnFocus) {
-          el.keyup(function() {
-            var ref6, rule, ruleName, val, valid;
-            self.errors[name] = [];
-            self.data[name] = [];
-            el = $(this);
-            name = el.attr('name');
-            val = self.getVal(name);
-            self.setData(name, val);
-            self.removeErrorAlert(name);
-            ref6 = self.fields[name].rules;
-            for (ruleName in ref6) {
-              rule = ref6[ruleName];
-              valid = self.validate[ruleName](val, rule);
-              if (!valid.state) {
-                self.setError(name, valid.reason);
-              }
-            }
-            if (!self.isEmpty(self.errors[name])) {
-              self.log("onError", name, self.errors[name]);
-              self.addErrorAlert(name);
-              return self.fields[name].onError(name, self.errors[name]);
-            }
-          });
-        }
       }
       if (this.fields[name].style && el.is("select")) {
         this.createSelect(el);
@@ -411,7 +155,7 @@ Form = (function() {
     }
     el.after($checkbox);
     return $checkbox.click(function() {
-      if ($(this).hasClass('checked')) {
+      if (el.is(':checked')) {
         $(this).removeClass('checked');
         return self.setVal(name, false);
       } else {
@@ -462,7 +206,10 @@ Form = (function() {
     $select = $("<div class='select' data-name='" + name + "'></div>");
     $options = $("<div class='options' style='display:none;'></div>");
     selectedText = el.find('option[selected]').size() ? el.find('option:selected').text() : el.find('option:first-child').text();
-    $selected = $("<div class='selected default'>" + selectedText + "</div>");
+    $selected = $("<div class='selected'>" + selectedText + "</div>");
+    if (el.find('option:selected').is(':first-child')) {
+      $selected.addClass('default');
+    }
     $select.append($selected);
     $select.append($options);
     el.after($select);
@@ -518,7 +265,9 @@ Form = (function() {
     el = this.form.find("[name='" + name + "']");
     if ((ref = el.attr('type')) === 'checkbox' || ref === 'radio') {
       el.prop("checked", false);
-      el.filter("[value='" + val + "']").prop("checked", true);
+      el.filter("[value='" + val + "']").prop("checked", val);
+    } else if (el.is("select")) {
+      el.val(val);
     } else {
       el.val(this.trim(val));
     }
@@ -529,9 +278,12 @@ Form = (function() {
         el.removeClass(this.placeholderClass);
       }
     }
-    if (this.fields[name].useErrorTemplate) {
-      return this.removeErrorAlert(name);
-    }
+    return this.form.trigger(name, [
+      {
+        name: name,
+        val: val
+      }
+    ]);
   };
 
   Form.prototype.getVal = function(name) {
@@ -555,6 +307,52 @@ Form = (function() {
     return val;
   };
 
+  Form.prototype.set = function(name, val) {
+    var el, sel;
+    if (val == null) {
+      val = false;
+    }
+    el = this.form.find("[name='" + name + "']");
+    sel = this.form.find("[data-name='" + name + "']");
+    if (el.is("select")) {
+      if (!val) {
+        val = el.find('option').eq(0).val();
+      }
+      this.setVal(name, val);
+      el.trigger('change');
+      return;
+    }
+    if (el.attr('type') === 'checkbox') {
+      if (val) {
+        sel.addClass('checked');
+      } else {
+        sel.removeClass('checked');
+      }
+    }
+    if (el.attr('type') === 'radio') {
+      sel.removeClass('checked');
+      if (val) {
+        sel.filter("[data-value='" + val + "']").addClass('checked');
+      } else {
+        val = el.eq(0).val();
+        sel.eq(0).addClass('checked');
+      }
+    }
+    this.setVal(name, val);
+    return this.log("SET", name, '=', val);
+  };
+
+  Form.prototype.get = function(name) {
+    var el, ref, val;
+    el = this.form.find("[name='" + name + "']");
+    if ((ref = el.attr('type')) === 'checkbox' || ref === 'radio') {
+      return el.filter(':checked').val();
+    }
+    val = el.val();
+    this.log("GET", name, '=', val);
+    return val;
+  };
+
   Form.prototype.submit = function() {
     var name, ref, rule, ruleName, val, valid;
     this.log("SUBMIT!");
@@ -563,7 +361,6 @@ Form = (function() {
     for (name in this.fields) {
       val = this.getVal(name);
       this.setData(name, val);
-      this.removeErrorAlert(name);
       if (this.fields[name].rules) {
         ref = this.fields[name].rules;
         for (ruleName in ref) {
@@ -591,23 +388,8 @@ Form = (function() {
       field = ref[name];
       if (this.errors[name]) {
         this.log("onError", name, this.errors[name]);
-        this.addErrorAlert(name);
         this.fields[name].onError(name, this.errors[name]);
       }
-    }
-    if (this.autoHideErrors) {
-      setTimeout((function(_this) {
-        return function() {
-          var ref1, results;
-          ref1 = _this.fields;
-          results = [];
-          for (name in ref1) {
-            field = ref1[name];
-            results.push(_this.removeErrorAlert(name));
-          }
-          return results;
-        };
-      })(this), 1000);
     }
     this.log("onFail", "errors", this.errors);
     return this.onFail(this.errors);
@@ -650,53 +432,6 @@ Form = (function() {
       this.errors[name] = [];
     }
     return this.errors[name].push(val);
-  };
-
-  Form.prototype.addErrorAlert = function(name) {
-    var el, errorAlert, i;
-    if (this.fields[name].useErrorTemplate) {
-      el = this.form.find("[name='" + name + "']");
-      el.addClass(this.errorInputClass);
-      if (el.is('select') && this.fields[name].style) {
-        this.form.find(".select[data-name='" + name + "']").addClass(this.errorInputClass);
-      }
-      errorAlert = this.form.find("." + this.errorAlertExtClass + "-" + name);
-      errorAlert.stop().empty();
-      for (i in this.errors[name]) {
-        errorAlert.append(this.errorTemplateList.replace(/\{error\}/g, this.errors[name][i]));
-      }
-      if (this.errorHideMethod === "visibility") {
-        errorAlert.css('visibility', 'visible');
-      }
-      if (this.errorFadeIn) {
-        return errorAlert.hide().fadeIn(this.errorFadeIn);
-      }
-    }
-  };
-
-  Form.prototype.removeErrorAlert = function(name) {
-    var el, errorAlert;
-    if (this.fields[name].useErrorTemplate) {
-      el = this.form.find("[name='" + name + "']");
-      el.removeClass(this.errorInputClass);
-      if (el.is('select') && this.fields[name].style) {
-        this.form.find(".select[data-name='" + name + "']").removeClass(this.errorInputClass);
-      }
-      errorAlert = this.form.find("." + this.errorAlertExtClass + "-" + name);
-      if (this.errorHideMethod === "visibility") {
-        errorAlert.css('visibility', 'hidden').show();
-        return errorAlert.empty();
-      } else if (this.errorFadeOut) {
-        return errorAlert.stop().css({
-          'opacity': '1'
-        }).fadeOut(this.errorFadeOut, function() {
-          return errorAlert.empty();
-        });
-      } else {
-        errorAlert.empty();
-        return errorAlert.hide();
-      }
-    }
   };
 
   Form.prototype.placeholder = function(el, val) {

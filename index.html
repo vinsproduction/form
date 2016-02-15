@@ -23,7 +23,7 @@
   <link rel="stylesheet" type="text/css" href="css/form.css"/>
   <script>(function() {
   $(function() {
-    var $form, fields, formValidator;
+    var $form, fields;
     $form = $('.form');
     fields = {
       'login': {
@@ -209,9 +209,26 @@
             }
           };
         })(this)
+      },
+      'dropdown-2': {
+        style: true,
+        rules: {
+          required: {
+            not: 'Выбрать',
+            reason: 'Обязательное поле для заполнения'
+          }
+        },
+        onError: (function(_this) {
+          return function(fieldName, errors) {
+            $form.find(".select[data-name=" + fieldName + "]").addClass('error-field');
+            if (errors[0]) {
+              return $form.find(".error-" + fieldName).append(errors[0] + "<br/>");
+            }
+          };
+        })(this)
       }
     };
-    formValidator = new Form({
+    window.formValidator = new Form({
       logs: true,
       formName: 'nice form',
       formEl: $form,
@@ -242,12 +259,24 @@
         $form.find('.checkbox,.select').click(function() {
           $form.find('.submit .error').empty();
           $(this).removeClass('error-field');
-          return $form.find(".error-" + ($(this).attr('data-name'))).empty().hide();
+          return $form.find(".error-" + ($(this).attr('data-name'))).empty();
         });
         $form.find('input,textarea').focus(function() {
           $form.find('.submit .error').empty();
           $(this).removeClass('error-field');
-          return $form.find(".error-" + ($(this).attr('name'))).empty().hide();
+          return $form.find(".error-" + ($(this).attr('name'))).empty();
+        });
+        formValidator.set('dropdown', 1);
+        formValidator.set('checkbox_1', false);
+        formValidator.set('checkbox_2', true);
+        formValidator.set('radiobutton', 2);
+        formValidator.set('text', 'тест');
+        formValidator.onChange('dropdown', function(v) {
+          formValidator.set('dropdown-2', 2);
+          return console.log(v);
+        });
+        formValidator.onChange('checkbox_1', function(v) {
+          return console.log(v);
         });
         scrollbars = {};
         scroll = function(el) {
@@ -272,7 +301,7 @@
       onSubmit: function(data) {
         $form.find('.errors').empty();
         $form.find("input,select").removeClass('error-field');
-        return $form.find(".error").show().empty();
+        return $form.find(".error").empty();
       },
       onSuccess: function(data) {
         if (formValidator.submitEl.hasClass('submit-disabled')) {
@@ -286,7 +315,7 @@
       onReset: function() {
         $form.find('.errors').empty();
         $form.find("input,select,textarea").removeClass('error-field');
-        $form.find(".error").show().empty();
+        $form.find(".error").empty();
         return formValidator.submitEl.removeClass('submit-disabled').find('span').html('Отправить');
       }
     });
@@ -353,7 +382,7 @@
     </div>
     <div class="field">
       <div class="label">checkbox 2</div>
-      <div class="field-group"><span>3</span>
+      <div class="field-group"><span>2</span>
         <input type="checkbox" name="checkbox_2" value="2"/>
       </div>
       <div class="error error-checkbox_2"></div>
@@ -380,6 +409,19 @@
         <option value="6">6</option>
       </select>
       <div class="error error-dropdown"></div>
+    </div>
+    <div class="field">
+      <div class="label">dropdown 2</div>
+      <select name="dropdown-2">
+        <option selected="selected">Выбрать</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+      </select>
+      <div class="error error-dropdown-2"></div>
     </div>
     <div class="field">
       <div class="errors-all"></div>

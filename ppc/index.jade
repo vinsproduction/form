@@ -149,7 +149,19 @@ head
 							if errors[0]
 								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
 
-				formValidator = new Form
+					'dropdown-2':
+						style: true
+						rules:
+							required:
+								not: 'Выбрать'
+								reason: 'Обязательное поле для заполнения'
+						onError: (fieldName,errors) =>
+							$form.find(".select[data-name=#{fieldName}]").addClass 'error-field'
+							if errors[0]
+								$form.find(".error-#{fieldName}").append(errors[0] + "<br/>")
+
+
+				window.formValidator = new Form
 
 					logs: true
 
@@ -188,14 +200,33 @@ head
 						$form.find('.checkbox,.select').click ->
 							$form.find('.submit .error').empty()
 							$(@).removeClass 'error-field'
-							$form.find(".error-#{$(@).attr('data-name')}").empty().hide()
+							$form.find(".error-#{$(@).attr('data-name')}").empty()
 
 
 						$form.find('input,textarea').focus ->
 							$form.find('.submit .error').empty()
 							$(@).removeClass 'error-field'
-							$form.find(".error-#{$(@).attr('name')}").empty().hide()
+							$form.find(".error-#{$(@).attr('name')}").empty()
 
+
+						formValidator.set('dropdown', 1)
+						formValidator.set('checkbox_1',false)
+						formValidator.set('checkbox_2',true)
+						formValidator.set('radiobutton',2)
+						formValidator.set('text','тест')
+
+
+						formValidator.onChange 'dropdown', (v) ->
+							formValidator.set('dropdown-2', 2)
+							console.log v
+
+						formValidator.onChange 'checkbox_1', (v) ->
+							console.log v
+
+
+						#formValidator.form.on 'dropdown', (e,v) ->
+							#formValidator.set('dropdown-2', 2)
+							#console.log v
 
 
 						# Скролл бар
@@ -229,7 +260,7 @@ head
 
 						$form.find('.errors').empty()
 						$form.find("input,select").removeClass 'error-field'
-						$form.find(".error").show().empty()
+						$form.find(".error").empty()
 
 					onSuccess: (data) ->
 
@@ -246,7 +277,7 @@ head
 
 						$form.find('.errors').empty()
 						$form.find("input,select,textarea").removeClass 'error-field'
-						$form.find(".error").show().empty()
+						$form.find(".error").empty()
 
 						formValidator.submitEl.removeClass('submit-disabled').find('span').html('Отправить')
 
@@ -314,7 +345,7 @@ body
 		.field
 			.label checkbox 2
 			.field-group
-				span 3
+				span 2
 				input(type="checkbox", name="checkbox_2", value="2")
 			.error.error-checkbox_2
 
@@ -339,6 +370,18 @@ body
 				option(value="5") 5
 				option(value="6") 6
 			.error.error-dropdown
+
+		.field
+			.label dropdown 2
+			select(name="dropdown-2")
+				option(selected=true) Выбрать
+				option(value="1") 1
+				option(value="2") 2
+				option(value="3") 3
+				option(value="4") 4
+				option(value="5") 5
+				option(value="6") 6
+			.error.error-dropdown-2
 
 		.field
 			.errors-all
