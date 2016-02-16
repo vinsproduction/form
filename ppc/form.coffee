@@ -9,7 +9,13 @@ class Form
 	formEl: false
 	submitEl: false
 
+	showErrors: true # 'all' # Показывать ошибку валидации конкретного поля, если all - то все ошибки поля
+	hideErrorInFocus: true # Удалять класс ошибки в фокусе
+	clearErrorInFocus: true # Очищать ошибку по клику поля
+
 	placeholderClass: "placeholder"
+	errorFieldClass: "error-field" # Стиль ошибки поля
+	errorClass: "error-" # Класс элемента вывода ошибки поля
 
 	fields: {}
 	data: {}
@@ -34,18 +40,19 @@ class Form
 
 		$ =>
 
-			if !@formEl then return @log 'Warning! formEl not set'
-			if !@submitEl then return @log 'Warning! submitEl not set'
+			if !@formEl and @logs then return @log 'Warning! formEl not set'
+			if !@submitEl and @logs then return @log 'Warning! submitEl not set'
 
 			@form 		= if @isObject(@formEl) then @formEl else $(@formEl)
 			@submitBtn 	= if @isObject(@submitEl) then @submitEl else @form.find(@submitEl)
 
-			if !@form.size() then return @log 'Warning! formEl not found in DOM'
-			if !@submitBtn.size() then return @log 'Warning! submitEl not found in DOM'
+			if !@form.size() and @logs then return @log 'Warning! formEl not found in DOM'
+			if !@submitBtn.size() and @logs then return @log 'Warning! submitEl not found in DOM'
+
+			#@log "onLoad", "options", @options
+			console.log("[Form: #{@formName}] init", @options) if @logs
 
 			do @init
-
-			@log "onLoad", "options", @options
 
 			do @onLoad
 
@@ -58,42 +65,79 @@ class Form
 
 		for name of @fields
 
-			el  = @form.find("[name='#{name}']").eq(0)
+			do (name) =>
 
-			el.unbind()
+				el  = @form.find("[name='#{name}']").eq(0)
 
-			if el.attr('type') in ['checkbox','radio']
-				@fields[name].originVal = el.filter(":checked").val() or false
-			else
-				@fields[name].originVal = el.val()
+				el.unbind()
 
-			@fields[name].style = @fields[name].style ? false
-			@fields[name].focus = @fields[name].focus ? false
+				@fields[name].el = el
+				@fields[name].sel = el
 
-			if !@fields[name].onError then @fields[name].onError = (fieldName,errors) ->
+				@fields[name].style = @fields[name].style ? true
+				@fields[name].focus = @fields[name].focus ? false
 
-			### placeholder ###
-			if @fields[name].placeholder and (el.is("input[type='text']") or el.is('textarea'))
-				@placeholder(el,@fields[name].placeholder)
+				if !@fields[name].onError
+					@fields[name].onError = (fieldName,errors) ->
 
-			### Отправка по Enter ###
-			if @fields[name].enterSubmit
-				el.keydown (event) =>
-					if event.keyCode is 13
-						do @submit
 
-			if @fields[name].style and el.is("select")
+				if el.is("select")
 
-				@createSelect(el)
-				el.change => @createSelect(el)
+					@fields[name].type = 'select'
 
-			if @fields[name].style and (el.attr('type') is 'radio')
-				self.createRadio(name)
+					if @fields[name].style 
+						@createSelect(el)
+						el.change => @createSelect(el)
 
-			if @fields[name].style and (el.attr('type') is 'checkbox')
-				self.createCheckbox(name)
+				else if el.attr('type') is 'radio'
 
-			el.focus() if @fields[name].focus
+					@fields[name].type = 'radio'
+
+					if @fields[name].style
+						self.createRadio(name)
+
+				else if el.attr('type') is 'checkbox'
+
+					@fields[name].type = 'checkbox'
+
+					if @fields[name].style
+						self.createCheckbox(name)
+
+				else if el.is("textarea")
+					
+					@fields[name].type = 'textarea'
+
+				else
+
+					@fields[name].type = 'text'
+
+				if @fields[name].type in ['checkbox','radio']
+					@fields[name].originVal = el.filter(":checked").val() or false
+				else
+					@fields[name].originVal = el.val()
+			
+				if @fields[name].placeholder and (@fields[name].type in ['text','textarea'])
+					@placeholder(el,@fields[name].placeholder)
+
+				el.focus() if @fields[name].focus
+
+
+				@fields[name].sel.removeClass(@errorFieldClass)
+
+				if @showErrors
+					@form.find('.' + @errorClass + name).empty()
+
+				@fields[name].sel.click =>
+
+					if @hideErrorInFocus
+						@fields[name].sel.removeClass(@errorFieldClass)
+
+					if @clearErrorInFocus and @showErrors
+						@form.find('.' + @errorClass + name).empty()
+
+
+
+				return
 
 
 		@form.submit (e) -> e.preventDefault()
@@ -129,6 +173,8 @@ class Form
 
 		el.after $checkbox
 
+		@fields[name].sel = $checkbox
+
 		$checkbox.click ->
 			if el.is(':checked')
 				$(@).removeClass 'checked'
@@ -139,11 +185,11 @@ class Form
 
 	createRadio: (name) ->
 
-		$radioEl = @form.find("[name='#{name}']")
-
 		self = @
 
-		$radioEl.each ->
+		@fields[name].el =  @form.find("[name='#{name}']")
+
+		@fields[name].el.each ->
 
 			el = $(this)
 
@@ -164,6 +210,8 @@ class Form
 
 			el.after $radio
 
+			self.fields[name].sel = self.form.find("[data-name='#{name}']")
+
 			$radio.click ->
 				self.form.find(".radio[data-name=#{name}]").removeClass 'checked'
 				$(@).addClass 'checked'
@@ -180,7 +228,8 @@ class Form
 		@form.find(".select[data-name='#{name}']").remove() if @form.find(".select[data-name='#{name}']").size()
 
 		$select 	= $("<div class='select' data-name='#{name}'></div>")
-		$options 		= $("<div class='options' style='display:none;'></div>")
+		$options 	= $("<div class='options' style='display:none;'></div>")
+
 		selectedText 	= if el.find('option[selected]').size()
 				el.find('option:selected').text()
 			else
@@ -196,6 +245,8 @@ class Form
 		$select.append $options
 
 		el.after $select
+
+		@fields[name].sel = $select
 
 		selectClose = false
 
@@ -240,13 +291,13 @@ class Form
 
 	setVal: (name,val) ->
 
-		el  = @form.find("[name='#{name}']")
+		el  = @fields[name].el
 
-		if el.attr('type') in ['checkbox','radio']
+		if @fields[name].type in ['checkbox','radio']
 			el.prop("checked", false)
 			el.filter("[value='#{val}']").prop("checked", val)
 
-		else if el.is("select")
+		else if @fields[name].type is 'select'
 			el.val(val)
 
 		else
@@ -262,14 +313,12 @@ class Form
 
 	getVal: (name) ->
 
-		el  = @form.find("[name='#{name}']")
+		el  = @fields[name].el
 
-		name 	= el.attr('name')
-
-		if el.attr('type') in ['checkbox','radio']
+		if @fields[name].type in ['checkbox','radio']
 			val = el.filter(":checked").val() or false
 
-		else if el.is('select')
+		else if @fields[name].type is 'select'
 			val = el.val()
 
 		else
@@ -285,23 +334,25 @@ class Form
 
 	set: (name,val=false) ->
 
-		el   = @form.find("[name='#{name}']")
-		sel  = @form.find("[data-name='#{name}']")
+		return if !@fields[name]
 
-		if el.is("select")
+		el   = @fields[name].el
+		sel  = @fields[name].sel
+
+		@setVal(name,val)
+
+		if @fields[name].type is 'select'
 			if !val
 				val = el.find('option').eq(0).val()
-			@setVal(name,val)
 			el.trigger('change')
-			return
 
-		if el.attr('type') is 'checkbox'
+		if @fields[name].type is 'checkbox'
 			if val
 				sel.addClass('checked')
 			else
 				sel.removeClass('checked')
 
-		if el.attr('type') is 'radio'
+		if @fields[name].type is 'radio'
 			sel.removeClass('checked')
 			if val
 				sel.filter("[data-value='#{val}']").addClass 'checked'
@@ -309,29 +360,24 @@ class Form
 				val = el.eq(0).val()
 				sel.eq(0).addClass 'checked'
 
-		@setVal(name,val)
-
-		@log "SET", name, '=', val
+		@log("[Form: #{@formName}] set", name + ': ' + val) if @logs
 
 	get: (name) ->
 
-		el  = @form.find("[name='#{name}']")
+		val = @getVal(name)
 
-		if el.attr('type') in ['checkbox','radio']
-			return el.filter(':checked').val()
+		# @log "GET", name, val
 
-		val = el.val()
-
-		@log "GET", name, '=', val
+		console.log("[Form: #{@formName}] get", name + ": " + val) if @logs
 
 		return val
 
 	submit: ->
 
-		@log "SUBMIT!"
-
 		do @resetData
 		do @resetErorrs
+
+		console.groupCollapsed("[Form: #{@formName}] submit")
 
 		for name of @fields
 
@@ -339,14 +385,27 @@ class Form
 	
 			@setData(name,val)
 
+			console.log(name + ': ' + val) if @logs
+
+			@fields[name].sel.removeClass(@errorFieldClass)
+
+			if @showErrors
+				@form.find('.' + @errorClass + name).empty()
+
 			# validate rules
 			if @fields[name].rules
+
 				for ruleName,rule of @fields[name].rules
 					valid = @validate[ruleName](val, rule)
 					if !valid.state
 						@setError(name,valid.reason)
 
-		@log "onSubmit", "data", @data
+		# @log "onSubmit", "data", @data
+
+		console.log("data",@data) if @logs
+
+		console.groupEnd()
+
 		@onSubmit(@data)
 
 		if @isEmpty(@errors)
@@ -356,18 +415,45 @@ class Form
 
 	fail: ->
 
+		console.groupCollapsed("[Form: #{@formName}] fail")
+
 		for name,field of @fields
 
 			if @errors[name]
-				@log "onError", name, @errors[name]
+				# @log "onError", name, @errors[name]
+				console.log(name + ': ', @errors[name]) if @logs
+
+				@fields[name].sel.addClass(@errorFieldClass)
+
+				if @showErrors
+					if @showErrors is 'all'
+						for i,error of @errors[name]
+							@form.find('.' + @errorClass + name).append(error + "<br/>")
+					else
+						@form.find('.' + @errorClass + name).html(@errors[name][0])
 	
 				@fields[name].onError(name,@errors[name])
 
-		@log "onFail","errors", @errors
+
+
+		# @log "onFail","errors", @errors
+		console.log("data",@errors) if @logs
+
+		console.groupEnd()
+
 		@onFail(@errors)
 
 	success: ->
-		@log "onSuccess","data", @data
+
+		console.groupCollapsed("[Form: #{@formName}] onSuccess")
+
+		for name,val of @data
+			console.log(name, val) if @logs
+
+		# @log "onSuccess","data", @data
+
+		console.groupEnd()
+
 		@onSuccess(@data)
 
 	reset: ->
@@ -379,7 +465,10 @@ class Form
 
 			@setVal(name,@fields[name].originVal)
 
-		@log "onReset"
+		# @log "onReset"
+
+		console.log("[Form: #{@formName}] reset") if @logs
+
 		do @onReset
 
 		do @init
@@ -400,7 +489,7 @@ class Form
 			@errors[name] = []
 
 		@errors[name].push val
-	
+
 	placeholder: (el,val) ->
 
 		el.focus =>
@@ -413,45 +502,66 @@ class Form
 
 	validate:
 
+		isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
+	
+		declOfNum: (number, titles) ->
+			cases = [2, 0, 1, 1, 1, 2]
+			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
+		
+
 		required: (val,rule) ->
 			valid = 
 				state: val not in ["", false, rule.not]
-				reason: rule.reason || 'Не заполнено'
+				reason: rule.reason || 'Обязательное поле для заполнения'
 
 			return valid
 
 		numeric : (val,rule) ->
 			valid = 
 				state: /^[0-9]+$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Не цифры'
+				reason: rule.reason  || 'Допустимы только цифры'
 
 			return valid
 
 		numericDash : (val,rule) ->
 			valid = 
 				state: /^[\d\-\s]+$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Не цифры и подчеркивания'
+				reason: rule.reason  || 'Допустимы только цифры и подчеркивания'
 
 			return valid
 
 		alpha : (val,rule) ->
 			valid = 
 				state: /^[a-zа-я]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Не буквы'
+				reason: rule.reason  || 'Допустимы только буквы'
+
+			return valid
+
+		eng : (val,rule) ->
+			valid = 
+				state: /^[a-z]+$/i.test(val) ||  val == ""
+				reason: rule.reason  || 'Допустимы только английские буквы'
+
+			return valid
+
+		cyrillic: (val, rule) ->
+			valid =
+				state: /^[а-я]+$/i.test(val) ||  val == ""
+				reason: rule.reason || 'Допустимы только русские буквы'
 
 			return valid
 
 		alphaDash : (val,rule) ->
 			valid = 
 				state: /^[a-z0-9_\-]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Не буквы и подчеркивания'
+				reason: rule.reason  || 'Допустимы только буквы и подчеркивания'
 
 			return valid
 
 		alphaNumeric : (val,rule) ->
 			valid = 
 				state: /^[a-z0-9]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Не буквы и не цифры'
+				reason: rule.reason  || 'Допустимы только буквы и цифры'
 
 			return valid
 
@@ -461,7 +571,7 @@ class Form
 
 			valid = 
 				state:  val.length <= rule.count ||  val == ""
-				reason: rule.reason || "Максимум #{rule.count}"
+				reason: rule.reason || "Максимум #{rule.count} #{@declOfNum(rule.count, ['символ', 'символа', 'символов'])}"
 
 			return valid
 
@@ -471,29 +581,42 @@ class Form
 
 			valid = 
 				state: val.length >= rule.count ||  val == ""
-				reason: rule.reason || "Минимум #{rule.count}"
+				reason: rule.reason || "Минимум #{rule.count} #{@declOfNum(rule.count, ['символ', 'символа', 'символов'])}"
 
 			return valid
 
 		email: (val,rule) ->
 			valid = 
 				state: /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Не email'
+				reason: rule.reason  || 'Неправильно заполненный E-mail'
 
 			return valid
 
 		url: (val,rule) ->
 			valid = 
 				state: /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Не url'
+				reason: rule.reason  || 'Неправильно заполненный url'
 
 			return valid
 
 		ip: (val,rule) ->
 			valid = 
 				state: /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Не ip'
+				reason: rule.reason  || 'Неправильно заполненный ip'
 
+			return valid
+
+		compare: (val,rule) ->
+
+			rule.val = rule.val() if @isFunction(rule.val)
+
+			console.log val,rule.val
+
+			valid =
+				state: val is rule.val
+				reason: rule.reason || "Поля не совпадают"
+
+				
 			return valid
 
 
@@ -526,7 +649,6 @@ class Form
 
 	trim: (text="") -> text.replace(/^\s+|\s+$/g, '')
 	stripHTML: (text="") -> text.replace(/<(?:.|\s)*?>/g, '')
-	isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
 	isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
 	isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
 	isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
@@ -540,8 +662,5 @@ class Form
 				if o.hasOwnProperty(i)
 					return false
 			return true
-	declOfNum: (number, titles) ->
-		cases = [2, 0, 1, 1, 1, 2]
-		titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
-	
+
 

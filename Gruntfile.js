@@ -36,6 +36,7 @@ module.exports = function(grunt) {
        	},
        	files: {
        		'js/form.js': 'ppc/form.coffee',
+       		'js/script.js': 'ppc/script.coffee',
 	    	}
     	}
 		},
