@@ -1,5 +1,7 @@
 
-/* Form Validator */
+/* Form */
+
+/* https://github.com/vinsproduction/form */
 var Form;
 
 Form = (function() {
@@ -11,17 +13,25 @@ Form = (function() {
 
   Form.prototype.submitEl = false;
 
+  Form.prototype.enter = true;
+
   Form.prototype.showErrors = true;
 
   Form.prototype.hideErrorInFocus = true;
 
   Form.prototype.clearErrorInFocus = true;
 
+  Form.prototype.disableSubmitBtn = false;
+
+  Form.prototype.disableSubmitClass = 'disabled-submit';
+
   Form.prototype.placeholderClass = "placeholder";
 
   Form.prototype.errorFieldClass = "error-field";
 
   Form.prototype.errorClass = "error-";
+
+  Form.prototype.preloaderClass = "preloader";
 
   Form.prototype.fields = {};
 
@@ -42,7 +52,7 @@ Form = (function() {
   Form.prototype.onInit = function() {};
 
   Form.prototype.onChange = function(fieldname, callback) {
-    return this.form.on(fieldname, function(event, v) {
+    this.form.on(fieldname, function(event, v) {
       return callback(v);
     });
   };
@@ -71,11 +81,21 @@ Form = (function() {
         if (!_this.submitBtn.size() && _this.logs) {
           return _this.log('Warning! submitEl not found in DOM');
         }
+        _this._disableSubmitBtn = _this.disableSubmitBtn;
+        if (_this.enter) {
+          $(window).keydown(function(event) {
+            if (_this.form.inFocus && event.keyCode === 13) {
+              if (!_this.disableSubmitBtn) {
+                return _this.submit();
+              }
+            }
+          });
+        }
         if (_this.logs) {
           console.log("[Form: " + _this.formName + "] init", _this.options);
         }
         _this.init();
-        return _this.onLoad();
+        _this.onLoad();
       };
     })(this));
   }
@@ -131,12 +151,14 @@ Form = (function() {
         if (_this.fields[name].focus) {
           el.focus();
         }
+        _this.fields[name].el.removeClass(_this.errorFieldClass);
         _this.fields[name].sel.removeClass(_this.errorFieldClass);
         if (_this.showErrors) {
           _this.form.find('.' + _this.errorClass + name).empty();
         }
         _this.fields[name].sel.click(function() {
           if (_this.hideErrorInFocus) {
+            _this.fields[name].el.removeClass(_this.errorFieldClass);
             _this.fields[name].sel.removeClass(_this.errorFieldClass);
           }
           if (_this.clearErrorInFocus && _this.showErrors) {
@@ -151,13 +173,28 @@ Form = (function() {
     this.form.submit(function(e) {
       return e.preventDefault();
     });
+    this.form.mouseover((function(_this) {
+      return function() {
+        return _this.form.inFocus = true;
+      };
+    })(this));
+    this.form.mouseout((function(_this) {
+      return function() {
+        return _this.form.inFocus = false;
+      };
+    })(this));
+    if (this._disableSubmitBtn) {
+      this.disableSubmit();
+    }
     this.submitBtn.click((function(_this) {
       return function() {
-        _this.submit();
+        if (!_this.disableSubmitBtn) {
+          _this.submit();
+        }
         return false;
       };
     })(this));
-    return this.onInit();
+    this.onInit();
   };
 
   Form.prototype.createCheckbox = function(name) {
@@ -183,7 +220,7 @@ Form = (function() {
     }
     el.after($checkbox);
     this.fields[name].sel = $checkbox;
-    return $checkbox.click(function() {
+    $checkbox.click(function() {
       if (el.is(':checked')) {
         $(this).removeClass('checked');
         return self.setVal(name, false);
@@ -198,7 +235,7 @@ Form = (function() {
     var self;
     self = this;
     this.fields[name].el = this.form.find("[name='" + name + "']");
-    return this.fields[name].el.each(function() {
+    this.fields[name].el.each(function() {
       var $radio, el, value;
       el = $(this);
       el.hide();
@@ -266,7 +303,7 @@ Form = (function() {
         return $options.show();
       }
     });
-    return el.find('option').each(function() {
+    el.find('option').each(function() {
       var $option;
       if ($(this).attr('value')) {
         $option = $("<div class='option' data-value='" + ($(this).attr('value')) + "'><span>" + ($(this).text()) + "</span></div>");
@@ -309,7 +346,7 @@ Form = (function() {
         el.removeClass(this.placeholderClass);
       }
     }
-    return this.form.trigger(name, [
+    this.form.trigger(name, [
       {
         name: name,
         val: val
@@ -371,7 +408,7 @@ Form = (function() {
       }
     }
     if (this.logs) {
-      return this.log("[Form: " + this.formName + "] set", name + ': ' + val);
+      this.log("[Form: " + this.formName + "] set", name + ': ' + val);
     }
   };
 
@@ -395,6 +432,7 @@ Form = (function() {
       if (this.logs) {
         console.log(name + ': ' + val);
       }
+      this.fields[name].el.removeClass(this.errorFieldClass);
       this.fields[name].sel.removeClass(this.errorFieldClass);
       if (this.showErrors) {
         this.form.find('.' + this.errorClass + name).empty();
@@ -416,9 +454,9 @@ Form = (function() {
     console.groupEnd();
     this.onSubmit(this.data);
     if (this.isEmpty(this.errors)) {
-      return this.success();
+      this.success();
     } else {
-      return this.fail();
+      this.fail();
     }
   };
 
@@ -432,6 +470,7 @@ Form = (function() {
         if (this.logs) {
           console.log(name + ': ', this.errors[name]);
         }
+        this.fields[name].el.addClass(this.errorFieldClass);
         this.fields[name].sel.addClass(this.errorFieldClass);
         if (this.showErrors) {
           if (this.showErrors === 'all') {
@@ -451,7 +490,7 @@ Form = (function() {
       console.log("data", this.errors);
     }
     console.groupEnd();
-    return this.onFail(this.errors);
+    this.onFail(this.errors);
   };
 
   Form.prototype.success = function() {
@@ -465,7 +504,7 @@ Form = (function() {
       }
     }
     console.groupEnd();
-    return this.onSuccess(this.data);
+    this.onSuccess(this.data);
   };
 
   Form.prototype.reset = function() {
@@ -480,7 +519,6 @@ Form = (function() {
     }
     this.onReset();
     this.init();
-    return false;
   };
 
   Form.prototype.resetErorrs = function() {
@@ -493,7 +531,7 @@ Form = (function() {
 
   Form.prototype.setData = function(name, val) {
     if (!this.data[name]) {
-      return this.data[name] = val;
+      this.data[name] = val;
     }
   };
 
@@ -501,7 +539,7 @@ Form = (function() {
     if (!this.errors[name]) {
       this.errors[name] = [];
     }
-    return this.errors[name].push(val);
+    this.errors[name].push(val);
   };
 
   Form.prototype.placeholder = function(el, val) {
@@ -518,7 +556,25 @@ Form = (function() {
         }
       };
     })(this));
-    return el.blur();
+    el.blur();
+  };
+
+  Form.prototype.disableSubmit = function() {
+    this.disableSubmitBtn = true;
+    this.submitBtn.addClass(this.disableSubmitClass);
+  };
+
+  Form.prototype.enableSubmit = function() {
+    this.disableSubmitBtn = false;
+    this.submitBtn.removeClass(this.disableSubmitClass);
+  };
+
+  Form.prototype.showPreloader = function() {
+    return this.form.find('.' + this.preloaderClass).show();
+  };
+
+  Form.prototype.hidePreloader = function() {
+    return this.form.find('.' + this.preloaderClass).hide();
   };
 
 
@@ -635,20 +691,11 @@ Form = (function() {
       };
       return valid;
     },
-    ip: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$/i.test(val) || val === "",
-        reason: rule.reason || 'Неправильно заполненный ip'
-      };
-      return valid;
-    },
     compare: function(val, rule) {
       var valid;
       if (this.isFunction(rule.val)) {
         rule.val = rule.val();
       }
-      console.log(val, rule.val);
       valid = {
         state: val === rule.val,
         reason: rule.reason || "Поля не совпадают"

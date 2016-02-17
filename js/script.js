@@ -136,18 +136,18 @@ $(function() {
       };
       return scroll();
     },
-    onSubmit: function(data) {},
+    onSubmit: function(data) {
+      return $form.find('.errors-all').empty();
+    },
     onSuccess: function(data) {
-      if (this.submitEl.hasClass('submit-disabled')) {
-        return;
-      }
-      return this.submitEl.addClass('submit-disabled').find('span').html('Выполняется...');
+      return this.disableSubmit();
     },
     onFail: function(errors) {
-      return $form.find('.errors').html("Исправьте ошибки в форме");
+      return $form.find('.errors-all').html("Исправьте ошибки в форме");
     },
     onReset: function() {
-      return formValidator.submitEl.removeClass('submit-disabled').find('span').html('Отправить');
+      this.enableSubmit();
+      return this.hidePreloader();
     }
   });
   window.reset = function() {

@@ -153,22 +153,24 @@ $ ->
 
 		onSubmit: (data) ->
 
+			$form.find('.errors-all').empty()
 
 		onSuccess: (data) ->
 
-			return if @submitEl.hasClass 'submit-disabled'
-			@submitEl.addClass('submit-disabled').find('span').html('Выполняется...')
+			@disableSubmit()
 
-			#formValidator.submitEl.removeClass('submit-disabled').find('span').html('Войти')
+			# API.success ->
+			# @enableSubmit()
+			# @hidePreloader()
 
 		onFail: (errors) ->
 
-			$form.find('.errors').html "Исправьте ошибки в форме"
+			$form.find('.errors-all').html "Исправьте ошибки в форме"
 
 		onReset: ->
 
-
-			formValidator.submitEl.removeClass('submit-disabled').find('span').html('Отправить')
+			@enableSubmit()
+			@hidePreloader()
 
 	# formValidator.addRule 
 	# 	field: 'password-confirmation'

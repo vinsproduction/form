@@ -1,5 +1,5 @@
-### Form Validator ###
-
+### Form ###
+### https://github.com/vinsproduction/form ###
 
 class Form
 
@@ -9,13 +9,20 @@ class Form
 	formEl: false
 	submitEl: false
 
+	enter: true  # Отправка на Enter
+
 	showErrors: true # 'all' # Показывать ошибку валидации конкретного поля, если all - то все ошибки поля
 	hideErrorInFocus: true # Удалять класс ошибки в фокусе
 	clearErrorInFocus: true # Очищать ошибку по клику поля
 
+	disableSubmitBtn: false # Заблокировать сабмит
+	disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
+
 	placeholderClass: "placeholder"
 	errorFieldClass: "error-field" # Стиль ошибки поля
 	errorClass: "error-" # Класс элемента вывода ошибки поля
+
+	preloaderClass: "preloader" # Класс прелоадера формы
 
 	fields: {}
 	data: {}
@@ -29,8 +36,11 @@ class Form
 	onInit: ->
 
 	onChange: (fieldname, callback) ->
+
 		@form.on fieldname, (event,v) ->
 			callback(v)
+
+		return
 
 	constructor: (@options={}) ->
 
@@ -49,12 +59,22 @@ class Form
 			if !@form.size() and @logs then return @log 'Warning! formEl not found in DOM'
 			if !@submitBtn.size() and @logs then return @log 'Warning! submitEl not found in DOM'
 
+			@_disableSubmitBtn = @disableSubmitBtn
+
+			if @enter
+
+				$(window).keydown (event) =>
+					if @form.inFocus and event.keyCode is 13
+						@submit() if !@disableSubmitBtn
+
 			#@log "onLoad", "options", @options
 			console.log("[Form: #{@formName}] init", @options) if @logs
 
 			do @init
 
 			do @onLoad
+
+			return
 
 	init: ->
 
@@ -122,6 +142,7 @@ class Form
 				el.focus() if @fields[name].focus
 
 
+				@fields[name].el.removeClass(@errorFieldClass)
 				@fields[name].sel.removeClass(@errorFieldClass)
 
 				if @showErrors
@@ -130,23 +151,28 @@ class Form
 				@fields[name].sel.click =>
 
 					if @hideErrorInFocus
+						@fields[name].el.removeClass(@errorFieldClass)
 						@fields[name].sel.removeClass(@errorFieldClass)
 
 					if @clearErrorInFocus and @showErrors
 						@form.find('.' + @errorClass + name).empty()
 
-
-
 				return
-
 
 		@form.submit (e) -> e.preventDefault()
 
+		@form.mouseover => @form.inFocus = true
+		@form.mouseout  => @form.inFocus = false
+
+		@disableSubmit() if @_disableSubmitBtn
+
 		@submitBtn.click =>
-			@submit()
+			@submit() if !@disableSubmitBtn
 			return false
 
 		do @onInit
+
+		return
 
 	createCheckbox: (name) ->
 
@@ -183,6 +209,8 @@ class Form
 				$(@).addClass 'checked'
 				self.setVal(name, value)
 
+		return
+
 	createRadio: (name) ->
 
 		self = @
@@ -216,6 +244,8 @@ class Form
 				self.form.find(".radio[data-name=#{name}]").removeClass 'checked'
 				$(@).addClass 'checked'
 				self.setVal(name, value)
+
+		return
 
 	createSelect: (el) ->
 
@@ -289,6 +319,8 @@ class Form
 
 			$options.append $option
 
+		return
+
 	setVal: (name,val) ->
 
 		el  = @fields[name].el
@@ -310,6 +342,8 @@ class Form
 				el.removeClass(@placeholderClass)
 
 		@form.trigger(name,[{name,val}])
+
+		return
 
 	getVal: (name) ->
 
@@ -362,6 +396,8 @@ class Form
 
 		@log("[Form: #{@formName}] set", name + ': ' + val) if @logs
 
+		return
+
 	get: (name) ->
 
 		val = @getVal(name)
@@ -387,6 +423,7 @@ class Form
 
 			console.log(name + ': ' + val) if @logs
 
+			@fields[name].el.removeClass(@errorFieldClass)
 			@fields[name].sel.removeClass(@errorFieldClass)
 
 			if @showErrors
@@ -413,6 +450,8 @@ class Form
 		else
 			do @fail
 
+		return
+
 	fail: ->
 
 		console.groupCollapsed("[Form: #{@formName}] fail")
@@ -423,6 +462,7 @@ class Form
 				# @log "onError", name, @errors[name]
 				console.log(name + ': ', @errors[name]) if @logs
 
+				@fields[name].el.addClass(@errorFieldClass)
 				@fields[name].sel.addClass(@errorFieldClass)
 
 				if @showErrors
@@ -435,13 +475,14 @@ class Form
 				@fields[name].onError(name,@errors[name])
 
 
-
 		# @log "onFail","errors", @errors
 		console.log("data",@errors) if @logs
 
 		console.groupEnd()
 
 		@onFail(@errors)
+
+		return
 
 	success: ->
 
@@ -455,6 +496,8 @@ class Form
 		console.groupEnd()
 
 		@onSuccess(@data)
+
+		return
 
 	reset: ->
 
@@ -473,7 +516,7 @@ class Form
 
 		do @init
 
-		return false
+		return
 
 	resetErorrs: -> @errors = {}
 
@@ -483,12 +526,16 @@ class Form
 
 		if !@data[name] then @data[name] = val
 
+		return
+
 	setError: (name,val) ->
 
 		if !@errors[name]
 			@errors[name] = []
 
 		@errors[name].push val
+
+		return
 
 	placeholder: (el,val) ->
 
@@ -497,6 +544,26 @@ class Form
 		.blur =>
 			if el.val() is "" then el.val(val).addClass(@placeholderClass)
 		el.blur()
+
+		return
+
+	disableSubmit: ->
+
+		@disableSubmitBtn = true
+		@submitBtn.addClass(@disableSubmitClass)
+		return
+
+	enableSubmit: ->
+
+		@disableSubmitBtn = false
+		@submitBtn.removeClass(@disableSubmitClass)
+		return
+
+	showPreloader: ->
+		@form.find('.' + @preloaderClass).show()
+
+	hidePreloader: ->
+		@form.find('.' + @preloaderClass).hide()
 
 	### VALIDATION FUNCTIONS ###
 
@@ -599,18 +666,9 @@ class Form
 
 			return valid
 
-		ip: (val,rule) ->
-			valid = 
-				state: /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Неправильно заполненный ip'
-
-			return valid
-
 		compare: (val,rule) ->
 
 			rule.val = rule.val() if @isFunction(rule.val)
-
-			console.log val,rule.val
 
 			valid =
 				state: val is rule.val
