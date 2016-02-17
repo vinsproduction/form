@@ -86,7 +86,8 @@ formValidator = new Form
 fields = 
 
 	'login':
-		escape: true # Экранировать отправку
+		escape: true # Экранировать отправку. По умолчанию false
+		showErrors: false # Показывать ошибку валидации конкретного поля автоматически, если 'all' - то все ошибки поля. По умолчанию true
 		placeholder: "login"
 		style: false # Не стилизовать поле! По умолчанию true
 		rules:
@@ -100,7 +101,8 @@ fields =
 			min:
 				count: 2
 				reason: 'Минимум {count} символа'
-				
+		
+		# Ручное отображение ошибок		
 		onError: (fieldName,errors) ->
 			for i of errors
 				$form.find(".error-#{fieldName}").append(errors[i] + "<br/>")
@@ -156,7 +158,6 @@ formValidator = new Form
 	
 	
 	enter: true  # Отправка на Enter (В фокусе формы). По умолчанию true
-	showErrors: true # 'all' # Показывать ошибку валидации конкретного поля, если all - то все ошибки поля
 	hideErrorInFocus: true # Удалять класс ошибки в фокусе
 	clearErrorInFocus: true # Очищать ошибку по клику поля
 	disableSubmitBtn: false # Заблокировать сабмит
