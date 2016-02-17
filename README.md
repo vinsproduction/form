@@ -80,13 +80,14 @@ formValidator = new Form
 ## Варианты настройки обработки полей
 
 У каждого правила (rules) может быть указана причина (reason).
-По умолчанию reason устанавливается либой.
+По умолчанию reason устанавливается form.js
 
 ```
 fields = 
 
 	'login':
-		escape: true # Экранировать отправку
+		escape: true # Экранировать отправку. По умолчанию false
+		showErrors: false # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
 		placeholder: "login"
 		style: false # Не стилизовать поле! По умолчанию true
 		rules:
@@ -100,7 +101,8 @@ fields =
 			min:
 				count: 2
 				reason: 'Минимум {count} символа'
-				
+		
+		# Ручное отображение ошибок		
 		onError: (fieldName,errors) ->
 			for i of errors
 				$form.find(".error-#{fieldName}").append(errors[i] + "<br/>")
@@ -118,7 +120,7 @@ alpha — Разрешены только буквы
 alphaDash — Разрешены только буквы и подчеркивания
 alphaNumeric — Разрешены только буквы и цифры
 eng — Разрешены только английские буквы
-cyrillic — Разрешены только кириллические буквыч
+cyrillic — Разрешены только кириллические буквы
 max — Максимум символов
 	count - кол-во символов
 min — Минимум символов
@@ -156,7 +158,6 @@ formValidator = new Form
 	
 	
 	enter: true  # Отправка на Enter (В фокусе формы). По умолчанию true
-	showErrors: true # 'all' # Показывать ошибку валидации конкретного поля, если all - то все ошибки поля
 	hideErrorInFocus: true # Удалять класс ошибки в фокусе
 	clearErrorInFocus: true # Очищать ошибку по клику поля
 	disableSubmitBtn: false # Заблокировать сабмит
@@ -169,6 +170,11 @@ formValidator = new Form
 ```
 	
 ## Методы формы
+
+Сброс формы
+```
+formValidator.reset()
+```
 
 Событие - инициализация формы
 ```
