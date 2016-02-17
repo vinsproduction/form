@@ -2,7 +2,8 @@
 
 ## Простая форма
 
-### SCRIPT
+
+``` 
 
 $form = $('.form')
 
@@ -43,7 +44,9 @@ formValidator = new Form
 	onFail: (errors) ->
 		$form.find('.errors').html "Исправьте ошибки в форме"
 
-### JADE
+```
+
+```
 
 .form
 
@@ -68,6 +71,8 @@ formValidator = new Form
 			div
 			div
 			div
+
+```
 
 ## Варианты настройки обработки полей
 
@@ -118,6 +123,8 @@ compare - Сравнение
 	
 ## Добавление своего правила валидации
 
+```
+
 formValidator.addRule 
 	field: 'password-confirmation'
 	rule: 'password confirmation rule'
@@ -125,9 +132,11 @@ formValidator.addRule
 	condition: (val) ->
 		return $form.find('input[name="password"]').val() is val
 
-
+```
 
 ## Установки формы
+
+```
 
 formValidator = new Form
 
@@ -147,41 +156,61 @@ formValidator = new Form
 	errorFieldClass: "error-field" # Стиль ошибки поля
 	errorClass: "error-" # Класс элемента вывода ошибки поля
 	preloaderClass: "preloader" # Класс прелоадера формы
+
+```
 	
 ## Методы формы
 
 Событие - инициализация формы
+```
 formValidator.onInit ->
+```
 
 Событие - нажатие кнопки Отправить
+```
 formValidator.onSubmit (data) ->
+```
 
 Событие - валидация пройдена 
+```
 formValidator.onSuccess (data) ->
- // Отправка данных на серверх 
+ 	// Отправка данных на серверх 
+```
 
 Событие - валидация НЕ пройдена 
+```
 formValidator.onFail (errors) ->
+```
 
 Событие - сброс формы
+```
 formValidator.onReset: ->
+```
 
 ## Методы полей формы
 
 Изменение значение поля
+```
 formValidator.onChange 'название поля', (v) ->
+```
 
 Установка значения поля
+```
 formValidator.set('название поля', 2)
+```
 
 Получние значения поля
+```
 formValidator.get('название поля')
+```
 
 
 ## Дополнения
 
+```
 formValidator.disableSubmit() # Заблокировать кнопку отправки
 formValidator.enableSubmit()  # Активировать кнопку отправки
 
 formValidator.showPreloader() # Показать прелоадер формы
 formValidator.hidePreloader() # Скрыть прелоадер формы
+```
