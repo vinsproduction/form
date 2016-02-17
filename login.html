@@ -1,0 +1,88 @@
+
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0"/>
+  <script>(function() {
+  var port, url;
+
+  port = 777;
+
+  url = "http://localhost:" + port + "/livereload.js";
+
+  window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>');
+
+  console.debug("[LiveReload] " + url);
+
+}).call(this);
+
+  </script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.0.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/normalize.css"/>
+  <script type="text/javascript" src="js/form.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/form.css"/>
+  <script>(function() {
+  $(function() {
+    var $form, fields, formValidator;
+    $form = $('.form');
+    fields = {
+      'email': {
+        rules: {
+          required: true,
+          email: true
+        }
+      },
+      'password': {
+        escape: true,
+        rules: {
+          required: true
+        }
+      }
+    };
+    formValidator = new Form({
+      logs: true,
+      formName: 'login',
+      formEl: $form,
+      submitEl: $form.find('.submit a'),
+      fields: fields,
+      onInit: function() {},
+      onSubmit: function(data) {
+        return $form.find('.errors').empty();
+      },
+      onSuccess: function(data) {
+        this.disableSubmit();
+        return this.showPreloader();
+      },
+      onFail: function(errors) {
+        return $form.find('.errors').html("Исправьте ошибки в форме");
+      }
+    });
+  });
+
+}).call(this);
+
+  </script>
+</head>
+<body>
+  <div class="form">
+    <div class="field">
+      <div class="label">Email</div>
+      <input type="text" name="email"/>
+      <div class="error error-email"></div>
+    </div>
+    <div class="field">
+      <div class="label">Пароль</div>
+      <input type="password" name="password"/>
+      <div class="error error-password"></div>
+    </div>
+    <div class="field">
+      <div class="errors"></div>
+    </div>
+    <div class="field">
+      <div class="submit"><a href="#"><span>Отправить</span></a></div>
+      <div class="preloader">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</body>

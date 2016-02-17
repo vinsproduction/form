@@ -23,9 +23,13 @@ module.exports = function(grunt) {
 						debug: false
 					}
 				},
-				files: {
-          'index.html': 'ppc/index.jade',
-        }
+				files: [ {
+          cwd: "ppc",
+          src: "*.jade",
+          dest: ".",
+          expand: true,
+          ext: ".html"
+        } ]
 			}
 		},
 

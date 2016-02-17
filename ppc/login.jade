@@ -1,0 +1,92 @@
+
+head
+	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0")
+	
+	script
+		:coffee-script
+			port = 777
+			url  = "http://localhost:#{port}/livereload.js"
+			window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>')
+			console.debug "[LiveReload] #{url}"
+
+	script(type="text/javascript", src="http://code.jquery.com/jquery-1.12.0.min.js")
+
+	link(rel="stylesheet", type="text/css", href="css/normalize.css")
+
+	script(type="text/javascript", src="js/form.js")
+	link(rel="stylesheet", type="text/css", href="css/form.css")
+
+	script
+		:coffee-script
+			$ ->
+				$form = $('.form')
+
+				fields = 
+
+					'email':
+						rules:
+							required: true
+							email: true
+
+					'password':
+						escape: true
+						rules:
+							required: true
+
+				formValidator = new Form
+
+					logs: true
+			
+					formName: 'login'
+					formEl: $form
+					submitEl: $form.find('.submit a')
+					fields: fields
+
+					onInit: ->
+					onSubmit: (data) ->
+
+						$form.find('.errors').empty()
+
+					onSuccess: (data) ->
+
+						@disableSubmit()
+						@showPreloader()
+
+						# API.success ->
+						# @enableSubmit()
+						# @hidePreloader()
+
+					onFail: (errors) ->
+
+						$form.find('.errors').html "Исправьте ошибки в форме"
+
+
+				return
+
+body
+
+	.form
+
+		.field
+			.label Email
+			input(type='text', name='email')
+			.error.error-email
+
+		.field
+			.label Пароль
+			input(type='password', name='password')
+			.error.error-password
+
+		.field
+			.errors
+
+
+		.field
+			.submit
+				a(href="#"): span Отправить
+			.preloader
+				div
+				div
+				div
+
+

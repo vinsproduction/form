@@ -570,11 +570,11 @@ Form = (function() {
   };
 
   Form.prototype.showPreloader = function() {
-    return this.form.find('.' + this.preloaderClass).show();
+    this.form.find('.' + this.preloaderClass).show();
   };
 
   Form.prototype.hidePreloader = function() {
-    return this.form.find('.' + this.preloaderClass).hide();
+    this.form.find('.' + this.preloaderClass).hide();
   };
 
 
@@ -693,11 +693,8 @@ Form = (function() {
     },
     compare: function(val, rule) {
       var valid;
-      if (this.isFunction(rule.val)) {
-        rule.val = rule.val();
-      }
       valid = {
-        state: val === rule.val,
+        state: val === (this.isFunction(rule.val) ? rule.val() : rule.val),
         reason: rule.reason || "Поля не совпадают"
       };
       return valid;

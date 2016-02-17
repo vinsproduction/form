@@ -561,9 +561,11 @@ class Form
 
 	showPreloader: ->
 		@form.find('.' + @preloaderClass).show()
+		return
 
 	hidePreloader: ->
 		@form.find('.' + @preloaderClass).hide()
+		return
 
 	### VALIDATION FUNCTIONS ###
 
@@ -668,10 +670,8 @@ class Form
 
 		compare: (val,rule) ->
 
-			rule.val = rule.val() if @isFunction(rule.val)
-
 			valid =
-				state: val is rule.val
+				state: val is (if @isFunction(rule.val) then rule.val() else rule.val)
 				reason: rule.reason || "Поля не совпадают"
 
 				

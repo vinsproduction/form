@@ -137,13 +137,14 @@ $(function() {
       return scroll();
     },
     onSubmit: function(data) {
-      return $form.find('.errors-all').empty();
+      return $form.find('.errors').empty();
     },
     onSuccess: function(data) {
-      return this.disableSubmit();
+      this.disableSubmit();
+      return this.showPreloader();
     },
     onFail: function(errors) {
-      return $form.find('.errors-all').html("Исправьте ошибки в форме");
+      return $form.find('.errors').html("Исправьте ошибки в форме");
     },
     onReset: function() {
       this.enableSubmit();

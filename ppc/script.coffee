@@ -123,7 +123,6 @@ $ ->
 			# formValidator.set('radiobutton',2)
 			# formValidator.set('text','тест')
 
-
 			# Скролл бар
 
 			scrollbars = {}
@@ -153,11 +152,12 @@ $ ->
 
 		onSubmit: (data) ->
 
-			$form.find('.errors-all').empty()
+			$form.find('.errors').empty()
 
 		onSuccess: (data) ->
 
 			@disableSubmit()
+			@showPreloader()
 
 			# API.success ->
 			# @enableSubmit()
@@ -165,7 +165,7 @@ $ ->
 
 		onFail: (errors) ->
 
-			$form.find('.errors-all').html "Исправьте ошибки в форме"
+			$form.find('.errors').html "Исправьте ошибки в форме"
 
 		onReset: ->
 
