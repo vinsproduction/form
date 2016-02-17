@@ -170,6 +170,11 @@ formValidator = new Form
 	
 ## Методы формы
 
+Сброс формы
+```
+formValidator.reset()
+```
+
 Событие - инициализация формы
 ```
 formValidator.onInit ->
