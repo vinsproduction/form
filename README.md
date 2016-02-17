@@ -1,8 +1,8 @@
 # Form.js
 
-## Пример простой формы
+### Пример простой формы
 
-### Coffee-script
+##### Coffee-script
 
 ``` 
 
@@ -47,7 +47,7 @@ formValidator = new Form
 
 ```
 
-### Jade
+##### Jade
 
 ```
 
