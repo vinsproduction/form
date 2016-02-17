@@ -15,8 +15,6 @@ Form = (function() {
 
   Form.prototype.enter = true;
 
-  Form.prototype.showErrors = true;
-
   Form.prototype.hideErrorInFocus = true;
 
   Form.prototype.clearErrorInFocus = true;
@@ -107,13 +105,14 @@ Form = (function() {
     this.submitBtn.unbind();
     fn = (function(_this) {
       return function(name) {
-        var el, ref, ref1, ref2, ref3;
+        var el, ref, ref1, ref2, ref3, ref4;
         el = _this.form.find("[name='" + name + "']").eq(0);
         el.unbind();
         _this.fields[name].el = el;
         _this.fields[name].sel = el;
         _this.fields[name].style = (ref = _this.fields[name].style) != null ? ref : true;
         _this.fields[name].focus = (ref1 = _this.fields[name].focus) != null ? ref1 : false;
+        _this.fields[name].showErrors = (ref2 = _this.fields[name].showErrors) != null ? ref2 : true;
         if (!_this.fields[name].onError) {
           _this.fields[name].onError = function(fieldName, errors) {};
         }
@@ -140,12 +139,12 @@ Form = (function() {
         } else {
           _this.fields[name].type = 'text';
         }
-        if ((ref2 = _this.fields[name].type) === 'checkbox' || ref2 === 'radio') {
+        if ((ref3 = _this.fields[name].type) === 'checkbox' || ref3 === 'radio') {
           _this.fields[name].originVal = el.filter(":checked").val() || false;
         } else {
           _this.fields[name].originVal = el.val();
         }
-        if (_this.fields[name].placeholder && ((ref3 = _this.fields[name].type) === 'text' || ref3 === 'textarea')) {
+        if (_this.fields[name].placeholder && ((ref4 = _this.fields[name].type) === 'text' || ref4 === 'textarea')) {
           _this.placeholder(el, _this.fields[name].placeholder);
         }
         if (_this.fields[name].focus) {
@@ -153,7 +152,7 @@ Form = (function() {
         }
         _this.fields[name].el.removeClass(_this.errorFieldClass);
         _this.fields[name].sel.removeClass(_this.errorFieldClass);
-        if (_this.showErrors) {
+        if (_this.fields[name].showErrors) {
           _this.form.find('.' + _this.errorClass + name).empty();
         }
         _this.fields[name].sel.click(function() {
@@ -161,7 +160,7 @@ Form = (function() {
             _this.fields[name].el.removeClass(_this.errorFieldClass);
             _this.fields[name].sel.removeClass(_this.errorFieldClass);
           }
-          if (_this.clearErrorInFocus && _this.showErrors) {
+          if (_this.clearErrorInFocus && _this.fields[name].showErrors) {
             return _this.form.find('.' + _this.errorClass + name).empty();
           }
         });
@@ -434,7 +433,7 @@ Form = (function() {
       }
       this.fields[name].el.removeClass(this.errorFieldClass);
       this.fields[name].sel.removeClass(this.errorFieldClass);
-      if (this.showErrors) {
+      if (this.fields[name].showErrors) {
         this.form.find('.' + this.errorClass + name).empty();
       }
       if (this.fields[name].rules) {
@@ -472,8 +471,8 @@ Form = (function() {
         }
         this.fields[name].el.addClass(this.errorFieldClass);
         this.fields[name].sel.addClass(this.errorFieldClass);
-        if (this.showErrors) {
-          if (this.showErrors === 'all') {
+        if (this.fields[name].showErrors) {
+          if (this.fields[name].showErrors === 'all') {
             ref1 = this.errors[name];
             for (i in ref1) {
               error = ref1[i];

@@ -11,7 +11,6 @@ class Form
 
 	enter: true  # Отправка на Enter
 
-	showErrors: true # 'all' # Показывать ошибку валидации конкретного поля, если all - то все ошибки поля
 	hideErrorInFocus: true # Удалять класс ошибки в фокусе
 	clearErrorInFocus: true # Очищать ошибку по клику поля
 
@@ -94,8 +93,9 @@ class Form
 				@fields[name].el = el
 				@fields[name].sel = el
 
-				@fields[name].style = @fields[name].style ? true
-				@fields[name].focus = @fields[name].focus ? false
+				@fields[name].style = @fields[name].style ? true # Cтилизовать поле
+				@fields[name].focus = @fields[name].focus ? false # Поставить фокус на поле
+				@fields[name].showErrors = @fields[name].showErrors ? true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
 
 				if !@fields[name].onError
 					@fields[name].onError = (fieldName,errors) ->
@@ -145,7 +145,7 @@ class Form
 				@fields[name].el.removeClass(@errorFieldClass)
 				@fields[name].sel.removeClass(@errorFieldClass)
 
-				if @showErrors
+				if @fields[name].showErrors
 					@form.find('.' + @errorClass + name).empty()
 
 				@fields[name].sel.click =>
@@ -154,7 +154,7 @@ class Form
 						@fields[name].el.removeClass(@errorFieldClass)
 						@fields[name].sel.removeClass(@errorFieldClass)
 
-					if @clearErrorInFocus and @showErrors
+					if @clearErrorInFocus and @fields[name].showErrors
 						@form.find('.' + @errorClass + name).empty()
 
 				return
@@ -426,7 +426,7 @@ class Form
 			@fields[name].el.removeClass(@errorFieldClass)
 			@fields[name].sel.removeClass(@errorFieldClass)
 
-			if @showErrors
+			if @fields[name].showErrors
 				@form.find('.' + @errorClass + name).empty()
 
 			# validate rules
@@ -465,8 +465,8 @@ class Form
 				@fields[name].el.addClass(@errorFieldClass)
 				@fields[name].sel.addClass(@errorFieldClass)
 
-				if @showErrors
-					if @showErrors is 'all'
+				if @fields[name].showErrors
+					if @fields[name].showErrors is 'all'
 						for i,error of @errors[name]
 							@form.find('.' + @errorClass + name).append(error + "<br/>")
 					else
