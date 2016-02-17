@@ -43,35 +43,36 @@ class Form
 
 	constructor: (@options={}) ->
 
-		for k,v of @options
-			@[k] = v
+		self = @
 
+		$.each @options , (k,v) ->
+			self[k] = v
 
-		$ =>
+		$ ->
 
-			if !@formEl and @logs then return @log 'Warning! formEl not set'
-			if !@submitEl and @logs then return @log 'Warning! submitEl not set'
+			if !self.formEl and self.logs then return self.log 'Warning! formEl not set'
+			if !self.submitEl and self.logs then return self.log 'Warning! submitEl not set'
 
-			@form 		= if @isObject(@formEl) then @formEl else $(@formEl)
-			@submitBtn 	= if @isObject(@submitEl) then @submitEl else @form.find(@submitEl)
+			self.form 		= if self.isObject(self.formEl) then self.formEl else $(self.formEl)
+			self.submitBtn 	= if self.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
 
-			if !@form.size() and @logs then return @log 'Warning! formEl not found in DOM'
-			if !@submitBtn.size() and @logs then return @log 'Warning! submitEl not found in DOM'
+			if !self.form.size() and self.logs then return self.log 'Warning! formEl not found in DOM'
+			if !self.submitBtn.size() and self.logs then return self.log 'Warning! submitEl not found in DOM'
 
-			@_disableSubmitBtn = @disableSubmitBtn
+			self._disableSubmitBtn = self.disableSubmitBtn
 
-			if @enter
+			if self.enter
 
-				$(window).keydown (event) =>
-					if @form.inFocus and event.keyCode is 13
-						@submit() if !@disableSubmitBtn
+				$(window).keydown (event) ->
+					if self.form.inFocus and event.keyCode is 13
+						self.submit() if !self.disableSubmitBtn
 
-			#@log "onLoad", "options", @options
-			console.log("[Form: #{@formName}] init", @options) if @logs
+			#self.log "onLoad", "options", @options
+			console.log("[Form: #{self.formName}] init", self.options) if self.logs
 
-			do @init
+			do self.init
 
-			do @onLoad
+			do self.onLoad
 
 			return
 
@@ -84,90 +85,90 @@ class Form
 
 		for name of @fields
 
-			do (name) =>
+			do (name) ->
 
-				el  = @form.find("[name='#{name}']").eq(0)
+				el  = self.form.find("[name='#{name}']").eq(0)
 
 				el.unbind()
 
-				@fields[name].el = el
-				@fields[name].sel = el
+				self.fields[name].el = el
+				self.fields[name].sel = el
 
-				@fields[name].style = @fields[name].style ? true # Cтилизовать поле
-				@fields[name].focus = @fields[name].focus ? false # Поставить фокус на поле
-				@fields[name].showErrors = @fields[name].showErrors ? true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
+				self.fields[name].style = self.fields[name].style || true # Cтилизовать поле
+				self.fields[name].focus = self.fields[name].focus || false # Поставить фокус на поле
+				self.fields[name].showErrors = self.fields[name].showErrors || true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
 
-				if !@fields[name].onError
-					@fields[name].onError = (fieldName,errors) ->
+				if !self.fields[name].onError
+					self.fields[name].onError = (fieldName,errors) ->
 
 
 				if el.is("select")
 
-					@fields[name].type = 'select'
+					self.fields[name].type = 'select'
 
-					if @fields[name].style 
-						@createSelect(el)
-						el.change => @createSelect(el)
+					if self.fields[name].style 
+						self.createSelect(el)
+						el.change => self.createSelect(el)
 
 				else if el.attr('type') is 'radio'
 
-					@fields[name].type = 'radio'
+					self.fields[name].type = 'radio'
 
-					if @fields[name].style
+					if self.fields[name].style
 						self.createRadio(name)
 
 				else if el.attr('type') is 'checkbox'
 
-					@fields[name].type = 'checkbox'
+					self.fields[name].type = 'checkbox'
 
-					if @fields[name].style
+					if self.fields[name].style
 						self.createCheckbox(name)
 
 				else if el.is("textarea")
 					
-					@fields[name].type = 'textarea'
+					self.fields[name].type = 'textarea'
 
 				else
 
-					@fields[name].type = 'text'
+					self.fields[name].type = 'text'
 
-				if @fields[name].type in ['checkbox','radio']
-					@fields[name].originVal = el.filter(":checked").val() or false
+				if self.fields[name].type in ['checkbox','radio']
+					self.fields[name].originVal = el.filter(":checked").val() or false
 				else
-					@fields[name].originVal = el.val()
+					self.fields[name].originVal = el.val()
 			
-				if @fields[name].placeholder and (@fields[name].type in ['text','textarea'])
-					@placeholder(el,@fields[name].placeholder)
+				if self.fields[name].placeholder and (self.fields[name].type in ['text','textarea'])
+					self.placeholder(el,self.fields[name].placeholder)
 
-				el.focus() if @fields[name].focus
+				el.focus() if self.fields[name].focus
 
 
-				@fields[name].el.removeClass(@errorFieldClass)
-				@fields[name].sel.removeClass(@errorFieldClass)
+				self.fields[name].el.removeClass(self.errorFieldClass)
+				self.fields[name].sel.removeClass(self.errorFieldClass)
 
-				if @fields[name].showErrors
-					@form.find('.' + @errorClass + name).empty()
+				if self.fields[name].showErrors
+					self.form.find('.' + self.errorClass + name).empty()
 
-				@fields[name].sel.click =>
+				self.fields[name].sel.click ->
 
-					if @hideErrorInFocus
-						@fields[name].el.removeClass(@errorFieldClass)
-						@fields[name].sel.removeClass(@errorFieldClass)
+					if self.hideErrorInFocus
+						self.fields[name].el.removeClass(self.errorFieldClass)
+						self.fields[name].sel.removeClass(self.errorFieldClass)
 
-					if @clearErrorInFocus and @fields[name].showErrors
-						@form.find('.' + @errorClass + name).empty()
+					if self.clearErrorInFocus and self.fields[name].showErrors
+						self.form.find('.' + self.errorClass + name).empty()
 
 				return
 
 		@form.submit (e) -> e.preventDefault()
 
-		@form.mouseover => @form.inFocus = true
-		@form.mouseout  => @form.inFocus = false
+		@form.mouseover -> self.form.inFocus = true
+		@form.mouseout  -> self.form.inFocus = false
 
 		@disableSubmit() if @_disableSubmitBtn
 
-		@submitBtn.click =>
-			@submit() if !@disableSubmitBtn
+		@submitBtn.click ->
+			self.submit() if !self.disableSubmitBtn
 			return false
 
 		do @onInit

@@ -56,46 +56,43 @@ Form = (function() {
   };
 
   function Form(options) {
-    var k, ref, v;
+    var self;
     this.options = options != null ? options : {};
-    ref = this.options;
-    for (k in ref) {
-      v = ref[k];
-      this[k] = v;
-    }
-    $((function(_this) {
-      return function() {
-        if (!_this.formEl && _this.logs) {
-          return _this.log('Warning! formEl not set');
-        }
-        if (!_this.submitEl && _this.logs) {
-          return _this.log('Warning! submitEl not set');
-        }
-        _this.form = _this.isObject(_this.formEl) ? _this.formEl : $(_this.formEl);
-        _this.submitBtn = _this.isObject(_this.submitEl) ? _this.submitEl : _this.form.find(_this.submitEl);
-        if (!_this.form.size() && _this.logs) {
-          return _this.log('Warning! formEl not found in DOM');
-        }
-        if (!_this.submitBtn.size() && _this.logs) {
-          return _this.log('Warning! submitEl not found in DOM');
-        }
-        _this._disableSubmitBtn = _this.disableSubmitBtn;
-        if (_this.enter) {
-          $(window).keydown(function(event) {
-            if (_this.form.inFocus && event.keyCode === 13) {
-              if (!_this.disableSubmitBtn) {
-                return _this.submit();
-              }
+    self = this;
+    $.each(this.options, function(k, v) {
+      return self[k] = v;
+    });
+    $(function() {
+      if (!self.formEl && self.logs) {
+        return self.log('Warning! formEl not set');
+      }
+      if (!self.submitEl && self.logs) {
+        return self.log('Warning! submitEl not set');
+      }
+      self.form = self.isObject(self.formEl) ? self.formEl : $(self.formEl);
+      self.submitBtn = self.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
+      if (!self.form.size() && self.logs) {
+        return self.log('Warning! formEl not found in DOM');
+      }
+      if (!self.submitBtn.size() && self.logs) {
+        return self.log('Warning! submitEl not found in DOM');
+      }
+      self._disableSubmitBtn = self.disableSubmitBtn;
+      if (self.enter) {
+        $(window).keydown(function(event) {
+          if (self.form.inFocus && event.keyCode === 13) {
+            if (!self.disableSubmitBtn) {
+              return self.submit();
             }
-          });
-        }
-        if (_this.logs) {
-          console.log("[Form: " + _this.formName + "] init", _this.options);
-        }
-        _this.init();
-        _this.onLoad();
-      };
-    })(this));
+          }
+        });
+      }
+      if (self.logs) {
+        console.log("[Form: " + self.formName + "] init", self.options);
+      }
+      self.init();
+      self.onLoad();
+    });
   }
 
   Form.prototype.init = function() {
@@ -103,96 +100,90 @@ Form = (function() {
     self = this;
     this.form.unbind();
     this.submitBtn.unbind();
-    fn = (function(_this) {
-      return function(name) {
-        var el, ref, ref1, ref2, ref3, ref4;
-        el = _this.form.find("[name='" + name + "']").eq(0);
-        el.unbind();
-        _this.fields[name].el = el;
-        _this.fields[name].sel = el;
-        _this.fields[name].style = (ref = _this.fields[name].style) != null ? ref : true;
-        _this.fields[name].focus = (ref1 = _this.fields[name].focus) != null ? ref1 : false;
-        _this.fields[name].showErrors = (ref2 = _this.fields[name].showErrors) != null ? ref2 : true;
-        if (!_this.fields[name].onError) {
-          _this.fields[name].onError = function(fieldName, errors) {};
+    fn = function(name) {
+      var el, ref, ref1;
+      el = self.form.find("[name='" + name + "']").eq(0);
+      el.unbind();
+      self.fields[name].el = el;
+      self.fields[name].sel = el;
+      self.fields[name].style = self.fields[name].style || true;
+      self.fields[name].focus = self.fields[name].focus || false;
+      self.fields[name].showErrors = self.fields[name].showErrors || true;
+      if (!self.fields[name].onError) {
+        self.fields[name].onError = function(fieldName, errors) {};
+      }
+      if (el.is("select")) {
+        self.fields[name].type = 'select';
+        if (self.fields[name].style) {
+          self.createSelect(el);
+          el.change((function(_this) {
+            return function() {
+              return self.createSelect(el);
+            };
+          })(this));
         }
-        if (el.is("select")) {
-          _this.fields[name].type = 'select';
-          if (_this.fields[name].style) {
-            _this.createSelect(el);
-            el.change(function() {
-              return _this.createSelect(el);
-            });
-          }
-        } else if (el.attr('type') === 'radio') {
-          _this.fields[name].type = 'radio';
-          if (_this.fields[name].style) {
-            self.createRadio(name);
-          }
-        } else if (el.attr('type') === 'checkbox') {
-          _this.fields[name].type = 'checkbox';
-          if (_this.fields[name].style) {
-            self.createCheckbox(name);
-          }
-        } else if (el.is("textarea")) {
-          _this.fields[name].type = 'textarea';
-        } else {
-          _this.fields[name].type = 'text';
+      } else if (el.attr('type') === 'radio') {
+        self.fields[name].type = 'radio';
+        if (self.fields[name].style) {
+          self.createRadio(name);
         }
-        if ((ref3 = _this.fields[name].type) === 'checkbox' || ref3 === 'radio') {
-          _this.fields[name].originVal = el.filter(":checked").val() || false;
-        } else {
-          _this.fields[name].originVal = el.val();
+      } else if (el.attr('type') === 'checkbox') {
+        self.fields[name].type = 'checkbox';
+        if (self.fields[name].style) {
+          self.createCheckbox(name);
         }
-        if (_this.fields[name].placeholder && ((ref4 = _this.fields[name].type) === 'text' || ref4 === 'textarea')) {
-          _this.placeholder(el, _this.fields[name].placeholder);
+      } else if (el.is("textarea")) {
+        self.fields[name].type = 'textarea';
+      } else {
+        self.fields[name].type = 'text';
+      }
+      if ((ref = self.fields[name].type) === 'checkbox' || ref === 'radio') {
+        self.fields[name].originVal = el.filter(":checked").val() || false;
+      } else {
+        self.fields[name].originVal = el.val();
+      }
+      if (self.fields[name].placeholder && ((ref1 = self.fields[name].type) === 'text' || ref1 === 'textarea')) {
+        self.placeholder(el, self.fields[name].placeholder);
+      }
+      if (self.fields[name].focus) {
+        el.focus();
+      }
+      self.fields[name].el.removeClass(self.errorFieldClass);
+      self.fields[name].sel.removeClass(self.errorFieldClass);
+      if (self.fields[name].showErrors) {
+        self.form.find('.' + self.errorClass + name).empty();
+      }
+      self.fields[name].sel.click(function() {
+        if (self.hideErrorInFocus) {
+          self.fields[name].el.removeClass(self.errorFieldClass);
+          self.fields[name].sel.removeClass(self.errorFieldClass);
         }
-        if (_this.fields[name].focus) {
-          el.focus();
+        if (self.clearErrorInFocus && self.fields[name].showErrors) {
+          return self.form.find('.' + self.errorClass + name).empty();
         }
-        _this.fields[name].el.removeClass(_this.errorFieldClass);
-        _this.fields[name].sel.removeClass(_this.errorFieldClass);
-        if (_this.fields[name].showErrors) {
-          _this.form.find('.' + _this.errorClass + name).empty();
-        }
-        _this.fields[name].sel.click(function() {
-          if (_this.hideErrorInFocus) {
-            _this.fields[name].el.removeClass(_this.errorFieldClass);
-            _this.fields[name].sel.removeClass(_this.errorFieldClass);
-          }
-          if (_this.clearErrorInFocus && _this.fields[name].showErrors) {
-            return _this.form.find('.' + _this.errorClass + name).empty();
-          }
-        });
-      };
-    })(this);
+      });
+    };
     for (name in this.fields) {
       fn(name);
     }
     this.form.submit(function(e) {
       return e.preventDefault();
     });
-    this.form.mouseover((function(_this) {
-      return function() {
-        return _this.form.inFocus = true;
-      };
-    })(this));
-    this.form.mouseout((function(_this) {
-      return function() {
-        return _this.form.inFocus = false;
-      };
-    })(this));
+    this.form.mouseover(function() {
+      return self.form.inFocus = true;
+    });
+    this.form.mouseout(function() {
+      return self.form.inFocus = false;
+    });
     if (this._disableSubmitBtn) {
       this.disableSubmit();
     }
-    this.submitBtn.click((function(_this) {
-      return function() {
-        if (!_this.disableSubmitBtn) {
-          _this.submit();
-        }
-        return false;
-      };
-    })(this));
+    this.submitBtn.click(function() {
+      if (!self.disableSubmitBtn) {
+        self.submit();
+      }
+      return false;
+    });
     this.onInit();
   };
 
