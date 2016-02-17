@@ -1,7 +1,8 @@
 # Form.js
 
-## Простая форма
+## Пример простой формы
 
+### Coffee-script
 
 ``` 
 
@@ -46,6 +47,8 @@ formValidator = new Form
 
 ```
 
+### Jade
+
 ```
 
 .form
@@ -79,6 +82,7 @@ formValidator = new Form
 У каждого правила (rules) может быть указана причина (reason).
 По умолчанию reason устанавливается либой.
 
+```
 fields = 
 
 	'login':
@@ -100,9 +104,12 @@ fields =
 		onError: (fieldName,errors) ->
 			for i of errors
 				$form.find(".error-#{fieldName}").append(errors[i] + "<br/>")
+
+```
 				
 ## Правила валидации
 
+```
 required — Обязательное поле
 	not: Значение кроме
 numeric — Разрешены только цифры
@@ -120,6 +127,8 @@ email — Email
 url — Url
 compare - Сравнение
 	val: значение или функция
+```
+	
 	
 ## Добавление своего правила валидации
 
@@ -174,7 +183,7 @@ formValidator.onSubmit (data) ->
 Событие - валидация пройдена 
 ```
 formValidator.onSuccess (data) ->
- 	// Отправка данных на серверх 
+ 	# Отправка данных на серверх 
 ```
 
 Событие - валидация НЕ пройдена 
