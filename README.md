@@ -15,7 +15,6 @@ fields =
 			email: true
 
 	'password':
-		escape: true
 		rules:
 			required: true
 
@@ -26,6 +25,11 @@ formValidator = new Form
 	formEl: $form
 	submitEl: $form.find('.submit a')
 	fields: fields
+	fieldsOptions:
+		style: true
+		clearErrorsInFocus: true
+		autoErrors: true
+		escape: true
 	
 	onInit: ->
 	
@@ -39,8 +43,8 @@ formValidator = new Form
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-			  @enableSubmit()
-			  @hidePreloader()
+				@enableSubmit()
+		  		@hidePreloader()
 	
 	onFail: (errors) ->
 		$form.find('.errors').html "Исправьте ошибки в форме"
@@ -250,7 +254,7 @@ formValidator.onChange 'название поля', (v) ->
 formValidator.set('название поля', 2)
 ```
 
-Получние значения поля
+Получение значения поля
 ```
 formValidator.get('название поля')
 ```
