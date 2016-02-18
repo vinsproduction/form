@@ -15,7 +15,6 @@ fields =
 			email: true
 
 	'password':
-		escape: true
 		rules:
 			required: true
 
@@ -26,6 +25,11 @@ formValidator = new Form
 	formEl: $form
 	submitEl: $form.find('.submit a')
 	fields: fields
+	fieldsOptions:
+		style: true
+		clearErrorsInFocus: true
+		autoErrors: true
+		escape: true
 	
 	onInit: ->
 	
@@ -33,14 +37,14 @@ formValidator = new Form
 		$form.find('.errors').empty()
 		
 	onSuccess: (data) ->
-		@disableSubmit()
+		@lockSubmit()
 		@showPreloader()
 
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-			  @enableSubmit()
-			  @hidePreloader()
+				@unlockSubmit()
+		  		@hidePreloader()
 	
 	onFail: (errors) ->
 		$form.find('.errors').html "Исправьте ошибки в форме"
@@ -89,8 +93,8 @@ fields =
 			required: true
 			email: true
 
-# fieldsOptions - настройки для всех полей.
-# Такие же настройки внутри поля приоритетней! См. выше escape
+# fieldsOptions - настройки для всех полей. Опционально
+# Такие же настройки внутри самого поля приоритетней! Как например escape выше
 
 fieldsOptions:
 	style: true # Cтилизовать поле. По умолчанию false
@@ -107,7 +111,7 @@ formValidator = new Form
 	formEl: '.form' # Элемент формы (Класс или элемент DOM)
 	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
 	
-	fields: fields # Проверяемы поля
+	fields: fields # Проверяемые поля
 	fieldsOptions: fieldsOptions # Настройки полей
 
  	# Опционально
@@ -250,7 +254,7 @@ formValidator.onChange 'название поля', (v) ->
 formValidator.set('название поля', 2)
 ```
 
-Получние значения поля
+Получение значения поля
 ```
 formValidator.get('название поля')
 ```
