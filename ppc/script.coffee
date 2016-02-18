@@ -92,7 +92,7 @@ $ ->
 	fieldsOptions = 
 		style: true
 		clearErrorsInFocus: true
-		autoErrors: false
+		autoErrors: true
 		escape: true
 
 
