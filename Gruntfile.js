@@ -87,15 +87,9 @@ module.exports = function(grunt) {
 				files: [
 					'ppc/*.coffee',
 				],
-				tasks: ['coffee']
+				tasks: ['coffee','uglify:js']
 			},
 
-			js: {
-				files: [
-					'js/form.js',
-				],
-				tasks: ['uglify:js']
-			},
 			
 		},
 	});

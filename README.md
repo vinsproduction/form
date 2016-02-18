@@ -77,7 +77,56 @@ formValidator = new Form
 
 ```
 
-## Варианты настройки обработки полей
+## Установки формы (пример)
+
+```
+
+fields = 
+
+	'email':
+		escape: false 
+		rules:
+			required: true
+			email: true
+
+# fieldsOptions - настройки для всех полей.
+# Такие же настройки внутри поля приоритетней! См. выше escape
+
+fieldsOptions:
+	style: true # Cтилизовать поле. По умолчанию false
+	focus: false # Поставить фокус на поле. . По умолчанию false
+	clearErrorsInFocus: true # Удалять ошибки в фокусе. По умолчанию false
+	autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию false
+	escape: true # Очищать инпут от тегов в отправке. По умолчанию false
+	onError: (fieldName, errors) -> # Опционально
+
+formValidator = new Form
+	
+	# Обязательные атрибуты
+
+	formEl: '.form' # Элемент формы (Класс или элемент DOM)
+	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
+	
+	fields: fields # Проверяемы поля
+	fieldsOptions: fieldsOptions # Настройки полей
+
+ 	# Опционально
+
+ 	logs: true # Логи. По умолчанию false
+	formName: 'nice form' Имя формы (опционально)
+
+	enter: true  # Отправка на Enter (В фокусе формы). По умолчанию true
+	disableSubmit: false # Заблокировать сабмит. По умолчанию false
+
+	classes:
+		disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
+		placeholderClass: "placeholder"
+		errorFieldClass: "error-field" # Стиль ошибки поля
+		errorClass: "error-" # Класс элемента вывода ошибки поля
+		preloaderClass: "preloader" # Класс прелоадера формы
+
+```
+## Вариант настройки обработки полей
 
 У каждого правила (rules) может быть указана причина (reason).
 По умолчанию reason устанавливается form.js
@@ -86,10 +135,8 @@ formValidator = new Form
 fields = 
 
 	'login':
-		escape: true # Экранировать отправку. По умолчанию false
-		showErrors: false # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
+		escape: true
 		placeholder: "login"
-		style: false # Не стилизовать поле! По умолчанию true
 		rules:
 			required:
 				reason: 'Своя причина'
@@ -101,8 +148,7 @@ fields =
 			min:
 				count: 2
 				reason: 'Минимум {count} символа'
-		
-		# Ручное отображение ошибок		
+
 		onError: (fieldName,errors) ->
 			for i of errors
 				$form.find(".error-#{fieldName}").append(errors[i] + "<br/>")
@@ -144,30 +190,6 @@ formValidator.addRule
 		return $form.find('input[name="password"]').val() is val
 
 ```
-
-## Установки формы
-
-```
-
-formValidator = new Form
-
-	logs: true # Логи. По умолчанию false
-	formName: 'nice form' Имя формы (опционально)
-	formEl: '.form' # Элемент формы (Класс или элемент DOM)
-	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
-	
-	
-	enter: true  # Отправка на Enter (В фокусе формы). По умолчанию true
-	hideErrorInFocus: true # Удалять класс ошибки в фокусе
-	clearErrorInFocus: true # Очищать ошибку по клику поля
-	disableSubmitBtn: false # Заблокировать сабмит
-	disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
-	placeholderClass: "placeholder"
-	errorFieldClass: "error-field" # Стиль ошибки поля
-	errorClass: "error-" # Класс элемента вывода ошибки поля
-	preloaderClass: "preloader" # Класс прелоадера формы
-
-```
 	
 ## Методы формы
 
@@ -204,6 +226,20 @@ formValidator.onReset: ->
 
 ## Методы полей формы
 
+Добавление поля
+```
+formValidator.add 'название поля',
+	rules:
+		required: true
+
+```
+
+Удаление поля
+```
+formValidator.delete 'название поля'
+
+```
+
 Изменение значение поля
 ```
 formValidator.onChange 'название поля', (v) ->
@@ -223,8 +259,8 @@ formValidator.get('название поля')
 ## Дополнения
 
 ```
-formValidator.disableSubmit() # Заблокировать кнопку отправки
-formValidator.enableSubmit()  # Активировать кнопку отправки
+formValidator.lockSubmit() # Заблокировать кнопку отправки
+formValidator.unlockSubmit()  # Активировать кнопку отправки
 
 formValidator.showPreloader() # Показать прелоадер формы
 formValidator.hidePreloader() # Скрыть прелоадер формы

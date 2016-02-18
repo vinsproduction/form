@@ -24,22 +24,18 @@ head
 				fields = 
 
 					'firstname':
-						escape: true
 						rules:
 							required: true
 
 					'lastname':
-						escape: true
 						rules:
 							required: true
 
 					'password':
-						escape: true
 						rules:
 							required: true
 
 					'password-confirmation':
-						escape: true
 						rules:
 							required: true
 							compare:
@@ -62,6 +58,11 @@ head
 					formEl: $form
 					submitEl: $form.find('.submit a')
 					fields: fields
+					fieldsOptions:
+						style: true
+						clearErrorsInFocus: true
+						autoErrors: true
+						escape: true
 
 					onInit: ->
 					onSubmit: (data) ->
@@ -70,11 +71,11 @@ head
 
 					onSuccess: (data) ->
 
-						@disableSubmit()
+						@lockSubmit()
 						@showPreloader()
 
 						# API.success ->
-						# @enableSubmit()
+						# @unlockSubmit()
 						# @hidePreloader()
 
 					onFail: (errors) ->

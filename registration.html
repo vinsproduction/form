@@ -25,25 +25,21 @@
     $form = $('.form');
     fields = {
       'firstname': {
-        escape: true,
         rules: {
           required: true
         }
       },
       'lastname': {
-        escape: true,
         rules: {
           required: true
         }
       },
       'password': {
-        escape: true,
         rules: {
           required: true
         }
       },
       'password-confirmation': {
-        escape: true,
         rules: {
           required: true,
           compare: {
@@ -71,12 +67,18 @@
       formEl: $form,
       submitEl: $form.find('.submit a'),
       fields: fields,
+      fieldsOptions: {
+        style: true,
+        clearErrorsInFocus: true,
+        autoErrors: true,
+        escape: true
+      },
       onInit: function() {},
       onSubmit: function(data) {
         return $form.find('.errors').empty();
       },
       onSuccess: function(data) {
-        this.disableSubmit();
+        this.lockSubmit();
         return this.showPreloader();
       },
       onFail: function(errors) {

@@ -19,11 +19,10 @@ $.datepicker.regional.ru = {
 $.datepicker.setDefaults($.datepicker.regional['ru']);
 
 $(function() {
-  var $form, fields, formValidator;
+  var $form, fields, fieldsOptions;
   $form = $('.form');
   fields = {
     'login': {
-      escape: true,
       placeholder: 'login',
       rules: {
         required: true,
@@ -37,13 +36,11 @@ $(function() {
       }
     },
     'password': {
-      escape: true,
       rules: {
         required: true
       }
     },
     'password-confirmation': {
-      escape: true,
       rules: {
         compare: {
           val: function() {
@@ -94,33 +91,35 @@ $(function() {
           not: 'Выбрать'
         }
       }
-    },
-    'dropdown-2': {
-      rules: {
-        required: {
-          not: 'Выбрать'
-        }
-      }
     }
   };
-  formValidator = new Form({
+  fieldsOptions = {
+    style: true,
+    clearErrorsInFocus: true,
+    autoErrors: false,
+    escape: true
+  };
+  window.formValidator = new Form({
     logs: true,
-    showErrors: 'all',
+    disableSubmit: false,
     formName: 'nice form',
     formEl: $form,
     submitEl: $form.find('.submit a'),
     fields: fields,
+    fieldsOptions: fieldsOptions,
     onInit: function() {
-      var scroll, scrollbars;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      scrollbars = {};
-      scroll = function(el) {
+      window.scrollbars = {};
+      window.scroll = function(el) {
         var select;
         select = el ? el : $form.find('.select');
         return select.each(function() {
           var $options, $select, $selected, selectName;
           $select = $(this);
+          if ($select.find('.viewport').size()) {
+            return;
+          }
           selectName = $select.attr('data-name');
           $selected = $select.find('.selected');
           $options = $select.find('.options');
@@ -134,7 +133,7 @@ $(function() {
           });
         });
       };
-      return scroll();
+      return window.scroll();
     },
     onSubmit: function(data) {
       return $form.find('.errors').empty();
@@ -147,11 +146,30 @@ $(function() {
       return $form.find('.errors').html("Исправьте ошибки в форме");
     },
     onReset: function() {
-      this.enableSubmit();
+      this.unlockSubmit();
       return this.hidePreloader();
     }
   });
+  window.addfield = function() {
+    var clone, fieldName;
+    clone = $form.find('.example').eq(0).clone();
+    fieldName = Date.now();
+    clone.find('.label').html(fieldName);
+    clone.find('.error').removeAttr('class').addClass('error error-' + fieldName);
+    clone.find('[name]').attr('name', fieldName);
+    clone.show();
+    $form.find('.error-list').before(clone);
+    formValidator.add(fieldName, {
+      rules: {
+        required: {
+          not: 'Выбрать'
+        }
+      }
+    });
+    return window.scroll();
+  };
   window.reset = function() {
-    return formValidator.reset();
+    formValidator.reset();
+    return $form.find('.example').remove();
   };
 });

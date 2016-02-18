@@ -15,23 +15,26 @@ Form = (function() {
 
   Form.prototype.enter = true;
 
-  Form.prototype.hideErrorInFocus = true;
+  Form.prototype.disableSubmit = false;
 
-  Form.prototype.clearErrorInFocus = true;
-
-  Form.prototype.disableSubmitBtn = false;
-
-  Form.prototype.disableSubmitClass = 'disabled-submit';
-
-  Form.prototype.placeholderClass = "placeholder";
-
-  Form.prototype.errorFieldClass = "error-field";
-
-  Form.prototype.errorClass = "error-";
-
-  Form.prototype.preloaderClass = "preloader";
+  Form.prototype.classes = {
+    disableSubmitClass: 'disabled-submit',
+    placeholderClass: "placeholder",
+    errorFieldClass: "error-field",
+    errorClass: "error-",
+    preloaderClass: "preloader"
+  };
 
   Form.prototype.fields = {};
+
+  Form.prototype.fieldsOptions = {
+    style: true,
+    focus: false,
+    clearErrorsInFocus: false,
+    autoErrors: false,
+    escape: false,
+    onError: function(fieldName, errors) {}
+  };
 
   Form.prototype.data = {};
 
@@ -59,9 +62,7 @@ Form = (function() {
     var self;
     this.options = options != null ? options : {};
     self = this;
-    $.each(this.options, function(k, v) {
-      return self[k] = v;
-    });
+    $.extend(true, this, this.options);
     $(function() {
       if (!self.formEl && self.logs) {
         return self.log('Warning! formEl not set');
@@ -77,18 +78,14 @@ Form = (function() {
       if (!self.submitBtn.size() && self.logs) {
         return self.log('Warning! submitEl not found in DOM');
       }
-      self._disableSubmitBtn = self.disableSubmitBtn;
       if (self.enter) {
         $(window).keydown(function(event) {
           if (self.form.inFocus && event.keyCode === 13) {
-            if (!self.disableSubmitBtn) {
+            if (!self.disableSubmit) {
               return self.submit();
             }
           }
         });
-      }
-      if (self.logs) {
-        console.log("[Form: " + self.formName + "] init", self.options);
       }
       self.init();
       self.onLoad();
@@ -96,76 +93,10 @@ Form = (function() {
   }
 
   Form.prototype.init = function() {
-    var fn, name, self;
+    var opts, self;
     self = this;
     this.form.unbind();
     this.submitBtn.unbind();
-    fn = function(name) {
-      var el, ref, ref1;
-      el = self.form.find("[name='" + name + "']").eq(0);
-      el.unbind();
-      self.fields[name].el = el;
-      self.fields[name].sel = el;
-      self.fields[name].style = self.fields[name].style || true;
-      self.fields[name].focus = self.fields[name].focus || false;
-      self.fields[name].showErrors = self.fields[name].showErrors || true;
-      if (!self.fields[name].onError) {
-        self.fields[name].onError = function(fieldName, errors) {};
-      }
-      if (el.is("select")) {
-        self.fields[name].type = 'select';
-        if (self.fields[name].style) {
-          self.createSelect(el);
-          el.change((function(_this) {
-            return function() {
-              return self.createSelect(el);
-            };
-          })(this));
-        }
-      } else if (el.attr('type') === 'radio') {
-        self.fields[name].type = 'radio';
-        if (self.fields[name].style) {
-          self.createRadio(name);
-        }
-      } else if (el.attr('type') === 'checkbox') {
-        self.fields[name].type = 'checkbox';
-        if (self.fields[name].style) {
-          self.createCheckbox(name);
-        }
-      } else if (el.is("textarea")) {
-        self.fields[name].type = 'textarea';
-      } else {
-        self.fields[name].type = 'text';
-      }
-      if ((ref = self.fields[name].type) === 'checkbox' || ref === 'radio') {
-        self.fields[name].originVal = el.filter(":checked").val() || false;
-      } else {
-        self.fields[name].originVal = el.val();
-      }
-      if (self.fields[name].placeholder && ((ref1 = self.fields[name].type) === 'text' || ref1 === 'textarea')) {
-        self.placeholder(el, self.fields[name].placeholder);
-      }
-      if (self.fields[name].focus) {
-        el.focus();
-      }
-      self.fields[name].el.removeClass(self.errorFieldClass);
-      self.fields[name].sel.removeClass(self.errorFieldClass);
-      if (self.fields[name].showErrors) {
-        self.form.find('.' + self.errorClass + name).empty();
-      }
-      self.fields[name].sel.click(function() {
-        if (self.hideErrorInFocus) {
-          self.fields[name].el.removeClass(self.errorFieldClass);
-          self.fields[name].sel.removeClass(self.errorFieldClass);
-        }
-        if (self.clearErrorInFocus && self.fields[name].showErrors) {
-          return self.form.find('.' + self.errorClass + name).empty();
-        }
-      });
-    };
-    for (name in this.fields) {
-      fn(name);
-    }
     this.form.submit(function(e) {
       return e.preventDefault();
     });
@@ -175,16 +106,129 @@ Form = (function() {
     this.form.mouseout(function() {
       return self.form.inFocus = false;
     });
-    if (this._disableSubmitBtn) {
-      this.disableSubmit();
+    if (this.options.disableSubmit) {
+      this.lockSubmit();
     }
     this.submitBtn.click(function() {
-      if (!self.disableSubmitBtn) {
+      if (!self.disableSubmit) {
         self.submit();
       }
       return false;
     });
+    $.each(this.fields, function(name, opt) {
+      return self.initSelector(name, opt);
+    });
+    opts = {
+      formName: this.formName,
+      logs: this.logs,
+      fields: this.fields,
+      fieldsOptions: this.fieldsOptions,
+      enter: this.enter,
+      disableSubmit: this.disableSubmit,
+      form: this.form,
+      submitBtn: this.submitBtn,
+      classes: this.classes
+    };
+    if (self.logs) {
+      console.log("[Form: " + this.formName + "] init", opts);
+    }
     this.onInit();
+  };
+
+  Form.prototype.initSelector = function(name, opt) {
+    var el, ref, ref1, self;
+    self = this;
+    el = this.form.find("[name='" + name + "']").eq(0);
+    if (!el.size()) {
+      self.log("Warning! selector '" + name + "' not found");
+      return;
+    }
+    el.unbind();
+    opt.el = el;
+    opt.sel = el;
+    opt.style = opt.style || this.fieldsOptions.style;
+    opt.focus = opt.focus || this.fieldsOptions.focus;
+    opt.hideErrorInFocus = opt.hideErrorInFocus || this.fieldsOptions.hideErrorInFocus;
+    opt.clearErrorsInFocus = opt.clearErrorsInFocus || this.fieldsOptions.clearErrorsInFocus;
+    opt.autoErrors = opt.autoErrors || this.fieldsOptions.autoErrors;
+    opt.onError = opt.onError || this.fieldsOptions.onError;
+    opt._onError = function(fieldName, errors, callback) {
+      callback();
+      return opt.onError(fieldName, errors);
+    };
+    if (el.is("select")) {
+      opt.type = 'select';
+      if (opt.style) {
+        this.createSelect(el);
+        el.change((function(_this) {
+          return function() {
+            return _this.createSelect(el);
+          };
+        })(this));
+      }
+    } else if (el.attr('type') === 'radio') {
+      opt.type = 'radio';
+      if (opt.style) {
+        this.createRadio(name);
+      }
+    } else if (el.attr('type') === 'checkbox') {
+      opt.type = 'checkbox';
+      if (opt.style) {
+        this.createCheckbox(name);
+      }
+    } else if (el.is("textarea")) {
+      opt.type = 'textarea';
+    } else {
+      opt.type = 'text';
+    }
+    if ((ref = opt.type) === 'checkbox' || ref === 'radio') {
+      opt.originVal = el.filter(":checked").val() || false;
+    } else {
+      opt.originVal = el.val();
+    }
+    if (opt.placeholder && ((ref1 = opt.type) === 'text' || ref1 === 'textarea')) {
+      this.placeholder(el, opt.placeholder);
+    }
+    if (opt.focus) {
+      el.focus();
+    }
+    opt.el.removeClass(this.classes.errorFieldClass);
+    opt.sel.removeClass(this.classes.errorFieldClass);
+    if (opt.autoErrors) {
+      this.form.find('.' + this.classes.errorClass + name).empty();
+    }
+    opt.sel.click(function() {
+      if (opt.clearErrorsInFocus) {
+        opt.el.removeClass(self.classes.errorFieldClass);
+        opt.sel.removeClass(self.classes.errorFieldClass);
+      }
+      if (opt.autoErrors) {
+        return self.form.find('.' + self.classes.errorClass + name).empty();
+      }
+    });
+  };
+
+  Form.prototype.add = function(name, opt) {
+    if (opt == null) {
+      opt = this.fieldsOptions;
+    }
+    console.log;
+    this.fields[name] = opt;
+    this.initSelector(name, opt);
+    if (this.logs) {
+      console.log("[Form: " + this.formName + "] add", name);
+    }
+  };
+
+  Form.prototype["delete"] = function(name) {
+    this.fields[name].sel.remove();
+    if (this.fields[name].style) {
+      this.fields[name].el.show();
+    }
+    if (this.logs) {
+      console.log("[Form: " + this.formName + "] delete", name);
+    }
+    delete this.fields[name];
   };
 
   Form.prototype.createCheckbox = function(name) {
@@ -319,21 +363,23 @@ Form = (function() {
   };
 
   Form.prototype.setVal = function(name, val) {
-    var el, ref;
-    el = this.fields[name].el;
-    if ((ref = this.fields[name].type) === 'checkbox' || ref === 'radio') {
-      el.prop("checked", false);
-      el.filter("[value='" + val + "']").prop("checked", val);
-    } else if (this.fields[name].type === 'select') {
-      el.val(val);
+    var opt, ref;
+    opt = this.fields[name];
+    if (opt.type === 'radio') {
+      opt.el.prop("checked", false);
+      opt.el.filter("[value='" + val + "']").prop("checked", val);
+    } else if (opt.type === 'checkbox') {
+      opt.el.prop("checked", val);
+    } else if (opt.type === 'select') {
+      opt.el.val(val);
     } else {
-      el.val(this.trim(val));
+      opt.el.val(this.trim(val));
     }
-    if (this.fields[name].placeholder && (el.is("input[type='text']") || el.is('textarea'))) {
-      if (val === "" || val === this.fields[name].placeholder) {
-        this.placeholder(el, this.fields[name].placeholder);
+    if (opt.placeholder && ((ref = opt.type) === 'text' || ref === 'textarea')) {
+      if (val === "" || val === opt.placeholder) {
+        this.placeholder(opt.el, opt.placeholder);
       } else {
-        el.removeClass(this.placeholderClass);
+        opt.el.removeClass(this.classes.placeholderClass);
       }
     }
     this.form.trigger(name, [
@@ -345,19 +391,19 @@ Form = (function() {
   };
 
   Form.prototype.getVal = function(name) {
-    var el, ref, val;
-    el = this.fields[name].el;
-    if ((ref = this.fields[name].type) === 'checkbox' || ref === 'radio') {
-      val = el.filter(":checked").val() || false;
-    } else if (this.fields[name].type === 'select') {
-      val = el.val();
+    var opt, ref, val;
+    opt = this.fields[name];
+    if ((ref = opt.type) === 'checkbox' || ref === 'radio') {
+      val = opt.el.filter(":checked").val() || false;
+    } else if (opt.type === 'select') {
+      val = opt.el.val();
     } else {
-      el.val(this.trim(el.val()));
-      if (this.fields[name].escape) {
-        el.val(this.stripHTML(el.val()));
+      opt.el.val(this.trim(opt.el.val()));
+      if (opt.escape) {
+        opt.el.val(this.stripHTML(opt.el.val()));
       }
-      val = this.trim(el.val());
-      if (this.fields[name]['placeholder'] && val === this.fields[name]['placeholder']) {
+      val = this.trim(opt.el.val());
+      if (opt.placeholder && (val === opt.placeholder)) {
         val = "";
       }
     }
@@ -398,46 +444,49 @@ Form = (function() {
       }
     }
     if (this.logs) {
-      this.log("[Form: " + this.formName + "] set", name + ': ' + val);
+      console.log("[Form: " + this.formName + "] set", name + ': ' + val);
     }
   };
 
   Form.prototype.get = function(name) {
     var val;
     val = this.getVal(name);
-    if (this.logs) {
-      console.log("[Form: " + this.formName + "] get", name + ": " + val);
-    }
     return val;
   };
 
   Form.prototype.submit = function() {
-    var name, ref, rule, ruleName, val, valid;
+    var self;
+    self = this;
     this.resetData();
     this.resetErorrs();
     console.groupCollapsed("[Form: " + this.formName + "] submit");
-    for (name in this.fields) {
-      val = this.getVal(name);
-      this.setData(name, val);
-      if (this.logs) {
+    $.each(this.fields, function(name, opt) {
+      var ref, results, rule, ruleName, val, valid;
+      val = self.getVal(name);
+      self.setData(name, val);
+      if (self.logs) {
         console.log(name + ': ' + val);
       }
-      this.fields[name].el.removeClass(this.errorFieldClass);
-      this.fields[name].sel.removeClass(this.errorFieldClass);
-      if (this.fields[name].showErrors) {
-        this.form.find('.' + this.errorClass + name).empty();
+      opt.el.removeClass(self.classes.errorFieldClass);
+      opt.sel.removeClass(self.classes.errorFieldClass);
+      if (opt.autoErrors) {
+        self.form.find('.' + self.classes.errorClass + name).empty();
       }
-      if (this.fields[name].rules) {
-        ref = this.fields[name].rules;
+      if (opt.rules) {
+        ref = opt.rules;
+        results = [];
         for (ruleName in ref) {
           rule = ref[ruleName];
-          valid = this.validate[ruleName](val, rule);
+          valid = self.validate[ruleName](val, rule);
           if (!valid.state) {
-            this.setError(name, valid.reason);
+            results.push(self.setError(name, valid.reason));
+          } else {
+            results.push(void 0);
           }
         }
+        return results;
       }
-    }
+    });
     if (this.logs) {
       console.log("data", this.data);
     }
@@ -451,31 +500,34 @@ Form = (function() {
   };
 
   Form.prototype.fail = function() {
-    var error, field, i, name, ref, ref1;
+    var self;
+    self = this;
     console.groupCollapsed("[Form: " + this.formName + "] fail");
-    ref = this.fields;
-    for (name in ref) {
-      field = ref[name];
-      if (this.errors[name]) {
-        if (this.logs) {
-          console.log(name + ': ', this.errors[name]);
+    $.each(this.fields, function(name, opt) {
+      if (self.errors[name]) {
+        if (self.logs) {
+          console.log(name + ': ', self.errors[name]);
         }
-        this.fields[name].el.addClass(this.errorFieldClass);
-        this.fields[name].sel.addClass(this.errorFieldClass);
-        if (this.fields[name].showErrors) {
-          if (this.fields[name].showErrors === 'all') {
-            ref1 = this.errors[name];
-            for (i in ref1) {
-              error = ref1[i];
-              this.form.find('.' + this.errorClass + name).append(error + "<br/>");
+        opt.el.addClass(self.classes.errorFieldClass);
+        opt.sel.addClass(self.classes.errorFieldClass);
+        return opt._onError(name, self.errors[name], function() {
+          var error, i, ref, results;
+          if (self.fields[name].autoErrors) {
+            if (self.fields[name].autoErrors === 'all') {
+              ref = self.errors[name];
+              results = [];
+              for (i in ref) {
+                error = ref[i];
+                results.push(self.form.find('.' + self.classes.errorClass + name).append(error + "<br/>"));
+              }
+              return results;
+            } else {
+              return self.form.find('.' + self.classes.errorClass + name).html(self.errors[name][0]);
             }
-          } else {
-            this.form.find('.' + this.errorClass + name).html(this.errors[name][0]);
           }
-        }
-        this.fields[name].onError(name, this.errors[name]);
+        });
       }
-    }
+    });
     if (this.logs) {
       console.log("data", this.errors);
     }
@@ -498,12 +550,16 @@ Form = (function() {
   };
 
   Form.prototype.reset = function() {
-    var name;
+    var self;
+    self = this;
     this.resetData();
     this.resetErorrs();
-    for (name in this.fields) {
-      this.setVal(name, this.fields[name].originVal);
-    }
+    $.each(this.fields, function(name, opt) {
+      self.setVal(name, opt.originVal);
+      if (!self.options.fields[name]) {
+        return self["delete"](name);
+      }
+    });
     if (this.logs) {
       console.log("[Form: " + this.formName + "] reset");
     }
@@ -525,6 +581,10 @@ Form = (function() {
     }
   };
 
+  Form.prototype.getData = function() {
+    return this.data;
+  };
+
   Form.prototype.setError = function(name, val) {
     if (!this.errors[name]) {
       this.errors[name] = [];
@@ -532,39 +592,43 @@ Form = (function() {
     this.errors[name].push(val);
   };
 
+  Form.prototype.getErrors = function() {
+    return this.errors;
+  };
+
   Form.prototype.placeholder = function(el, val) {
     el.focus((function(_this) {
       return function() {
         if (el.val() === val) {
-          return el.val("").removeClass(_this.placeholderClass);
+          return el.val("").removeClass(_this.classes.placeholderClass);
         }
       };
     })(this)).blur((function(_this) {
       return function() {
         if (el.val() === "") {
-          return el.val(val).addClass(_this.placeholderClass);
+          return el.val(val).addClass(_this.classes.placeholderClass);
         }
       };
     })(this));
     el.blur();
   };
 
-  Form.prototype.disableSubmit = function() {
-    this.disableSubmitBtn = true;
-    this.submitBtn.addClass(this.disableSubmitClass);
+  Form.prototype.lockSubmit = function() {
+    this.disableSubmit = true;
+    this.submitBtn.addClass(this.classes.disableSubmitClass);
   };
 
-  Form.prototype.enableSubmit = function() {
-    this.disableSubmitBtn = false;
-    this.submitBtn.removeClass(this.disableSubmitClass);
+  Form.prototype.unlockSubmit = function() {
+    this.disableSubmit = false;
+    this.submitBtn.removeClass(this.classes.disableSubmitClass);
   };
 
   Form.prototype.showPreloader = function() {
-    this.form.find('.' + this.preloaderClass).show();
+    this.form.find('.' + this.classes.preloaderClass).show();
   };
 
   Form.prototype.hidePreloader = function() {
-    this.form.find('.' + this.preloaderClass).hide();
+    this.form.find('.' + this.classes.preloaderClass).hide();
   };
 
 

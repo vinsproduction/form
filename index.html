@@ -98,7 +98,7 @@
       </select>
       <div class="error error-dropdown"></div>
     </div>
-    <div class="field">
+    <div style="display:none;" class="field example">
       <div class="label">dropdown 2</div>
       <select name="dropdown-2">
         <option selected="selected">Выбрать</option>
@@ -111,10 +111,11 @@
       </select>
       <div class="error error-dropdown-2"></div>
     </div>
-    <div class="field">
+    <div class="field error-list">
       <div class="errors"></div>
     </div>
     <div class="field">
+      <div class="add-field"><a href="#" onclick="addfield();return false">Добавить поле</a></div>
       <div class="reset"><a href="#" onclick="reset();return false">Сбросить</a></div>
       <div class="submit"><a href="#"><span>Отправить</span></a></div>
       <div class="preloader">

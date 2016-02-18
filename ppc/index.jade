@@ -100,7 +100,7 @@ body
 				option(value="6") 6
 			.error.error-dropdown
 
-		.field
+		.field.example(style="display:none;")
 			.label dropdown 2
 			select(name="dropdown-2")
 				option(selected=true) Выбрать
@@ -112,11 +112,13 @@ body
 				option(value="6") 6
 			.error.error-dropdown-2
 
-		.field
+		.field.error-list
 			.errors
 
 
 		.field
+			.add-field
+				a(href="#" onclick="addfield();return false") Добавить поле
 			.reset
 				a(href="#" onclick="reset();return false") Сбросить
 			.submit

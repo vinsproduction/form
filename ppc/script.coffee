@@ -30,7 +30,6 @@ $ ->
 	fields = 
 
 		'login':
-			escape: true
 			placeholder: 'login'
 			rules:
 				required: true
@@ -40,13 +39,12 @@ $ ->
 				min:
 					count: 2
 
+
 		'password':
-			escape: true
 			rules:
 				required: true
 
 		'password-confirmation':
-			escape: true
 			rules:
 				compare:
 					val: -> $form.find('input[name="password"]').val()
@@ -63,6 +61,7 @@ $ ->
 			rules:
 				required: true
 				email: true
+		
 		'text':
 			rules:
 				required: true
@@ -84,21 +83,30 @@ $ ->
 				required:
 					not: 'Выбрать'
 
-		'dropdown-2':
-			rules:
-				required:
-					not: 'Выбрать'
-					
+		# 'dropdown-2':
+		# 	rules:
+		# 		required:
+		# 			not: 'Выбрать'
+	
 
-	formValidator = new Form
+	fieldsOptions = 
+		style: true
+		clearErrorsInFocus: true
+		autoErrors: false
+		escape: true
+
+
+	window.formValidator = new Form
 
 		logs: true
-		showErrors: 'all'
+
+		disableSubmit: false
 
 		formName: 'nice form'
 		formEl: $form
 		submitEl: $form.find('.submit a')
 		fields: fields
+		fieldsOptions: fieldsOptions
 
 		onInit: ->
 
@@ -106,34 +114,47 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
+			# @add 'dropdown-2',
+			# 	rules:
+			# 		required:
+			# 			not: 'Выбрать'
 
-			# formValidator.onChange 'dropdown', (v) ->
-			# 	formValidator.set('dropdown-2', 3)
+
+			# setTimeout(=>
+			# 	@delete('dropdown-2')
+			# ,2000)
+
+
+			# @onChange 'dropdown', (v) =>
+			# 	@set('dropdown-2', 3)
+
+			# @onChange 'checkbox_1', (v) ->
 			# 	console.log v
 
-			# formValidator.onChange 'checkbox_1', (v) ->
-			# 	console.log v
-
-			#formValidator.get('login')
+			# @get('login')
 
 
-			# formValidator.set('dropdown', 2)
-			# formValidator.set('checkbox_1',false)
-			# formValidator.set('checkbox_2',true)
-			# formValidator.set('radiobutton',2)
-			# formValidator.set('text','тест')
+			# @set('dropdown', 2)
+			# @set('checkbox_1',false)
+			# @set('checkbox_2',true)
+
+			# @get('checkbox_2')
+
+			# @set('radiobutton',2)
+			# @set('text','тест')
 
 			# Скролл бар
 
-			scrollbars = {}
+			window.scrollbars = {}
 
-			scroll = (el) ->
+			window.scroll = (el) ->
 
 				select 	= if el then el else $form.find('.select')
-
 				select.each ->
 
 					$select = $(@)
+
+					return if $select.find('.viewport').size()
 
 					selectName = $select.attr('data-name')
 
@@ -148,7 +169,7 @@ $ ->
 					scrollbars[selectName] = $options.tinyscrollbar({sizethumb: 40})
 					$selected.click -> scrollbars[selectName].tinyscrollbar_update()
 
-			scroll()
+			window.scroll()
 
 		onSubmit: (data) ->
 
@@ -169,7 +190,7 @@ $ ->
 
 		onReset: ->
 
-			@enableSubmit()
+			@unlockSubmit()
 			@hidePreloader()
 
 	# formValidator.addRule 
@@ -180,8 +201,29 @@ $ ->
 	# 		return $form.find('input[name="password"]').val() is val
 
 
+	window.addfield = ->
+
+		clone = $form.find('.example').eq(0).clone()
+
+		fieldName = Date.now()
+
+		clone.find('.label').html(fieldName)
+		clone.find('.error').removeAttr('class').addClass('error error-' + fieldName)
+		clone.find('[name]').attr('name', fieldName)
+		clone.show()
+
+		$form.find('.error-list').before clone
+
+		formValidator.add fieldName,
+			rules:
+				required:
+					not: 'Выбрать'
+
+		window.scroll()
+
 
 	window.reset = ->
 		formValidator.reset()
+		$form.find('.example').remove()
 
 	return
