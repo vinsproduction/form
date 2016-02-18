@@ -26,9 +26,6 @@ formValidator = new Form
 	submitEl: $form.find('.submit a')
 	fields: fields
 	fieldsOptions:
-		style: true
-		clearErrorsInFocus: true
-		autoErrors: true
 		escape: true
 	
 	onInit: ->
@@ -97,11 +94,11 @@ fields =
 # Такие же настройки внутри самого поля приоритетней! Как например escape выше
 
 fieldsOptions:
-	style: true # Cтилизовать поле. По умолчанию false
+	style: false # Cтилизовать поле. По умолчанию true
 	focus: false # Поставить фокус на поле. . По умолчанию false
-	clearErrorsInFocus: true # Удалять ошибки в фокусе. По умолчанию false
-	autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию false
-	escape: true # Очищать инпут от тегов в отправке. По умолчанию false
+	clearErrorsInFocus: false # Удалять ошибки в фокусе. По умолчанию true
+	autoErrors: false # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
+	escape: false # Очищать инпут от тегов в отправке. По умолчанию false
 	onError: (fieldName, errors) -> # Опционально
 
 formValidator = new Form

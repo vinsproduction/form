@@ -30,8 +30,8 @@ Form = (function() {
   Form.prototype.fieldsOptions = {
     style: true,
     focus: false,
-    clearErrorsInFocus: false,
-    autoErrors: false,
+    clearErrorsInFocus: true,
+    autoErrors: true,
     escape: false,
     onError: function(fieldName, errors) {}
   };

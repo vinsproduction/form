@@ -26,8 +26,8 @@ class Form
 	fieldsOptions:
 		style: true # Cтилизовать поле
 		focus: false # Поставить фокус на поле
-		clearErrorsInFocus: false # Удалять ошибки в фокусе
-		autoErrors: false # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
+		clearErrorsInFocus: true # Удалять ошибки в фокусе
+		autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
 		escape: false # Очищать инпут от тегов в отправке
 		onError: (fieldName, errors) ->
 
