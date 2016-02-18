@@ -111,7 +111,7 @@ formValidator = new Form
 	formEl: '.form' # Элемент формы (Класс или элемент DOM)
 	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
 	
-	fields: fields # Проверяемы поля
+	fields: fields # Проверяемые поля
 	fieldsOptions: fieldsOptions # Настройки полей
 
  	# Опционально
