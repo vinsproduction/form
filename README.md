@@ -1,5 +1,9 @@
 # Form.js
 
+[Пример login form] (http://vinsproduction.com/projects/form/login.html)
+
+[Пример registration form](http://vinsproduction.com/projects/form/registration.html)
+
 ### Пример простой формы
 
 ##### Coffee-script
