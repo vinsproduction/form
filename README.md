@@ -37,13 +37,13 @@ formValidator = new Form
 		$form.find('.errors').empty()
 		
 	onSuccess: (data) ->
-		@disableSubmit()
+		@lockSubmit()
 		@showPreloader()
 
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-				@enableSubmit()
+				@unlockSubmit()
 		  		@hidePreloader()
 	
 	onFail: (errors) ->
