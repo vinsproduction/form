@@ -1,10 +1,8 @@
 # Form.js
 
-(http://vinsproduction.com/projects/form/)
+[Пример login form] (http://vinsproduction.com/projects/form/login.html)
 
-(http://vinsproduction.com/projects/form/login.html)
-
-(http://vinsproduction.com/projects/form/registration.html)
+[Пример registration form](http://vinsproduction.com/projects/form/registration.html)
 
 ### Пример простой формы
 
