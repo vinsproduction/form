@@ -22,74 +22,10 @@ $(function() {
   var $form, fields, fieldsOptions;
   $form = $('.form');
   fields = {
-    'login': {
-      placeholder: 'login',
-      rules: {
-        required: true,
-        alpha: true,
-        max: {
-          count: 4
-        },
-        min: {
-          count: 2
-        }
-      }
-    },
-    'password': {
-      rules: {
-        required: true
-      }
-    },
-    'password-confirmation': {
-      rules: {
-        compare: {
-          val: function() {
-            return $form.find('input[name="password"]').val();
-          }
-        }
-      }
-    },
-    'phone': {
-      rules: {
-        required: true
-      }
-    },
-    'date': {
-      rules: {
-        required: true
-      }
-    },
-    'email': {
-      rules: {
-        required: true,
-        email: true
-      }
-    },
-    'text': {
-      rules: {
-        required: true
-      }
-    },
     'checkbox_1': {
       rules: {
-        required: true
-      }
-    },
-    'checkbox_2': {
-      rules: {
-        required: true
-      }
-    },
-    'radiobutton': {
-      rules: {
-        required: true
-      }
-    },
-    'dropdown': {
-      rules: {
-        required: {
-          not: 'Выбрать'
-        }
+        required: false,
+        alpha: true
       }
     }
   };
@@ -97,10 +33,16 @@ $(function() {
     style: true,
     clearErrorsInFocus: true,
     autoErrors: true,
-    escape: true
+    escape: true,
+    rules: {
+      required: {
+        reason: 'ошибка'
+      }
+    }
   };
   window.formValidator = new Form({
     logs: true,
+    autoFields: true,
     disableSubmit: false,
     formName: 'nice form',
     formEl: $form,
@@ -139,7 +81,7 @@ $(function() {
       return $form.find('.errors').empty();
     },
     onSuccess: function(data) {
-      this.disableSubmit();
+      this.lockSubmit();
       return this.showPreloader();
     },
     onFail: function(errors) {
@@ -156,13 +98,14 @@ $(function() {
     fieldName = Date.now();
     clone.find('.label').html(fieldName);
     clone.find('.error').removeAttr('class').addClass('error error-' + fieldName);
-    clone.find('[name]').attr('name', fieldName);
+    clone.find('select').attr('name', fieldName);
     clone.show();
+    clone.addClass('new');
     $form.find('.error-list').before(clone);
-    formValidator.add(fieldName, {
+    formValidator.addField(fieldName, {
       rules: {
         required: {
-          not: 'Выбрать'
+          reason: 'Своя ошибка'
         }
       }
     });
@@ -170,6 +113,6 @@ $(function() {
   };
   window.reset = function() {
     formValidator.reset();
-    return $form.find('.example').remove();
+    return $form.find('.example.new').remove();
   };
 });

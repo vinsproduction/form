@@ -21,41 +21,37 @@
   <link rel="stylesheet" type="text/css" href="css/form.css"/>
   <script>(function() {
   $(function() {
-    var $form, fields, formValidator;
-    $form = $('.form');
+    var fields, formValidator;
     fields = {
       'email': {
         rules: {
-          required: true,
           email: true
-        }
-      },
-      'password': {
-        escape: true,
-        rules: {
-          required: true
         }
       }
     };
     formValidator = new Form({
       logs: true,
       formName: 'login',
-      formEl: $form,
-      submitEl: $form.find('.submit a'),
+      formEl: '.form',
+      submitEl: '.submit a',
+      autoFields: true,
       fields: fields,
       fieldsOptions: {
-        escape: true
+        escape: true,
+        rules: {
+          required: true
+        }
       },
       onInit: function() {},
       onSubmit: function(data) {
-        return $form.find('.errors').empty();
+        return this.form.find('.errors').empty();
       },
       onSuccess: function(data) {
         this.lockSubmit();
         return this.showPreloader();
       },
       onFail: function(errors) {
-        return $form.find('.errors').html("Исправьте ошибки в форме");
+        return this.form.find('.errors').html("Исправьте ошибки в форме");
       }
     });
   });

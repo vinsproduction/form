@@ -29,76 +29,83 @@ $ ->
 
 	fields = 
 
-		'login':
-			placeholder: 'login'
-			rules:
-				required: true
-				alpha: true
-				max:
-					count: 4
-				min:
-					count: 2
+		# 'login':
+		# 	placeholder: 'login'
+		# 	rules:
+		# 		required: true
+		# 		alpha: true
+		# 		max:
+		# 			count: 4
+		# 		min:
+		# 			count: 2
 
 
-		'password':
-			rules:
-				required: true
+		# 'password':
+		# 	rules:
+		# 		required: true
 
-		'password-confirmation':
-			rules:
-				compare:
-					val: -> $form.find('input[name="password"]').val()
+		# 'password-confirmation':
+		# 	rules:
+		# 		compare:
+		# 			val: -> $form.find('input[name="password"]').val()
 
-		'phone':
-			rules:
-				required: true
+		# 'phone':
+		# 	rules:
+		# 		required: true
 
-		'date':
-			rules:
-				required: true
+		# 'date':
+		# 	rules:
+		# 		required: true
 
-		'email':
-			rules:
-				required: true
-				email: true
+		# 'email':
+		# 	rules:
+		# 		required: true
+		# 		email: true
 		
-		'text':
-			rules:
-				required: true
+		# 'text':
+		# 	rules:
+		# 		required: true
 
 		'checkbox_1':
 			rules:
-				required: true
+				required: false
+				alpha: true
+			# onError: (name,errors) ->
+			# 	console.log 22
 
-		'checkbox_2':
-			rules:
-				required: true
 
-		'radiobutton':
-			rules:
-				required: true
+		# 'checkbox_2':
+		# 	rules:
+		# 		required: true
 
-		'dropdown':
-			rules:
-				required:
-					not: 'Выбрать'
+		# 'radiobutton':
+		# 	rules:
+		# 		required: true
 
-		# 'dropdown-2':
+		# 'dropdown':
 		# 	rules:
 		# 		required:
 		# 			not: 'Выбрать'
-	
+
 
 	fieldsOptions = 
 		style: true
 		clearErrorsInFocus: true
 		autoErrors: true
 		escape: true
+		rules:
+			required:
+				reason: 'ошибка'
+		# onError: (name,errors) ->
+		# 	console.log 11
+
 
 
 	window.formValidator = new Form
 
 		logs: true
+
+		autoFields: true
 
 		disableSubmit: false
 
@@ -177,11 +184,11 @@ $ ->
 
 		onSuccess: (data) ->
 
-			@disableSubmit()
+			@lockSubmit()
 			@showPreloader()
 
 			# API.success ->
-			# @enableSubmit()
+			# @unlockSubmit()
 			# @hidePreloader()
 
 		onFail: (errors) ->
@@ -209,21 +216,22 @@ $ ->
 
 		clone.find('.label').html(fieldName)
 		clone.find('.error').removeAttr('class').addClass('error error-' + fieldName)
-		clone.find('[name]').attr('name', fieldName)
+		clone.find('select').attr('name', fieldName)
 		clone.show()
+		clone.addClass('new')
 
 		$form.find('.error-list').before clone
 
-		formValidator.add fieldName,
+		formValidator.addField fieldName,
 			rules:
 				required:
-					not: 'Выбрать'
+					reason: 'Своя ошибка'
 
 		window.scroll()
 
 
 	window.reset = ->
 		formValidator.reset()
-		$form.find('.example').remove()
+		$form.find('.example.new').remove()
 
 	return

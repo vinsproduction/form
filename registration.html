@@ -21,8 +21,7 @@
   <link rel="stylesheet" type="text/css" href="css/form.css"/>
   <script>(function() {
   $(function() {
-    var $form, fields, formValidator;
-    $form = $('.form');
+    var fields, formValidator;
     fields = {
       'firstname': {
         rules: {
@@ -44,7 +43,7 @@
           required: true,
           compare: {
             val: function() {
-              return $form.find('input[name="password"]').val();
+              return formValidator.get('password');
             }
           }
         }
@@ -64,22 +63,22 @@
     formValidator = new Form({
       logs: true,
       formName: 'registration',
-      formEl: $form,
-      submitEl: $form.find('.submit a'),
+      formEl: '.form',
+      submitEl: '.submit a',
       fields: fields,
       fieldsOptions: {
         escape: true
       },
       onInit: function() {},
       onSubmit: function(data) {
-        return $form.find('.errors').empty();
+        return this.form.find('.errors').empty();
       },
       onSuccess: function(data) {
         this.lockSubmit();
         return this.showPreloader();
       },
       onFail: function(errors) {
-        return $form.find('.errors').html("Исправьте ошибки в форме");
+        return this.form.find('.errors').html("Исправьте ошибки в форме");
       }
     });
   });

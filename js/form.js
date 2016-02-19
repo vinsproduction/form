@@ -5,78 +5,68 @@
 var Form;
 
 Form = (function() {
-  Form.prototype.logs = false;
-
-  Form.prototype.formName = false;
-
-  Form.prototype.formEl = false;
-
-  Form.prototype.submitEl = false;
-
-  Form.prototype.enter = true;
-
-  Form.prototype.disableSubmit = false;
-
-  Form.prototype.classes = {
-    disableSubmitClass: 'disabled-submit',
-    placeholderClass: "placeholder",
-    errorFieldClass: "error-field",
-    errorClass: "error-",
-    preloaderClass: "preloader"
-  };
-
-  Form.prototype.fields = {};
-
-  Form.prototype.fieldsOptions = {
-    style: true,
-    focus: false,
-    clearErrorsInFocus: true,
-    autoErrors: true,
-    escape: false,
-    onError: function(fieldName, errors) {}
-  };
-
-  Form.prototype.data = {};
-
-  Form.prototype.errors = {};
-
-  Form.prototype.onFail = function(errors) {};
-
-  Form.prototype.onSuccess = function(data) {};
-
-  Form.prototype.onSubmit = function(data) {};
-
-  Form.prototype.onReset = function() {};
-
-  Form.prototype.onLoad = function() {};
-
-  Form.prototype.onInit = function() {};
-
-  Form.prototype.onChange = function(fieldname, callback) {
-    this.form.on(fieldname, function(event, v) {
-      return callback(v);
-    });
-  };
-
-  function Form(options) {
+  function Form(params) {
     var self;
-    this.options = options != null ? options : {};
+    this.params = params != null ? params : {};
     self = this;
-    $.extend(true, this, this.options);
+    this.logs = false;
+    this.formName = false;
+    this.formEl = false;
+    this.submitEl = false;
+
+    /*
+    		autoFields
+    		Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
+    		Если false - обрабатываться будут только указанные поля!
+     */
+    this.autoFields = true;
+    this.enter = true;
+    this.disableSubmit = false;
+    this.classes = {
+      disableSubmitClass: 'disabled-submit',
+      placeholderClass: "placeholder",
+      errorFieldClass: "error-field",
+      errorClass: "error-",
+      preloaderClass: "preloader"
+    };
+    this.fields = {};
+    this.fieldsOptions = {
+      style: true,
+      focus: false,
+      clearErrorsInFocus: true,
+      autoErrors: true,
+      escape: false,
+      rules: {},
+      onError: function(fieldName, errors) {},
+      onChange: function(callback) {
+        return this.el.on('change', function(e, v) {
+          return callback(v.val);
+        });
+      }
+    };
+    this.data = {};
+    this.errors = {};
+    this.onFail = function(errors) {};
+    this.onSuccess = function(data) {};
+    this.onSubmit = function(data) {};
+    this.onReset = function() {};
+    this.onLoad = function() {};
+    this.onInit = function() {};
+    $.extend(true, this, this.params);
     $(function() {
       if (!self.formEl && self.logs) {
-        return self.log('Warning! formEl not set');
+        return console.log("[Form: " + self.formName + "] Warning! formEl not set");
       }
       if (!self.submitEl && self.logs) {
-        return self.log('Warning! submitEl not set');
+        return console.log("[Form: " + self.formName + "] Warning! submitEl not set");
       }
       self.form = self.isObject(self.formEl) ? self.formEl : $(self.formEl);
       self.submitBtn = self.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
       if (!self.form.size() && self.logs) {
-        return self.log('Warning! formEl not found in DOM');
+        return console.log("[Form: " + self.formName + "] Warning! formEl not found in DOM");
       }
       if (!self.submitBtn.size() && self.logs) {
-        return self.log('Warning! submitEl not found in DOM');
+        return console.log("[Form: " + self.formName + "] Warning! submitEl not found in DOM");
       }
       if (self.enter) {
         $(window).keydown(function(event) {
@@ -85,6 +75,13 @@ Form = (function() {
               return self.submit();
             }
           }
+        });
+      }
+      if (self.autoFields) {
+        self.form.find('[name]').each(function() {
+          var name;
+          name = $(this).attr('name');
+          return self.fields[name] = self.params.fields && self.params.fields[name] ? self.params.fields[name] : {};
         });
       }
       self.init();
@@ -106,7 +103,7 @@ Form = (function() {
     this.form.mouseout(function() {
       return self.form.inFocus = false;
     });
-    if (this.options.disableSubmit) {
+    if (this.params.disableSubmit) {
       this.lockSubmit();
     }
     this.submitBtn.click(function() {
@@ -115,18 +112,15 @@ Form = (function() {
       }
       return false;
     });
-    $.each(this.fields, function(name, opt) {
-      return self.initSelector(name, opt);
+    $.each(this.fields, function(name) {
+      return self.initField(name);
     });
     opts = {
-      formName: this.formName,
-      logs: this.logs,
+      autoFields: this.autoFields,
       fields: this.fields,
       fieldsOptions: this.fieldsOptions,
       enter: this.enter,
       disableSubmit: this.disableSubmit,
-      form: this.form,
-      submitBtn: this.submitBtn,
       classes: this.classes
     };
     if (self.logs) {
@@ -135,92 +129,90 @@ Form = (function() {
     this.onInit();
   };
 
-  Form.prototype.initSelector = function(name, opt) {
+  Form.prototype.initField = function(name, isNew) {
     var el, ref, ref1, self;
     self = this;
-    el = this.form.find("[name='" + name + "']").eq(0);
+    el = this.form.find("[name='" + name + "']");
     if (!el.size()) {
-      self.log("Warning! selector '" + name + "' not found");
+      console.log("[Form: " + this.formName + "] Warning! selector '" + name + "' not found");
       return;
     }
-    el.unbind();
-    opt.el = el;
-    opt.sel = el;
-    opt.style = opt.style || this.fieldsOptions.style;
-    opt.focus = opt.focus || this.fieldsOptions.focus;
-    opt.hideErrorInFocus = opt.hideErrorInFocus || this.fieldsOptions.hideErrorInFocus;
-    opt.clearErrorsInFocus = opt.clearErrorsInFocus || this.fieldsOptions.clearErrorsInFocus;
-    opt.autoErrors = opt.autoErrors || this.fieldsOptions.autoErrors;
-    opt.onError = opt.onError || this.fieldsOptions.onError;
-    opt._onError = function(fieldName, errors, callback) {
-      callback();
-      return opt.onError(fieldName, errors);
-    };
-    if (el.is("select")) {
-      opt.type = 'select';
-      if (opt.style) {
-        this.createSelect(el);
-        el.change((function(_this) {
-          return function() {
-            return _this.createSelect(el);
-          };
-        })(this));
+    this.fields[name] = $.extend(true, {}, this.fieldsOptions, this.fields[name]);
+    this.fields[name].el = el;
+    this.fields[name].sel = el;
+    if (isNew) {
+      this.fields[name]["new"] = true;
+    }
+    this.fields[name].el.unbind();
+    this.fields[name].val = function(val) {
+      if (val) {
+        self.set(name, val);
+      } else {
+        return self.get(name);
       }
-    } else if (el.attr('type') === 'radio') {
-      opt.type = 'radio';
-      if (opt.style) {
+    };
+    if (this.fields[name].el.is("select")) {
+      this.fields[name].type = 'select';
+      if (this.fields[name].style) {
+        this.createSelect(name);
+        this.fields[name].el.change(function() {
+          return self.createSelect(name, true);
+        });
+      }
+    } else if (this.fields[name].el.attr('type') === 'radio') {
+      this.fields[name].type = 'radio';
+      if (this.fields[name].style) {
         this.createRadio(name);
       }
-    } else if (el.attr('type') === 'checkbox') {
-      opt.type = 'checkbox';
-      if (opt.style) {
+    } else if (this.fields[name].el.attr('type') === 'checkbox') {
+      this.fields[name].type = 'checkbox';
+      if (this.fields[name].style) {
         this.createCheckbox(name);
       }
-    } else if (el.is("textarea")) {
-      opt.type = 'textarea';
+    } else if (this.fields[name].el.is("textarea")) {
+      this.fields[name].type = 'textarea';
     } else {
-      opt.type = 'text';
+      this.fields[name].type = 'text';
     }
-    if ((ref = opt.type) === 'checkbox' || ref === 'radio') {
-      opt.originVal = el.filter(":checked").val() || false;
+    if ((ref = this.fields[name].type) === 'checkbox' || ref === 'radio') {
+      this.fields[name].originVal = this.fields[name].el.filter(":checked").val() || false;
     } else {
-      opt.originVal = el.val();
+      this.fields[name].originVal = this.fields[name].el.val();
     }
-    if (opt.placeholder && ((ref1 = opt.type) === 'text' || ref1 === 'textarea')) {
-      this.placeholder(el, opt.placeholder);
+    if (this.fields[name].placeholder && ((ref1 = this.fields[name].type) === 'text' || ref1 === 'textarea')) {
+      this.placeholder(this.fields[name].el, this.fields[name].placeholder);
     }
-    if (opt.focus) {
-      el.focus();
+    if (this.fields[name].focus) {
+      this.fields[name].el.focus();
     }
-    opt.el.removeClass(this.classes.errorFieldClass);
-    opt.sel.removeClass(this.classes.errorFieldClass);
-    if (opt.autoErrors) {
+    this.fields[name].el.removeClass(this.classes.errorFieldClass);
+    this.fields[name].sel.removeClass(this.classes.errorFieldClass);
+    if (this.fields[name].autoErrors) {
       this.form.find('.' + this.classes.errorClass + name).empty();
     }
-    opt.sel.click(function() {
-      if (opt.clearErrorsInFocus) {
-        opt.el.removeClass(self.classes.errorFieldClass);
-        opt.sel.removeClass(self.classes.errorFieldClass);
+    this.fields[name].sel.click(function() {
+      if (self.fields[name].clearErrorsInFocus) {
+        self.fields[name].el.removeClass(self.classes.errorFieldClass);
+        self.fields[name].sel.removeClass(self.classes.errorFieldClass);
       }
-      if (opt.autoErrors) {
+      if (self.fields[name].autoErrors) {
         return self.form.find('.' + self.classes.errorClass + name).empty();
       }
     });
   };
 
-  Form.prototype.add = function(name, opt) {
+  Form.prototype.addField = function(name, opt) {
     if (opt == null) {
       opt = this.fieldsOptions;
     }
-    console.log;
     this.fields[name] = opt;
-    this.initSelector(name, opt);
+    this.initField(name, true);
     if (this.logs) {
       console.log("[Form: " + this.formName + "] add", name);
     }
   };
 
-  Form.prototype["delete"] = function(name) {
+  Form.prototype.removeField = function(name) {
     this.fields[name].sel.remove();
     if (this.fields[name].style) {
       this.fields[name].el.show();
@@ -232,16 +224,14 @@ Form = (function() {
   };
 
   Form.prototype.createCheckbox = function(name) {
-    var $checkbox, el, self, value;
-    el = this.form.find("[name='" + name + "']");
-    el.hide();
-    name = el.attr('name');
-    value = el.attr('value');
+    var $checkbox, self, value;
+    this.fields[name].el.hide();
+    value = this.fields[name].el.attr('value');
     self = this;
     if (this.form.find(".checkbox[data-name=" + name + "][data-value=" + value + "]").size()) {
       this.form.find(".checkbox[data-name=" + name + "][data-value=" + value + "]").remove();
     }
-    el.click(function() {
+    this.fields[name].el.click(function() {
       if (!$(this).is(':checked')) {
         return self.form.find(".checkbox[data-name=" + name + "]").removeClass('checked');
       } else {
@@ -249,13 +239,13 @@ Form = (function() {
       }
     });
     $checkbox = $("<div class='checkbox' data-name='" + name + "' data-value='" + value + "'></div>");
-    if (el.attr('checked')) {
+    if (this.fields[name].el.attr('checked')) {
       $checkbox.addClass('checked');
     }
-    el.after($checkbox);
+    this.fields[name].el.after($checkbox);
     this.fields[name].sel = $checkbox;
     $checkbox.click(function() {
-      if (el.is(':checked')) {
+      if (self.fields[name].el.is(':checked')) {
         $(this).removeClass('checked');
         return self.setVal(name, false);
       } else {
@@ -268,12 +258,10 @@ Form = (function() {
   Form.prototype.createRadio = function(name) {
     var self;
     self = this;
-    this.fields[name].el = this.form.find("[name='" + name + "']");
     this.fields[name].el.each(function() {
       var $radio, el, value;
       el = $(this);
       el.hide();
-      name = el.attr('name');
       value = el.attr('value');
       if (self.form.find(".radio[data-name=" + name + "][data-value=" + value + "]").size()) {
         self.form.find(".radio[data-name=" + name + "][data-value=" + value + "]").remove();
@@ -296,24 +284,44 @@ Form = (function() {
     });
   };
 
-  Form.prototype.createSelect = function(el) {
-    var $options, $select, $selected, name, selectClose, selectedText, self;
-    el.hide();
-    name = el.attr('name');
+  Form.prototype.createSelect = function(name, change) {
+    var $options, $select, $selected, emptyOption, selectClose, selectedText, self;
+    this.fields[name].el.hide();
     self = this;
+    if (change) {
+      this.fields[name].sel.find('.selected').html(this.fields[name].el.val());
+      if (this.fields[name].el.val() !== this.fields[name].el.find('option:first-child').text()) {
+        this.fields[name].sel.find('.selected').removeClass('default');
+      } else {
+        this.fields[name].sel.find('.selected').addClass('default');
+      }
+      return;
+    }
     if (this.form.find(".select[data-name='" + name + "']").size()) {
       this.form.find(".select[data-name='" + name + "']").remove();
     }
     $select = $("<div class='select' data-name='" + name + "'></div>");
     $options = $("<div class='options' style='display:none;'></div>");
-    selectedText = el.find('option[selected]').size() ? el.find('option:selected').text() : el.find('option:first-child').text();
+    selectedText = this.fields[name].el.find('option[selected]').size() ? this.fields[name].el.find('option:selected').text() : this.fields[name].el.find('option:first-child').text();
     $selected = $("<div class='selected'>" + selectedText + "</div>");
-    if (el.find('option:selected').is(':first-child')) {
+    if (this.fields[name].el.find('option:selected').is(':first-child')) {
       $selected.addClass('default');
+    }
+    emptyOption = this.fields[name].el.find('option').not('option[value]');
+    if (this.fields[name].rules.required && emptyOption.size()) {
+      if (typeof this.fields[name].rules.required === 'boolean') {
+        this.fields[name].rules = {
+          required: {
+            not: this.trim(emptyOption.text())
+          }
+        };
+      } else if (!this.fields[name].rules.required.not) {
+        this.fields[name].rules.required.not = this.trim(emptyOption.text());
+      }
     }
     $select.append($selected);
     $select.append($options);
-    el.after($select);
+    this.fields[name].el.after($select);
     this.fields[name].sel = $select;
     selectClose = false;
     $select.mouseover(function() {
@@ -337,7 +345,7 @@ Form = (function() {
         return $options.show();
       }
     });
-    el.find('option').each(function() {
+    this.fields[name].el.find('option').each(function() {
       var $option;
       if ($(this).attr('value')) {
         $option = $("<div class='option' data-value='" + ($(this).attr('value')) + "'><span>" + ($(this).text()) + "</span></div>");
@@ -382,7 +390,7 @@ Form = (function() {
         opt.el.removeClass(this.classes.placeholderClass);
       }
     }
-    this.form.trigger(name, [
+    this.fields[name].el.trigger('change', [
       {
         name: name,
         val: val
@@ -443,9 +451,6 @@ Form = (function() {
         sel.eq(0).addClass('checked');
       }
     }
-    if (this.logs) {
-      console.log("[Form: " + this.formName + "] set", name + ': ' + val);
-    }
   };
 
   Form.prototype.get = function(name) {
@@ -472,7 +477,7 @@ Form = (function() {
       if (opt.autoErrors) {
         self.form.find('.' + self.classes.errorClass + name).empty();
       }
-      if (opt.rules) {
+      if (!self.isEmpty(opt.rules)) {
         ref = opt.rules;
         results = [];
         for (ruleName in ref) {
@@ -504,28 +509,25 @@ Form = (function() {
     self = this;
     console.groupCollapsed("[Form: " + this.formName + "] fail");
     $.each(this.fields, function(name, opt) {
+      var error, i, ref;
       if (self.errors[name]) {
         if (self.logs) {
           console.log(name + ': ', self.errors[name]);
         }
         opt.el.addClass(self.classes.errorFieldClass);
         opt.sel.addClass(self.classes.errorFieldClass);
-        return opt._onError(name, self.errors[name], function() {
-          var error, i, ref, results;
-          if (self.fields[name].autoErrors) {
-            if (self.fields[name].autoErrors === 'all') {
-              ref = self.errors[name];
-              results = [];
-              for (i in ref) {
-                error = ref[i];
-                results.push(self.form.find('.' + self.classes.errorClass + name).append(error + "<br/>"));
-              }
-              return results;
-            } else {
-              return self.form.find('.' + self.classes.errorClass + name).html(self.errors[name][0]);
+        if (self.fields[name].autoErrors) {
+          if (self.fields[name].autoErrors === 'all') {
+            ref = self.errors[name];
+            for (i in ref) {
+              error = ref[i];
+              self.form.find('.' + self.classes.errorClass + name).append(error + "<br/>");
             }
+          } else {
+            self.form.find('.' + self.classes.errorClass + name).html(self.errors[name][0]);
           }
-        });
+        }
+        return opt.onError(name, self.errors[name]);
       }
     });
     if (this.logs) {
@@ -537,13 +539,16 @@ Form = (function() {
 
   Form.prototype.success = function() {
     var name, ref, val;
-    console.groupCollapsed("[Form: " + this.formName + "] onSuccess");
+    console.groupCollapsed("[Form: " + this.formName + "] success");
     ref = this.data;
     for (name in ref) {
       val = ref[name];
       if (this.logs) {
         console.log(name, val);
       }
+    }
+    if (this.logs) {
+      console.log("data", this.data);
     }
     console.groupEnd();
     this.onSuccess(this.data);
@@ -556,8 +561,8 @@ Form = (function() {
     this.resetErorrs();
     $.each(this.fields, function(name, opt) {
       self.setVal(name, opt.originVal);
-      if (!self.options.fields[name]) {
-        return self["delete"](name);
+      if (self.fields[name]["new"]) {
+        return self.removeField(name);
       }
     });
     if (this.logs) {

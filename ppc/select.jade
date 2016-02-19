@@ -1,0 +1,162 @@
+
+head
+	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=no")
+
+	script
+		:coffee-script
+			port = 777
+			url  = "http://localhost:#{port}/livereload.js"
+			window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>')
+			console.debug "[LiveReload] #{url}"
+
+	script(type="text/javascript", src="http://code.jquery.com/jquery-1.12.0.min.js")
+	script(type="text/javascript", src="js/jquery.tinyscrollbar.min.js")
+
+	link(rel="stylesheet", type="text/css", href="css/normalize.css")
+
+	script(type="text/javascript", src="js/form.js")
+	link(rel="stylesheet", type="text/css", href="css/form.css")
+
+	script
+		:coffee-script
+			$ ->
+
+
+				window.formValidator = new Form
+
+					logs: true
+
+					formName: 'select'
+					formEl: '.form-1'
+					submitEl: '.submit a'
+
+					fieldsOptions:
+						rules:
+							required: true
+						
+					onInit: ->
+
+						@fields['dropdown'].onChange (val) ->
+							console.log val
+
+
+						scrollbars = {}
+
+						scroll = (el) =>
+
+							select 	= if el then el else @form.find('.select')
+							select.each ->
+
+								$select = $(@)
+
+								return if $select.find('.viewport').size()
+
+								selectName = $select.attr('data-name')
+
+								$selected = $select.find('.selected')
+								$options 	= $select.find('.options')
+								$options.wrapInner """
+									<div class="viewport"><div class="overview"></div></div>
+								"""
+								$options.prepend """
+									<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+								"""
+								scrollbars[selectName] = $options.tinyscrollbar({sizethumb: 40})
+								$selected.click -> scrollbars[selectName].tinyscrollbar_update()
+
+						scroll()
+
+
+					onSubmit: (data) ->
+						@form.find('.errors').empty()
+
+					onSuccess: (data) ->
+
+						@lockSubmit()
+						@showPreloader()
+
+						# API.success ->
+						# @unlockSubmit()
+						# @hidePreloader()
+
+					onFail: (errors) ->
+
+						@form.find('.errors').html "Исправьте ошибки в форме"
+
+
+				formValidator2 = new Form
+
+					logs: true
+
+					formName: 'select 2'
+					formEl: '.form-2'
+					submitEl: '.submit a'
+
+
+				window.reset = ->
+					formValidator.reset()
+
+				window.reset2 = ->
+					formValidator2.reset()
+
+				return
+
+body
+
+	.form.form-1
+
+		.field
+			.label dropdown
+			select(name="dropdown")
+				option() Выбрать
+				option(value="1") 1
+				option(value="2") 2
+				option(value="3") 3
+				option(value="4") 4
+				option(value="5") 5
+				option(value="6") 6
+			.error.error-dropdown
+
+		.field.error-list
+			.errors
+
+		.field
+
+			.reset
+				a(href="#" onclick="reset();return false") Сбросить
+			.submit
+				a(href="#"): span Отправить
+			.preloader
+				div
+				div
+				div
+
+	.form.form-2
+
+		.field
+			.label dropdown 2
+			select(name="dropdown-2")
+				option(selected=true) Выбрать
+				option(value="1") 1
+				option(value="2") 2
+				option(value="3") 3
+				option(value="4") 4
+				option(value="5") 5
+				option(value="6") 6
+			.error.error-dropdown-2
+
+		.field.error-list
+			.errors
+
+		.field
+
+			.reset
+				a(href="#" onclick="reset2();return false") Сбросить
+			.submit
+				a(href="#"): span Отправить
+			.preloader
+				div
+				div
+				div
+
+

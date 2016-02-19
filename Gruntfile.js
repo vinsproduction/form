@@ -93,11 +93,18 @@ module.exports = function(grunt) {
 			
 		},
 	});
-	
 
+	
 	grunt.file.expand('node_modules/grunt-*/tasks').forEach(grunt.loadTasks);
 
-	grunt.registerTask('default', ['coffee', 'stylus', 'jade', 'uglify', 'watch']);
+	grunt.registerTask('server', 'Start web server', function() {
+		port = 8888
+		grunt.log.writeln('SERVER started on port ' + port);
+		require('./server/server.js')(port)
+	});
+
+
+	grunt.registerTask('default', ['server','coffee', 'stylus', 'jade', 'uglify', 'watch']);
 
 
 };

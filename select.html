@@ -1,0 +1,152 @@
+
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=no"/>
+  <script>(function() {
+  var port, url;
+
+  port = 777;
+
+  url = "http://localhost:" + port + "/livereload.js";
+
+  window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>');
+
+  console.debug("[LiveReload] " + url);
+
+}).call(this);
+
+  </script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.0.min.js"></script>
+  <script type="text/javascript" src="js/jquery.tinyscrollbar.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/normalize.css"/>
+  <script type="text/javascript" src="js/form.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/form.css"/>
+  <script>(function() {
+  $(function() {
+    var formValidator2;
+    window.formValidator = new Form({
+      logs: true,
+      formName: 'select',
+      formEl: '.form-1',
+      submitEl: '.submit a',
+      fieldsOptions: {
+        rules: {
+          required: true
+        }
+      },
+      onInit: function() {
+        var scroll, scrollbars;
+        this.fields['dropdown'].onChange(function(val) {
+          return console.log(val);
+        });
+        scrollbars = {};
+        scroll = (function(_this) {
+          return function(el) {
+            var select;
+            select = el ? el : _this.form.find('.select');
+            return select.each(function() {
+              var $options, $select, $selected, selectName;
+              $select = $(this);
+              if ($select.find('.viewport').size()) {
+                return;
+              }
+              selectName = $select.attr('data-name');
+              $selected = $select.find('.selected');
+              $options = $select.find('.options');
+              $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
+              $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
+              scrollbars[selectName] = $options.tinyscrollbar({
+                sizethumb: 40
+              });
+              return $selected.click(function() {
+                return scrollbars[selectName].tinyscrollbar_update();
+              });
+            });
+          };
+        })(this);
+        return scroll();
+      },
+      onSubmit: function(data) {
+        return this.form.find('.errors').empty();
+      },
+      onSuccess: function(data) {
+        this.lockSubmit();
+        return this.showPreloader();
+      },
+      onFail: function(errors) {
+        return this.form.find('.errors').html("Исправьте ошибки в форме");
+      }
+    });
+    formValidator2 = new Form({
+      logs: true,
+      formName: 'select 2',
+      formEl: '.form-2',
+      submitEl: '.submit a'
+    });
+    window.reset = function() {
+      return formValidator.reset();
+    };
+    window.reset2 = function() {
+      return formValidator2.reset();
+    };
+  });
+
+}).call(this);
+
+  </script>
+</head>
+<body>
+  <div class="form form-1">
+    <div class="field">
+      <div class="label">dropdown</div>
+      <select name="dropdown">
+        <option>Выбрать</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+      </select>
+      <div class="error error-dropdown"></div>
+    </div>
+    <div class="field error-list">
+      <div class="errors"></div>
+    </div>
+    <div class="field">
+      <div class="reset"><a href="#" onclick="reset();return false">Сбросить</a></div>
+      <div class="submit"><a href="#"><span>Отправить</span></a></div>
+      <div class="preloader">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+  <div class="form form-2">
+    <div class="field">
+      <div class="label">dropdown 2</div>
+      <select name="dropdown-2">
+        <option selected="selected">Выбрать</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+      </select>
+      <div class="error error-dropdown-2"></div>
+    </div>
+    <div class="field error-list">
+      <div class="errors"></div>
+    </div>
+    <div class="field">
+      <div class="reset"><a href="#" onclick="reset2();return false">Сбросить</a></div>
+      <div class="submit"><a href="#"><span>Отправить</span></a></div>
+      <div class="preloader">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</body>

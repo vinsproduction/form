@@ -19,35 +19,34 @@ head
 	script
 		:coffee-script
 			$ ->
-				$form = $('.form')
 
 				fields = 
 
 					'email':
 						rules:
-							required: true
 							email: true
 
-					'password':
-						escape: true
-						rules:
-							required: true
 
 				formValidator = new Form
 
 					logs: true
-			
+
 					formName: 'login'
-					formEl: $form
-					submitEl: $form.find('.submit a')
+					formEl: '.form'
+					submitEl: '.submit a'
+
+					autoFields: true
 					fields: fields
+
 					fieldsOptions:
 						escape: true
+						rules:
+							required: true
 
 					onInit: ->
 					onSubmit: (data) ->
 
-						$form.find('.errors').empty()
+						@form.find('.errors').empty()
 
 					onSuccess: (data) ->
 
@@ -60,7 +59,7 @@ head
 
 					onFail: (errors) ->
 
-						$form.find('.errors').html "Исправьте ошибки в форме"
+						@form.find('.errors').html "Исправьте ошибки в форме"
 
 
 				return

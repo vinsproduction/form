@@ -45,7 +45,7 @@ formValidator = new Form
 			.error (res) -> console.error res
 			.success (res) ->
 				@unlockSubmit()
-		  		@hidePreloader()
+				@hidePreloader()
 	
 	onFail: (errors) ->
 		$form.find('.errors').html "Исправьте ошибки в форме"
@@ -111,6 +111,15 @@ formValidator = new Form
 
 	formEl: '.form' # Элемент формы (Класс или элемент DOM)
 	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
+
+	###
+	autoFields
+	Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
+	Если false - обрабатываться будут только указанные поля!
+	По умолчанию - true
+	###
+
+	@autoFields = true
 	
 	fields: fields # Проверяемые поля
 	fieldsOptions: fieldsOptions # Настройки полей
@@ -198,11 +207,6 @@ formValidator.addRule
 	
 ## Методы формы
 
-Сброс формы
-```
-formValidator.reset()
-```
-
 Событие - инициализация формы
 ```
 formValidator.onInit ->
@@ -229,11 +233,16 @@ formValidator.onFail (errors) ->
 formValidator.onReset: ->
 ```
 
+Сброс формы
+```
+formValidator.reset()
+```
+
 ## Методы полей формы
 
 Добавление поля
 ```
-formValidator.add 'название поля',
+formValidator.addField 'название поля',
 	rules:
 		required: true
 
@@ -241,23 +250,23 @@ formValidator.add 'название поля',
 
 Удаление поля
 ```
-formValidator.delete 'название поля'
+formValidator.removeField 'название поля'
 
 ```
 
-Изменение значение поля
+Следить за изменениями поля
 ```
-formValidator.onChange 'название поля', (v) ->
+formValidator.fields['название поля'].onChange (v) ->
 ```
 
 Установка значения поля
 ```
-formValidator.set('название поля', 2)
+formValidator.fields['название поля'].val('значение')
 ```
 
 Получение значения поля
 ```
-formValidator.get('название поля')
+formValidator.fields['название поля'].val()
 ```
 
 

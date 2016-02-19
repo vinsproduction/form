@@ -19,7 +19,6 @@ head
 	script
 		:coffee-script
 			$ ->
-				$form = $('.form')
 
 				fields = 
 
@@ -39,7 +38,7 @@ head
 						rules:
 							required: true
 							compare:
-								val: -> $form.find('input[name="password"]').val()
+								val: -> formValidator.get('password')
 
 					'email':
 						rules:
@@ -55,8 +54,8 @@ head
 					logs: true
 			
 					formName: 'registration'
-					formEl: $form
-					submitEl: $form.find('.submit a')
+					formEl: '.form'
+					submitEl: '.submit a'
 					fields: fields
 					fieldsOptions:
 						escape: true
@@ -64,7 +63,7 @@ head
 					onInit: ->
 					onSubmit: (data) ->
 
-						$form.find('.errors').empty()
+						@form.find('.errors').empty()
 
 					onSuccess: (data) ->
 
@@ -77,7 +76,7 @@ head
 
 					onFail: (errors) ->
 
-						$form.find('.errors').html "Исправьте ошибки в форме"
+						@form.find('.errors').html "Исправьте ошибки в форме"
 
 				return
 
