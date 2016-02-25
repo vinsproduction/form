@@ -340,7 +340,6 @@ Form = (function() {
     optionsTemplate = "<div class=\"options\" style=\"display:none;\"></div>";
     optionTemplate = "<div class=\"option\"><span>{text}</span></div>";
     if (change) {
-      console.log(this.fields[name].val());
       this.fields[name].sel.find('[data-selected]').html(this.fields[name].sel.find("[data-option][data-val='" + (this.fields[name].val()) + "']").html());
       if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === this.fields[name].el.val()) {
         this.fields[name].sel.find('[data-selected]').addClass('default');

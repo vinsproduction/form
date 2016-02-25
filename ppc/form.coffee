@@ -355,8 +355,6 @@ class Form
 
 		if change
 
-			console.log @fields[name].val()
-
 			@fields[name].sel.find('[data-selected]').html @fields[name].sel.find("[data-option][data-val='#{@fields[name].val()}']").html()
 
 			if @fields[name].defaultStyle and @fields[name].defaultStyle is @fields[name].el.val()
