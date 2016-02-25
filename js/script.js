@@ -23,9 +23,18 @@ $(function() {
   $form = $('.form');
   fields = {
     'checkbox_1': {
+      name: 'checkbox new',
       rules: {
         required: false,
         alpha: true
+      }
+    },
+    'dropdown': {
+      defaultStyle: 'Выбрать',
+      rules: {
+        required: {
+          not: 'Выбрать'
+        }
       }
     }
   };
@@ -52,6 +61,12 @@ $(function() {
     onInit: function() {
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
+      this.form.on('formChange', function() {
+        return console.log('form change');
+      });
+      this.fields['dropdown'].el.on('change', function() {
+        return console.log('dropdown change');
+      });
       window.scrollbars = {};
       window.scroll = function(el) {
         var select;
@@ -102,12 +117,18 @@ $(function() {
     clone.show();
     clone.addClass('new');
     $form.find('.error-list').before(clone);
+    formValidator.form.on('formChange', function() {
+      return console.log('form change 2');
+    });
     formValidator.addField(fieldName, {
       rules: {
         required: {
           reason: 'Своя ошибка'
         }
       }
+    });
+    formValidator.fields[fieldName].el.on('change', function(e, v) {
+      return console.log('change', v.val);
     });
     return window.scroll();
   };

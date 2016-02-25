@@ -67,6 +67,7 @@ $ ->
 		# 		required: true
 
 		'checkbox_1':
+			name: 'checkbox new'
 			rules:
 				required: false
 				alpha: true
@@ -74,18 +75,17 @@ $ ->
 			# 	console.log 22
 
 
-		# 'checkbox_2':
-		# 	rules:
-		# 		required: true
+		# 'checkbox_2': false
 
 		# 'radiobutton':
 		# 	rules:
 		# 		required: true
 
-		# 'dropdown':
-		# 	rules:
-		# 		required:
-		# 			not: 'Выбрать'
+		'dropdown':
+			defaultStyle: 'Выбрать'
+			rules:
+				required:
+					not: 'Выбрать'
 
 
 	fieldsOptions = 
@@ -121,34 +121,13 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-			# @add 'dropdown-2',
-			# 	rules:
-			# 		required:
-			# 			not: 'Выбрать'
 
+			@form.on 'formChange', ->
+				console.log 'form change'
 
-			# setTimeout(=>
-			# 	@delete('dropdown-2')
-			# ,2000)
+			@fields['dropdown'].el.on 'change', ->
+				console.log 'dropdown change'
 
-
-			# @onChange 'dropdown', (v) =>
-			# 	@set('dropdown-2', 3)
-
-			# @onChange 'checkbox_1', (v) ->
-			# 	console.log v
-
-			# @get('login')
-
-
-			# @set('dropdown', 2)
-			# @set('checkbox_1',false)
-			# @set('checkbox_2',true)
-
-			# @get('checkbox_2')
-
-			# @set('radiobutton',2)
-			# @set('text','тест')
 
 			# Скролл бар
 
@@ -222,10 +201,20 @@ $ ->
 
 		$form.find('.error-list').before clone
 
+		formValidator.form.on 'formChange', ->
+			console.log 'form change 2'
+
 		formValidator.addField fieldName,
 			rules:
 				required:
 					reason: 'Своя ошибка'
+
+		formValidator.fields[fieldName].el.on 'change', (e,v) ->
+			console.log 'change',v.val
+
+		
+
+
 
 		window.scroll()
 

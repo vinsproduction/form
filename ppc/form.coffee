@@ -5,6 +5,15 @@ class Form
 
 	constructor: (@params={}) ->
 
+		if !window.console
+			window.console = {}
+
+		if !window.console.groupCollapsed
+			window.console.groupCollapsed = () ->
+
+		if !window.console.groupEnd
+			window.console.groupEnd = ->
+
 		self = @
 
 		@logs = false
@@ -30,7 +39,7 @@ class Form
 			disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
 			placeholderClass: "placeholder"
 			errorFieldClass: "error-field" # Стиль ошибки поля
-			errorClass: "error-" # Класс элемента вывода ошибки поля
+			errorClass: "error" # Класс элемента вывода ошибки поля
 			preloaderClass: "preloader" # Класс прелоадера формы
 
 		@fields = {}
@@ -43,10 +52,7 @@ class Form
 			escape: false # Очищать инпут от тегов в отправке
 			rules: {}
 			onError: (fieldName, errors) ->
-			onChange: (callback) ->
-				@el.on 'change', (e,v) ->
-					callback(v.val)
-
+	
 		@data = {}
 		@errors = {}
 
@@ -80,7 +86,10 @@ class Form
 			if self.autoFields
 				self.form.find('[name]').each ->
 					name = $(@).attr('name')
-					self.fields[name] = if self.params.fields and self.params.fields[name] then self.params.fields[name] else {}
+					if self.params.fields and self.params.fields[name] is false
+						delete self.fields[name]
+					else
+						self.fields[name] = if self.params.fields and self.params.fields[name] then self.params.fields[name] else {}
 
 			do self.init
 
@@ -100,7 +109,10 @@ class Form
 		@form.mouseover -> self.form.inFocus = true
 		@form.mouseout  -> self.form.inFocus = false
 
-		@lockSubmit() if @params.disableSubmit
+		if @params.disableSubmit
+			@lockSubmit() 
+		else
+			@unlockSubmit()
 
 		@submitBtn.click ->
 			self.submit() if !self.disableSubmit
@@ -118,10 +130,40 @@ class Form
 			@classes
 		}
 
+		@form.find('[data-field]').each ->
+
+			name = $(@).attr('data-field')
+
+			$(@).removeClass(self.classes.errorFieldClass)
+
+			if self.fields[name].autoErrors
+				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
+
+		@form.on 'style', '[data-field]', ->
+
+			name = $(@).attr('data-field')
+
+			self.fields[name].sel.removeClass(self.classes.errorFieldClass)
+
+			if self.fields[name].autoErrors
+				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
+
+		@form.on 'click', '[data-field]', ->
+
+			name = $(@).attr('data-field')
+
+			if self.fields[name].clearErrorsInFocus
+				$(@).removeClass(self.classes.errorFieldClass)
+
+			if self.fields[name].autoErrors
+				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
 
 		console.log("[Form: #{@formName}] init",opts) if self.logs
 		
 		do @onInit
+		
+		$.each @fields, (name) -> 
+			self.fields[name].el.trigger('style') if self.fields[name].style
 
 		return
 
@@ -138,73 +180,57 @@ class Form
 		@fields[name] = $.extend(true, {}, @fieldsOptions, @fields[name])
 
 		@fields[name].el = el
-		@fields[name].sel = el
-
-		if isNew
-			@fields[name].new = true
+		@fields[name].sel = $([])
 
 		@fields[name].el.unbind()
 
+		@fields[name].el.attr('data-field',name)
+
+		@fields[name].new = true if isNew
+		
 		@fields[name].val = (val) ->
-			if val
-				self.set(name, val)
+			if val?
+				self.setVal(name, val)
 				return
 			else 
-				return self.get(name)
+				return self.getVal(name)
 
 		if @fields[name].el.is("select")
 
 			@fields[name].type = 'select'
-
-			if @fields[name].style 
-				@createSelect(name)
-				@fields[name].el.change -> self.createSelect(name,true)
+			@fields[name].el.on 'change', -> self.createSelect(name,true)
+			@fields[name].el.on 'style', -> self.createSelect(name)
 
 		else if @fields[name].el.attr('type') is 'radio'
 
 			@fields[name].type = 'radio'
-
-			if @fields[name].style
-				@createRadio(name)
+			@fields[name].el.on 'change', -> self.createRadio(name, true)
+			@fields[name].el.on 'style', -> self.createRadio(name)
 
 		else if @fields[name].el.attr('type') is 'checkbox'
 			@fields[name].type = 'checkbox'
-
-			if @fields[name].style
-				@createCheckbox(name)
+			@fields[name].el.on 'change', -> self.createCheckbox(name,true)
+			@fields[name].el.on 'style', -> self.createCheckbox(name)
 
 		else if @fields[name].el.is("textarea")
 			@fields[name].type = 'textarea'
+			@fields[name].style = false
 
 		else
 			@fields[name].type = 'text'
+			@fields[name].style = false
 
-		if @fields[name].type in ['checkbox','radio']
-			@fields[name].originVal = @fields[name].el.filter(":checked").val() or false
 
-		else
-			@fields[name].originVal = @fields[name].el.val()
+		if @fields[name].style
+			@fields[name].stylize = ->
+				self.fields[name].el.trigger('style')
 
+		@fields[name].originVal = @fields[name].val()
 
 		if @fields[name].placeholder and (@fields[name].type in ['text','textarea'])
 			@placeholder(@fields[name].el,@fields[name].placeholder)
 
 		@fields[name].el.focus() if @fields[name].focus
-
-		@fields[name].el.removeClass(@classes.errorFieldClass)
-		@fields[name].sel.removeClass(@classes.errorFieldClass)
-
-		if @fields[name].autoErrors
-			@form.find('.' + @classes.errorClass + name).empty()
-
-		@fields[name].sel.click ->
-
-			if self.fields[name].clearErrorsInFocus
-				self.fields[name].el.removeClass(self.classes.errorFieldClass)
-				self.fields[name].sel.removeClass(self.classes.errorFieldClass)
-
-			if self.fields[name].autoErrors
-				self.form.find('.' + self.classes.errorClass + name).empty()
 
 
 		return
@@ -214,13 +240,15 @@ class Form
 		@fields[name] = opt
 		@initField(name,true)
 
+		@fields[name].el.trigger('style') if @fields[name].style
+
 		console.log("[Form: #{@formName}] add", name) if @logs
 
 		return
 
 	removeField: (name) ->
 
-		@fields[name].sel.remove()
+		@fields[name].sel.remove() if @fields[name].sel
 		@fields[name].el.show() if @fields[name].style
 
 		console.log("[Form: #{@formName}] delete", name) if @logs
@@ -229,70 +257,88 @@ class Form
 
 		return
 
-	createCheckbox: (name) ->
+	createCheckbox: (name,change) ->
+
+		self = @
+
+		checkboxTemplate = """<div class="checkbox"></div>"""
 
 		@fields[name].el.hide()
 
-		value = @fields[name].el.attr('value')
+		if change
 
-		self = @
-
-		@form.find(".checkbox[data-name=#{name}][data-value=#{value}]").remove() if @form.find(".checkbox[data-name=#{name}][data-value=#{value}]").size()
-
-		@fields[name].el.click ->
-			if !$(@).is(':checked')
-				self.form.find(".checkbox[data-name=#{name}]").removeClass 'checked'
+			if @fields[name].val()
+				@fields[name].sel.attr('data-checked','data-checked')
 			else
-				self.form.find(".checkbox[data-name=#{name}]").addClass 'checked'
+				@fields[name].sel.removeAttr('data-checked')
 
-		$checkbox = $("<div class='checkbox' data-name='#{name}' data-value='#{value}'></div>")
+		else
 
-		$checkbox.addClass 'checked' if @fields[name].el.attr('checked')
+			@form.find("[data-checkbox][data-name='#{name}']").remove()
 
-		@fields[name].el.after $checkbox
+			val = @fields[name].el.attr('value')
 
-		@fields[name].sel = $checkbox
+			$checkbox = $(checkboxTemplate)
+			$checkbox.attr('data-field',name)
+			$checkbox.attr('data-checkbox','data-checkbox')
+			$checkbox.attr('data-name',name)
+			$checkbox.attr('data-value',val)
 
-		$checkbox.click ->
-			if self.fields[name].el.is(':checked')
-				$(@).removeClass 'checked'
-				self.setVal(name, false)
-			else
-				$(@).addClass 'checked'
-				self.setVal(name, value)
+			@fields[name].sel = $checkbox
+
+			@fields[name].el.after $checkbox
+
+			$checkbox.attr('data-checked','data-checked') if @fields[name].el.attr('checked')
+
+			$checkbox.click ->
+				if self.fields[name].el.is(':checked')
+					self.setVal(name, false)
+				else
+					self.setVal(name, val)
 
 		return
 
-	createRadio: (name) ->
+	createRadio: (name,change) ->
 
 		self = @
 
-		@fields[name].el.each ->
+		radioTemplate = """<div class="radio"></div>"""
 
-			el = $(this)
+		if change
 
-			el.hide()
+			@fields[name].sel.removeAttr('data-checked')
+			@fields[name].sel.filter("[data-value='#{@fields[name].val()}']").attr('data-checked','data-checked')
 
-			value = el.attr('value')
+		else
 
-			self.form.find(".radio[data-name=#{name}][data-value=#{value}]").remove() if self.form.find(".radio[data-name=#{name}][data-value=#{value}]").size()
+			@form.find("[data-radio][data-name='#{name}']").remove()
 
-			el.click ->
-				self.form.find(".radio[data-name=#{name}]").removeClass 'checked'
-				self.form.find(".radio[data-name=#{name}][data-value=#{value}]").addClass 'checked'
+			@fields[name].sel = $([])
 
-			$radio 	= $("<div class='radio' data-name='#{name}' data-value='#{value}'></div>")
+			@fields[name].el.each ->
 
-			$radio.addClass 'checked' if el.attr('checked')
+				el = $(@)
 
-			el.after $radio
+				el.hide()
 
-			self.fields[name].sel = self.form.find("[data-name='#{name}']")
+				val = el.attr('value')
 
-			$radio.click ->
-				self.form.find(".radio[data-name=#{name}]").removeClass 'checked'
-				$(@).addClass 'checked'
-				self.setVal(name, value)
+				$radio 	= $(radioTemplate)
+
+				$radio.attr('data-field',name)
+				$radio.attr('data-radio','data-radio')
+				$radio.attr('data-name',name)
+				$radio.attr('data-value',val)
+
+				$radio.attr('data-checked','data-checked') if el.attr('checked')
+
+				self.fields[name].sel = self.fields[name].sel.add($radio)
+
+				el.after $radio
+
+				$radio.click ->
+					self.setVal(name, val)
+
 
 		return
 
@@ -302,90 +348,102 @@ class Form
 
 		self = @
 
+		selectTemplate = """<div class="select"></div>"""
+		selectedTemplate = """<div class="selected"><span>{selected}</span></div>"""
+		optionsTemplate = """<div class="options" style="display:none;"></div>"""
+		optionTemplate = """<div class="option"><span>{text}</span></div>"""
+
 		if change
-			@fields[name].sel.find('.selected').html @fields[name].el.val()
+
+			console.log @fields[name].val()
+
+			@fields[name].sel.find('[data-selected]').html @fields[name].sel.find("[data-option][data-val='#{@fields[name].val()}']").html()
+
+			if @fields[name].defaultStyle and @fields[name].defaultStyle is @fields[name].el.val()
+				@fields[name].sel.find('[data-selected]').addClass('default')
+			else
+				@fields[name].sel.find('[data-selected]').removeClass('default')
 			
-			if @fields[name].el.val() isnt @fields[name].el.find('option:first-child').text()
-				@fields[name].sel.find('.selected').removeClass('default')
-			
+		else
+
+			@form.find("[data-select][data-name='#{name}']").remove()
+
+			$select  = $(selectTemplate)
+			$select.attr('data-field', name)
+			$select.attr('data-select', 'data-select')
+			$select.attr('data-name', name)
+
+			if @fields[name].el.find('option[selected]').size()
+				selectedText 	= @fields[name].el.find('option:selected').text()
 			else
-				@fields[name].sel.find('.selected').addClass('default')
-			
-			return
+				selectedText 	= @fields[name].el.find('option:first-child').text()
 
-		@form.find(".select[data-name='#{name}']").remove() if @form.find(".select[data-name='#{name}']").size()
+			selectedTemplate = selectedTemplate.replace('{selected}',selectedText)
+			$selected = $(selectedTemplate)
+			$selected.attr('data-selected','data-selected')
 
-		$select 	= $("<div class='select' data-name='#{name}'></div>")
-		$options 	= $("<div class='options' style='display:none;'></div>")
+			$options = $(optionsTemplate)
+			$options.attr('data-options','data-options')
 
-		selectedText 	= if @fields[name].el.find('option[selected]').size()
-				@fields[name].el.find('option:selected').text()
-			else
-				@fields[name].el.find('option:first-child').text()
+			$select.append $selected
+			$select.append $options
 
-		$selected = $("<div class='selected'>#{selectedText}</div>")
+			@fields[name].el.after $select
+			@fields[name].sel = $select
 
-		if @fields[name].el.find('option:selected').is(':first-child')
-			$selected.addClass 'default'
-
-		emptyOption = @fields[name].el.find('option').not('option[value]')
-
-		if @fields[name].rules.required and emptyOption.size()
-
-			if typeof @fields[name].rules.required is 'boolean'
-				@fields[name].rules = 
-					required:
-						not: @trim(emptyOption.text())
-
-			else if !@fields[name].rules.required.not
-				@fields[name].rules.required.not = @trim(emptyOption.text())
-
-		$select.append $selected
-		$select.append $options
-
-		@fields[name].el.after $select
-		@fields[name].sel = $select
-
-		selectClose = false
-
-		$select.mouseover -> selectClose = false
-		$select.mouseout  -> selectClose = true
-
-		$(document).click ->
-			if selectClose
-				$select.removeClass('open')
-				$options.hide()
-
-		$selected.click ->
-			if $select.hasClass('open')
-				$select.removeClass('open')
-				$options.hide()
-			else
-				$select.addClass('open')
-				$options.show()
-
-		@fields[name].el.find('option').each ->
-
-			if $(@).attr('value')
-				$option = $("<div class='option' data-value='#{$(@).attr('value')}'><span>#{$(@).text()}</span></div>")
-			else
-				$option = $("<div class='option'><span>#{$(@).text()}</span></div>")
-
-			$option.click =>
-	
-				if $(@).attr('value')
-					self.setVal(name, $(@).attr('value'))
-					$selected.removeClass 'default'
+			$selected.click ->
+				if $select.hasClass('open')
+					$select.removeClass('open')
+					$options.hide()
 				else
-					self.setVal(name,self.fields[name].originVal)
-					$selected.addClass 'default'
+					$select.addClass('open')
+					$options.show()
 
-				$select.find('.selected').html($(@).text())
+			if @fields[name].defaultStyle and @fields[name].defaultStyle is selectedText
+				$selected.addClass 'default'
 
-				$select.removeClass('open')
-				$options.hide()
+			selectClose = true
+			$select.mouseover -> selectClose = false
+			$select.mouseout  -> selectClose = true
 
-			$options.append $option
+			$(window).click ->
+				if selectClose
+					$select.removeClass('open')
+					$options.hide()
+
+			@fields[name].el.find('option').each ->
+
+				if !$(@).attr('value') || self.isEmpty($(@).attr('value'))
+					$(@).attr('value', $(@).text())
+
+				val = $(@).attr('value')
+
+				text = $(@).text()
+
+				option = optionTemplate.replace('{text}',text)
+				$option = $(option)
+				$option.attr('data-option', 'data-option')
+				$option.attr('data-val', val)
+
+				if $(@).is(':first-child')
+					$option.attr('data-checked','data-checked')
+
+				$option.click ->
+
+					self.setVal(name,$(@).attr('data-val'))
+
+					$options.find('[data-option]').removeAttr('data-checked')
+					$(@).attr('data-checked','data-checked')
+
+					if self.fields[name].defaultStyle and self.fields[name].defaultStyle is $(@).attr('data-val')
+						$selected.addClass 'default'
+					else
+						$selected.removeClass 'default'
+
+					$select.removeClass('open')
+					$options.hide()
+
+				$options.append $option
 
 		return
 
@@ -408,11 +466,12 @@ class Form
 
 		if opt.placeholder and opt.type in ['text','textarea']
 			if val in ["",opt.placeholder]
-				@placeholder(opt.el,opt.placeholder)
+				@placeholder(opt.el,opt.el.placeholder)
 			else
 				opt.el.removeClass(@classes.placeholderClass)
 
-		@fields[name].el.trigger('change',[{name,val}])
+
+		opt.el.trigger('change',[{name,val,el:opt.el}])
 
 		return
 
@@ -421,56 +480,15 @@ class Form
 		opt = @fields[name]
 
 		if opt.type in ['checkbox','radio']
-			val = opt.el.filter(":checked").val() or false
+			val = opt.el.filter(":checked").val() || false
 
 		else if opt.type is 'select'
 			val = opt.el.val()
 
 		else
-			opt.el.val @trim(opt.el.val())
 
-			opt.el.val @stripHTML(opt.el.val()) if opt.escape
 			val = @trim(opt.el.val())
-
-			#if placeholder
 			val = "" if opt.placeholder and (val is opt.placeholder)
-
-		return val
-
-	set: (name,val=false) ->
-
-		return if !@fields[name]
-
-		el   = @fields[name].el
-		sel  = @fields[name].sel
-
-		@setVal(name,val)
-
-		if @fields[name].type is 'select'
-			if !val
-				val = el.find('option').eq(0).val()
-			el.trigger('change')
-
-		if @fields[name].type is 'checkbox'
-			if val
-				sel.addClass('checked')
-			else
-				sel.removeClass('checked')
-
-		if @fields[name].type is 'radio'
-			sel.removeClass('checked')
-			if val
-				sel.filter("[data-value='#{val}']").addClass 'checked'
-			else
-				val = el.eq(0).val()
-				sel.eq(0).addClass 'checked'
-
-
-		return
-
-	get: (name) ->
-
-		val = @getVal(name)
 
 		return val
 
@@ -481,21 +499,28 @@ class Form
 		do @resetData
 		do @resetErorrs
 
+		data = {} # для отправки данных
+
 		console.groupCollapsed("[Form: #{@formName}] submit")
 
 		$.each @fields, (name, opt) ->
 
 			val = self.getVal(name)
 
+			if opt.name
+				data[opt.name] = if opt.escape then self.escapeText(val) else val
+			else
+				data[name] = if opt.escape then self.escapeText(val) else val
+
 			self.setData(name,val)
 
 			console.log(name + ': ' + val) if self.logs
 
 			opt.el.removeClass(self.classes.errorFieldClass)
-			opt.sel.removeClass(self.classes.errorFieldClass)
+			opt.sel.removeClass(self.classes.errorFieldClass) if opt.sel
 
 			if opt.autoErrors
-				self.form.find('.' + self.classes.errorClass + name).empty()
+				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
 
 			if !self.isEmpty(opt.rules)
 				for ruleName,rule of opt.rules
@@ -503,11 +528,11 @@ class Form
 					if !valid.state
 						self.setError(name,valid.reason)
 
-		console.log("data",@data) if @logs
+		console.log("data",data) if @logs
 
 		console.groupEnd()
 
-		@onSubmit(@data)
+		@onSubmit(data)
 
 		if @isEmpty(@errors)
 			do @success
@@ -528,14 +553,15 @@ class Form
 				console.log(name + ': ', self.errors[name]) if self.logs
 
 				opt.el.addClass(self.classes.errorFieldClass)
-				opt.sel.addClass(self.classes.errorFieldClass)
+				opt.sel.addClass(self.classes.errorFieldClass) if opt.sel
 
 				if self.fields[name].autoErrors
 					if self.fields[name].autoErrors is 'all'
 						for i,error of self.errors[name]
-							self.form.find('.' + self.classes.errorClass + name).append(error + "<br/>")
+							self.form.find('.' + self.classes.errorClass + '-' + name).append(error + "<br/>")
 					else
-						self.form.find('.' + self.classes.errorClass + name).html(self.errors[name][0])
+						self.form.find('.' + self.classes.errorClass + '-' + name).html(self.errors[name][0])
+
 
 				opt.onError(name, self.errors[name])
 
@@ -570,6 +596,7 @@ class Form
 		do @resetErorrs
 
 		$.each @fields, (name, opt) ->
+
 			self.setVal(name,opt.originVal)
 
 			if self.fields[name].new
@@ -761,6 +788,8 @@ class Form
 
 			return valid
 
+		console.log("[Form: #{@formName}] add rule", opt)
+
 
 	### HELPERS ###
 
@@ -774,8 +803,15 @@ class Form
 				newArgs.push argument
 			console.log.apply(console,newArgs)
 
-	trim: (text="") -> text.replace(/^\s+|\s+$/g, '')
-	stripHTML: (text="") -> text.replace(/<(?:.|\s)*?>/g, '')
+	trim: (text="") ->
+		return text if !@isString(text)
+		text.replace(/^\s+|\s+$/g, '')
+	stripHTML: (text="") ->
+		return text if !@isString(text)
+		text.replace(/<(?:.|\s)*?>/g, '')
+	escapeText: (text="") ->
+		return text if !@isString(text)
+		text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 	isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
 	isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
 	isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
