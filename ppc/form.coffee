@@ -42,6 +42,15 @@ class Form
 			errorClass: "error" # Класс элемента вывода ошибки поля
 			preloaderClass: "preloader" # Класс прелоадера формы
 
+		@templates =
+			checkbox: """<div class="checkbox"></div>"""
+			radio: """<div class="radio"></div>"""
+			select:
+				select: """<div class="select"></div>"""
+				selected: """<div class="selected"><span>{selected}</span></div>"""
+				options: """<div class="options"></div>"""
+				option: """<div class="option"><span>{text}</span></div>"""
+
 		@fields = {}
 
 		@fieldsOptions =
@@ -261,9 +270,9 @@ class Form
 
 		self = @
 
-		checkboxTemplate = """<div class="checkbox"></div>"""
-
 		@fields[name].el.hide()
+
+		checkboxTemplate = @templates.checkbox
 
 		if change
 
@@ -302,7 +311,9 @@ class Form
 
 		self = @
 
-		radioTemplate = """<div class="radio"></div>"""
+		@fields[name].el.hide()
+
+		radioTemplate = @templates.radio
 
 		if change
 
@@ -344,14 +355,14 @@ class Form
 
 	createSelect: (name,change) ->
 
-		@fields[name].el.hide()
-
 		self = @
 
-		selectTemplate = """<div class="select"></div>"""
-		selectedTemplate = """<div class="selected"><span>{selected}</span></div>"""
-		optionsTemplate = """<div class="options" style="display:none;"></div>"""
-		optionTemplate = """<div class="option"><span>{text}</span></div>"""
+		@fields[name].el.hide()
+
+		selectTemplate 		= @templates.select.select
+		selectedTemplate 	= @templates.select.selected
+		optionsTemplate 	= @templates.select.options
+		optionTemplate 		= @templates.select.option
 
 		if change
 
@@ -382,6 +393,7 @@ class Form
 
 			$options = $(optionsTemplate)
 			$options.attr('data-options','data-options')
+			$options.hide()
 
 			$select.append $selected
 			$select.append $options
@@ -432,11 +444,6 @@ class Form
 
 					$options.find('[data-option]').removeAttr('data-checked')
 					$(@).attr('data-checked','data-checked')
-
-					if self.fields[name].defaultStyle and self.fields[name].defaultStyle is $(@).attr('data-val')
-						$selected.addClass 'default'
-					else
-						$selected.removeClass 'default'
 
 					$select.removeClass('open')
 					$options.hide()
@@ -521,10 +528,12 @@ class Form
 				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
 
 			if !self.isEmpty(opt.rules)
-				for ruleName,rule of opt.rules
-					valid = self.validate[ruleName](val, rule)
-					if !valid.state
-						self.setError(name,valid.reason)
+
+				$.each opt.rules, (ruleName,rule) ->
+					if rule
+						valid = self.validate[ruleName](val, rule)
+						if !valid.state
+							self.setError(name,valid.reason)
 
 		console.log("data",data) if @logs
 
@@ -733,8 +742,8 @@ class Form
 			rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
 
 			valid = 
-				state:  val.length <= rule.count ||  val == ""
-				reason: rule.reason || "Максимум #{rule.count} #{@declOfNum(rule.count, ['символ', 'символа', 'символов'])}"
+				state:  val.length <= (rule.count || rule) ||  val == ""
+				reason: rule.reason || "Максимум #{(rule.count || rule)} #{@declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
 
 			return valid
 
@@ -743,8 +752,8 @@ class Form
 			rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
 
 			valid = 
-				state: val.length >= rule.count ||  val == ""
-				reason: rule.reason || "Минимум #{rule.count} #{@declOfNum(rule.count, ['символ', 'символа', 'символов'])}"
+				state: val.length >= (rule.count || rule) ||  val == ""
+				reason: rule.reason || "Минимум #{(rule.count || rule)} #{@declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
 
 			return valid
 

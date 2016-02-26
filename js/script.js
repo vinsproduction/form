@@ -59,38 +59,31 @@ $(function() {
     fields: fields,
     fieldsOptions: fieldsOptions,
     onInit: function() {
+      var scroll, self;
+      self = this;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.form.on('formChange', function() {
-        return console.log('form change');
-      });
       this.fields['dropdown'].el.on('change', function() {
         return console.log('dropdown change');
       });
-      window.scrollbars = {};
-      window.scroll = function(el) {
-        var select;
-        select = el ? el : $form.find('.select');
-        return select.each(function() {
-          var $options, $select, $selected, selectName;
-          $select = $(this);
-          if ($select.find('.viewport').size()) {
-            return;
-          }
-          selectName = $select.attr('data-name');
-          $selected = $select.find('.selected');
-          $options = $select.find('.options');
-          $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
-          $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
-          scrollbars[selectName] = $options.tinyscrollbar({
-            sizethumb: 40
-          });
-          return $selected.click(function() {
-            return scrollbars[selectName].tinyscrollbar_update();
-          });
+      this.fields['dropdown'].el.on('style', function() {
+        console.log('dropdown style');
+        return scroll(self.fields['dropdown'].sel);
+      });
+      return scroll = function(el) {
+        var $options, $select, $selected, scrollbar;
+        $select = el;
+        $selected = $select.find('[data-selected]');
+        $options = $select.find('[data-options]');
+        $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
+        $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
+        scrollbar = $options.tinyscrollbar({
+          sizethumb: 44
+        });
+        $selected.click(function() {
+          return scrollbar.tinyscrollbar_update();
         });
       };
-      return window.scroll();
     },
     onSubmit: function(data) {
       return $form.find('.errors').empty();

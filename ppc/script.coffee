@@ -117,45 +117,37 @@ $ ->
 
 		onInit: ->
 
+			self = @
+
 			@fields['date'].el.datepicker()
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-
-			@form.on 'formChange', ->
-				console.log 'form change'
-
 			@fields['dropdown'].el.on 'change', ->
 				console.log 'dropdown change'
+
+			@fields['dropdown'].el.on 'style', ->
+				console.log 'dropdown style'
+				scroll(self.fields['dropdown'].sel)
 
 
 			# Скролл бар
 
-			window.scrollbars = {}
+			scroll = (el) ->
 
-			window.scroll = (el) ->
+				$select = el
 
-				select 	= if el then el else $form.find('.select')
-				select.each ->
-
-					$select = $(@)
-
-					return if $select.find('.viewport').size()
-
-					selectName = $select.attr('data-name')
-
-					$selected = $select.find('.selected')
-					$options 	= $select.find('.options')
-					$options.wrapInner """
-						<div class="viewport"><div class="overview"></div></div>
-					"""
-					$options.prepend """
-						<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
-					"""
-					scrollbars[selectName] = $options.tinyscrollbar({sizethumb: 40})
-					$selected.click -> scrollbars[selectName].tinyscrollbar_update()
-
-			window.scroll()
+				$selected = $select.find('[data-selected]')
+				$options 	= $select.find('[data-options]')
+				$options.wrapInner """
+					<div class="viewport"><div class="overview"></div></div>
+				"""
+				$options.prepend """
+					<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+				"""
+				scrollbar = $options.tinyscrollbar({sizethumb: 44})
+				$selected.click -> scrollbar.tinyscrollbar_update()
+				return
 
 		onSubmit: (data) ->
 

@@ -23,19 +23,9 @@
   $(function() {
     var fields, formValidator;
     fields = {
-      'firstname': {
-        rules: {
-          required: true
-        }
-      },
-      'lastname': {
-        rules: {
-          required: true
-        }
-      },
       'password': {
         rules: {
-          required: true
+          min: 3
         }
       },
       'password-confirmation': {
@@ -43,20 +33,14 @@
           required: true,
           compare: {
             val: function() {
-              return formValidator.get('password');
+              return formValidator.fields['password'].val();
             }
           }
         }
       },
       'email': {
         rules: {
-          required: true,
           email: true
-        }
-      },
-      'agree': {
-        rules: {
-          required: true
         }
       }
     };
@@ -65,20 +49,36 @@
       formName: 'registration',
       formEl: '.form',
       submitEl: '.submit a',
+      autoFields: true,
       fields: fields,
       fieldsOptions: {
-        escape: true
+        escape: true,
+        style: true,
+        autoErrors: true,
+        clearErrorsInFocus: true,
+        rules: {
+          required: true
+        }
       },
-      onInit: function() {},
+      onInit: function() {
+        var self;
+        return self = this;
+      },
       onSubmit: function(data) {
-        return this.form.find('.errors').empty();
+        var self;
+        self = this;
+        return self.form.find('.errors').empty();
       },
       onSuccess: function(data) {
-        this.lockSubmit();
-        return this.showPreloader();
+        var self;
+        self = this;
+        self.lockSubmit();
+        return self.showPreloader();
       },
       onFail: function(errors) {
-        return this.form.find('.errors').html("Исправьте ошибки в форме");
+        var self;
+        self = this;
+        return self.form.find('.errors').html("Исправьте ошибки в форме");
       }
     });
   });

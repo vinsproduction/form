@@ -157,7 +157,7 @@ body {
   background: #fff;
   cursor: pointer;
 }
-.form .field-group .checkbox.checked {
+.form .field-group .checkbox[data-checked] {
   background: url("../img/checked.png") no-repeat center center;
 }
 .form .field-group .checkbox.error-field {
@@ -176,7 +176,7 @@ body {
   background: #fff;
   cursor: pointer;
 }
-.form .field-group .radio.checked {
+.form .field-group .radio[data-checked] {
   background: url("../img/checked.png") no-repeat center center;
 }
 .form .field-group .radio.error-field {
@@ -270,6 +270,9 @@ body {
   bottom: -16px;
   left: 0;
 }
+.form .select .options .option[data-checked] {
+  color: #a4a4a4;
+}
 .form .select .options .option:first-child {
   color: #a4a4a4;
 }
@@ -283,19 +286,6 @@ body {
 .form .select .options .option:hover span:after {
   display: none;
 }
-.form .select .search {
-  position: absolute;
-  z-index: 999;
-  top: 0;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  width: 80%;
-  height: 33px;
-  padding: 5px 10px;
-  border: 0;
-  margin: 5px 10px;
-  background: #fff;
-}
 .form .select .scrollbar {
   position: relative;
   background-position: 0 0;
@@ -306,12 +296,12 @@ body {
 .form .select .scrollbar.disable {
   display: none;
 }
-.form .select .track {
+.form .select .scrollbar .track {
   position: relative;
   width: 6px;
   height: 100%;
 }
-.form .select .thumb {
+.form .select .scrollbar .track .thumb {
   background: transparent url("../img/bg-scrollbar.png") no-repeat 0 100%;
   cursor: pointer;
   width: 6px;
@@ -319,7 +309,7 @@ body {
   position: absolute;
   top: 0;
 }
-.form .select .thumb .end {
+.form .select .scrollbar .track .thumb .end {
   background: transparent url("../img/bg-scrollbar.png") no-repeat 0 0;
   height: 5px;
   width: 6px;

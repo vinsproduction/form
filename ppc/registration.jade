@@ -22,32 +22,20 @@ head
 
 				fields = 
 
-					'firstname':
-						rules:
-							required: true
-
-					'lastname':
-						rules:
-							required: true
-
 					'password':
 						rules:
-							required: true
+							min: 3
 
 					'password-confirmation':
 						rules:
 							required: true
 							compare:
-								val: -> formValidator.get('password')
+								val: -> formValidator.fields['password'].val()
 
 					'email':
 						rules:
-							required: true
 							email: true
 
-					'agree':
-						rules:
-							required: true
 
 				formValidator = new Form
 
@@ -56,27 +44,43 @@ head
 					formName: 'registration'
 					formEl: '.form'
 					submitEl: '.submit a'
+					autoFields: true
 					fields: fields
 					fieldsOptions:
 						escape: true
+						style: true
+						autoErrors: true
+						clearErrorsInFocus: true
+
+						rules:
+							required: true
 
 					onInit: ->
+
+						self = @
+
 					onSubmit: (data) ->
 
-						@form.find('.errors').empty()
+						self = @
+
+						self.form.find('.errors').empty()
 
 					onSuccess: (data) ->
 
-						@lockSubmit()
-						@showPreloader()
+						self = @
+
+						self.lockSubmit()
+						self.showPreloader()
 
 						# API.success ->
-						# @unlockSubmit()
-						# @hidePreloader()
+						# self.unlockSubmit()
+						# self.hidePreloader()
 
 					onFail: (errors) ->
 
-						@form.find('.errors').html "Исправьте ошибки в форме"
+						self = @
+
+						self.form.find('.errors').html "Исправьте ошибки в форме"
 
 				return
 

@@ -38,6 +38,16 @@ Form = (function() {
       errorClass: "error",
       preloaderClass: "preloader"
     };
+    this.templates = {
+      checkbox: "<div class=\"checkbox\"></div>",
+      radio: "<div class=\"radio\"></div>",
+      select: {
+        select: "<div class=\"select\"></div>",
+        selected: "<div class=\"selected\"><span>{selected}</span></div>",
+        options: "<div class=\"options\"></div>",
+        option: "<div class=\"option\"><span>{text}</span></div>"
+      }
+    };
     this.fields = {};
     this.fieldsOptions = {
       style: true,
@@ -268,8 +278,8 @@ Form = (function() {
   Form.prototype.createCheckbox = function(name, change) {
     var $checkbox, checkboxTemplate, self, val;
     self = this;
-    checkboxTemplate = "<div class=\"checkbox\"></div>";
     this.fields[name].el.hide();
+    checkboxTemplate = this.templates.checkbox;
     if (change) {
       if (this.fields[name].val()) {
         this.fields[name].sel.attr('data-checked', 'data-checked');
@@ -302,7 +312,8 @@ Form = (function() {
   Form.prototype.createRadio = function(name, change) {
     var radioTemplate, self;
     self = this;
-    radioTemplate = "<div class=\"radio\"></div>";
+    this.fields[name].el.hide();
+    radioTemplate = this.templates.radio;
     if (change) {
       this.fields[name].sel.removeAttr('data-checked');
       this.fields[name].sel.filter("[data-value='" + (this.fields[name].val()) + "']").attr('data-checked', 'data-checked');
@@ -333,12 +344,12 @@ Form = (function() {
 
   Form.prototype.createSelect = function(name, change) {
     var $options, $select, $selected, optionTemplate, optionsTemplate, selectClose, selectTemplate, selectedTemplate, selectedText, self;
-    this.fields[name].el.hide();
     self = this;
-    selectTemplate = "<div class=\"select\"></div>";
-    selectedTemplate = "<div class=\"selected\"><span>{selected}</span></div>";
-    optionsTemplate = "<div class=\"options\" style=\"display:none;\"></div>";
-    optionTemplate = "<div class=\"option\"><span>{text}</span></div>";
+    this.fields[name].el.hide();
+    selectTemplate = this.templates.select.select;
+    selectedTemplate = this.templates.select.selected;
+    optionsTemplate = this.templates.select.options;
+    optionTemplate = this.templates.select.option;
     if (change) {
       this.fields[name].sel.find('[data-selected]').html(this.fields[name].sel.find("[data-option][data-val='" + (this.fields[name].val()) + "']").html());
       if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === this.fields[name].el.val()) {
@@ -362,6 +373,7 @@ Form = (function() {
       $selected.attr('data-selected', 'data-selected');
       $options = $(optionsTemplate);
       $options.attr('data-options', 'data-options');
+      $options.hide();
       $select.append($selected);
       $select.append($options);
       this.fields[name].el.after($select);
@@ -409,11 +421,6 @@ Form = (function() {
           self.setVal(name, $(this).attr('data-val'));
           $options.find('[data-option]').removeAttr('data-checked');
           $(this).attr('data-checked', 'data-checked');
-          if (self.fields[name].defaultStyle && self.fields[name].defaultStyle === $(this).attr('data-val')) {
-            $selected.addClass('default');
-          } else {
-            $selected.removeClass('default');
-          }
           $select.removeClass('open');
           return $options.hide();
         });
@@ -475,7 +482,7 @@ Form = (function() {
     data = {};
     console.groupCollapsed("[Form: " + this.formName + "] submit");
     $.each(this.fields, function(name, opt) {
-      var ref, results, rule, ruleName, val, valid;
+      var val;
       val = self.getVal(name);
       if (opt.name) {
         data[opt.name] = opt.escape ? self.escapeText(val) : val;
@@ -494,18 +501,15 @@ Form = (function() {
         self.form.find('.' + self.classes.errorClass + '-' + name).empty();
       }
       if (!self.isEmpty(opt.rules)) {
-        ref = opt.rules;
-        results = [];
-        for (ruleName in ref) {
-          rule = ref[ruleName];
-          valid = self.validate[ruleName](val, rule);
-          if (!valid.state) {
-            results.push(self.setError(name, valid.reason));
-          } else {
-            results.push(void 0);
+        return $.each(opt.rules, function(ruleName, rule) {
+          var valid;
+          if (rule) {
+            valid = self.validate[ruleName](val, rule);
+            if (!valid.state) {
+              return self.setError(name, valid.reason);
+            }
           }
-        }
-        return results;
+        });
       }
     });
     if (this.logs) {
@@ -736,8 +740,8 @@ Form = (function() {
         rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
       }
       valid = {
-        state: val.length <= rule.count || val === "",
-        reason: rule.reason || ("Максимум " + rule.count + " " + (this.declOfNum(rule.count, ['символ', 'символа', 'символов'])))
+        state: val.length <= (rule.count || rule) || val === "",
+        reason: rule.reason || ("Максимум " + (rule.count || rule) + " " + (this.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
       };
       return valid;
     },
@@ -747,8 +751,8 @@ Form = (function() {
         rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
       }
       valid = {
-        state: val.length >= rule.count || val === "",
-        reason: rule.reason || ("Минимум " + rule.count + " " + (this.declOfNum(rule.count, ['символ', 'символа', 'символов'])))
+        state: val.length >= (rule.count || rule) || val === "",
+        reason: rule.reason || ("Минимум " + (rule.count || rule) + " " + (this.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
       };
       return valid;
     },

@@ -146,7 +146,7 @@ body
 			border 1px solid rgb(214,214,214)
 			background #FFF
 			cursor pointer
-			&.checked
+			&[data-checked]
 				bg 'checked.png'
 			&.error-field
 				border 1px solid red
@@ -156,7 +156,7 @@ body
 			border 1px solid rgb(214,214,214)
 			background #FFF
 			cursor pointer
-			&.checked
+			&[data-checked]
 				bg 'checked.png'
 			&.error-field
 				border 1px solid red
@@ -245,9 +245,13 @@ body
 						background #CCC
 						bottom -16px
 						left 0
+						
+				&[data-checked]
+					color #a4a4a4
 
 				&:first-child
 					color #a4a4a4
+					
 				&:last-child
 					span
 						&:after
@@ -260,18 +264,6 @@ body
 						display none
 						
 
-		.search
-			position absolute
-			z-index 999
-			top 0
-			borderbox()
-			width 80%
-			height 33px
-			padding 5px 10px
-			// border 1px solid rgb(214,214,214)
-			border 0
-			margin 5px 10px
-			background #FFF
 
 		.scrollbar
 			// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
@@ -284,26 +276,25 @@ body
 			&.disable
 				display none
 
-		.track
-			// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
-			position: relative
-			width 6px
-			height 100%
-
-		.thumb
-			background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
-			cursor: pointer
-			width 6px
-			// height 20px
-			overflow hidden
-			position absolute
-			top 0
-
-			.end
-				background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
-				height 5px
+			.track
+				// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
+				position: relative
 				width 6px
-				// overflow hidden
+				height 100%
+
+				.thumb
+					background: transparent url('../img/bg-scrollbar.png') no-repeat 0 100%
+					cursor pointer
+					width 6px
+					overflow hidden
+					position absolute
+					top 0
+
+					.end
+						background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
+						height 5px
+						width 6px
+						// overflow hidden
 
 		.viewport
 			overflow hidden

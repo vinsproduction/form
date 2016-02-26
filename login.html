@@ -27,6 +27,11 @@
         rules: {
           email: true
         }
+      },
+      'password': {
+        rules: {
+          min: 3
+        }
       }
     };
     formValidator = new Form({
@@ -38,20 +43,32 @@
       fields: fields,
       fieldsOptions: {
         escape: true,
+        style: true,
+        autoErrors: true,
+        clearErrorsInFocus: true,
         rules: {
           required: true
         }
       },
-      onInit: function() {},
+      onInit: function() {
+        var self;
+        return self = this;
+      },
       onSubmit: function(data) {
-        return this.form.find('.errors').empty();
+        var self;
+        self = this;
+        return self.form.find('.errors').empty();
       },
       onSuccess: function(data) {
-        this.lockSubmit();
-        return this.showPreloader();
+        var self;
+        self = this;
+        self.lockSubmit();
+        return self.showPreloader();
       },
       onFail: function(errors) {
-        return this.form.find('.errors').html("Исправьте ошибки в форме");
+        var self;
+        self = this;
+        return self.form.find('.errors').html("Исправьте ошибки в форме");
       }
     });
   });

@@ -26,6 +26,10 @@ head
 						rules:
 							email: true
 
+					'password':
+						rules:
+							min: 3
+
 
 				formValidator = new Form
 
@@ -34,32 +38,42 @@ head
 					formName: 'login'
 					formEl: '.form'
 					submitEl: '.submit a'
-
 					autoFields: true
 					fields: fields
-
 					fieldsOptions:
 						escape: true
+						style: true
+						autoErrors: true
+						clearErrorsInFocus: true
 						rules:
 							required: true
 
 					onInit: ->
+
+						self = @
+
 					onSubmit: (data) ->
 
-						@form.find('.errors').empty()
+						self = @
+
+						self.form.find('.errors').empty()
 
 					onSuccess: (data) ->
 
-						@lockSubmit()
-						@showPreloader()
+						self = @
+
+						self.lockSubmit()
+						self.showPreloader()
 
 						# API.success ->
-						# @unlockSubmit()
-						# @hidePreloader()
+						# self.unlockSubmit()
+						# self.hidePreloader()
 
 					onFail: (errors) ->
 
-						@form.find('.errors').html "Исправьте ошибки в форме"
+						self = @
+
+						self.form.find('.errors').html "Исправьте ошибки в форме"
 
 
 				return
