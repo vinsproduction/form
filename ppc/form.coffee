@@ -527,7 +527,7 @@ class Form
 			if opt.autoErrors
 				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
 
-			if !self.isEmpty(opt.rules)
+			if opt.rules and !self.isEmpty(opt.rules)
 
 				$.each opt.rules, (ruleName,rule) ->
 					if rule

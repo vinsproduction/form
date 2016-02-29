@@ -500,7 +500,7 @@ Form = (function() {
       if (opt.autoErrors) {
         self.form.find('.' + self.classes.errorClass + '-' + name).empty();
       }
-      if (!self.isEmpty(opt.rules)) {
+      if (opt.rules && !self.isEmpty(opt.rules)) {
         return $.each(opt.rules, function(ruleName, rule) {
           var valid;
           if (rule) {
