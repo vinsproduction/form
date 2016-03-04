@@ -29,12 +29,14 @@ scroll = (el) ->
 
 	$selected = $select.find('[data-selected]')
 	$options 	= $select.find('[data-options]')
-	$options.wrapInner """
-		<div class="viewport"><div class="overview"></div></div>
-	"""
-	$options.prepend """
-		<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
-	"""
+	
+	if !$select.find('.scrollbar').size()
+		$options.wrapInner """
+			<div class="viewport"><div class="overview"></div></div>
+		"""
+		$options.prepend """
+			<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+		"""
 
 	browserIsMobile = false
 
