@@ -20,6 +20,8 @@ head
 		:coffee-script
 			$ ->
 
+				window.forms = {}
+
 				fields = 
 
 					'email':
@@ -31,7 +33,7 @@ head
 							min: 3
 
 
-				formValidator = new Form
+				window.forms['login'] = new Form
 
 					logs: true
 

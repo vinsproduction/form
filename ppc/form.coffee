@@ -42,6 +42,10 @@ class Form
 			errorClass: "error" # Класс элемента вывода ошибки поля
 			preloaderClass: "preloader" # Класс прелоадера формы
 
+			select:
+				open: 'open' # Класс открытого селекта
+				default: 'default' # Класс селекта значения по умолчанию, например 'Выбрать'
+
 		@templates =
 			checkbox: """<div class="checkbox"></div>"""
 			radio: """<div class="radio"></div>"""
@@ -141,7 +145,9 @@ class Form
 
 		@form.find('[data-field]').each ->
 
-			name = $(@).attr('data-field')
+			name = $(@).attr('data-name') || $(@).attr('name')
+
+			return if !self.fields[name]
 
 			$(@).removeClass(self.classes.errorFieldClass)
 
@@ -150,7 +156,9 @@ class Form
 
 		@form.on 'style', '[data-field]', ->
 
-			name = $(@).attr('data-field')
+			name = $(@).attr('data-name') || $(@).attr('name')
+
+			return if !self.fields[name]
 
 			self.fields[name].sel.removeClass(self.classes.errorFieldClass)
 
@@ -159,7 +167,9 @@ class Form
 
 		@form.on 'click', '[data-field]', ->
 
-			name = $(@).attr('data-field')
+			name = $(@).attr('data-name') || $(@).attr('name')
+
+			return if !self.fields[name]
 
 			if self.fields[name].clearErrorsInFocus
 				$(@).removeClass(self.classes.errorFieldClass)
@@ -193,7 +203,7 @@ class Form
 
 		@fields[name].el.unbind()
 
-		@fields[name].el.attr('data-field',name)
+		@fields[name].el.attr('data-field','data-field')
 
 		@fields[name].new = true if isNew
 		
@@ -244,10 +254,12 @@ class Form
 
 		return
 
-	addField: (name,opt = @fieldsOptions) ->
+	addField: (name,opt = @fieldsOptions, onInit) ->
 
 		@fields[name] = opt
 		@initField(name,true)
+
+		onInit() if onInit
 
 		@fields[name].el.trigger('style') if @fields[name].style
 
@@ -257,6 +269,7 @@ class Form
 
 	removeField: (name) ->
 
+		@fields[name].el.removeAttr('data-field')
 		@fields[name].sel.remove() if @fields[name].sel
 		@fields[name].el.show() if @fields[name].style
 
@@ -270,7 +283,8 @@ class Form
 
 		self = @
 
-		@fields[name].el.hide()
+		@fields[name].el.attr('style','opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;')
+
 
 		checkboxTemplate = @templates.checkbox
 
@@ -288,7 +302,7 @@ class Form
 			val = @fields[name].el.attr('value')
 
 			$checkbox = $(checkboxTemplate)
-			$checkbox.attr('data-field',name)
+			$checkbox.attr('data-field','data-field')
 			$checkbox.attr('data-checkbox','data-checkbox')
 			$checkbox.attr('data-name',name)
 			$checkbox.attr('data-value',val)
@@ -311,7 +325,7 @@ class Form
 
 		self = @
 
-		@fields[name].el.hide()
+		@fields[name].el.attr('style','opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;')
 
 		radioTemplate = @templates.radio
 
@@ -336,7 +350,7 @@ class Form
 
 				$radio 	= $(radioTemplate)
 
-				$radio.attr('data-field',name)
+				$radio.attr('data-field','data-field')
 				$radio.attr('data-radio','data-radio')
 				$radio.attr('data-name',name)
 				$radio.attr('data-value',val)
@@ -357,28 +371,36 @@ class Form
 
 		self = @
 
-		@fields[name].el.hide()
+		@fields[name].el.attr('style','opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;')
 
-		selectTemplate 		= @templates.select.select
-		selectedTemplate 	= @templates.select.selected
+		selectTemplate		= @templates.select.select
+		selectedTemplate	= @templates.select.selected
 		optionsTemplate 	= @templates.select.options
 		optionTemplate 		= @templates.select.option
 
 		if change
 
-			@fields[name].sel.find('[data-selected]').html @fields[name].sel.find("[data-option][data-val='#{@fields[name].val()}']").html()
+			@fields[name].sel.removeClass(@classes.select.open)
+
+			@fields[name].sel.find("[data-selected]").html @fields[name].sel.find("[data-option][data-value='#{@fields[name].val()}']").html()
 
 			if @fields[name].defaultStyle and @fields[name].defaultStyle is @fields[name].el.val()
-				@fields[name].sel.find('[data-selected]').addClass('default')
+				@fields[name].sel.find("[data-selected]").addClass(self.classes.select.default)
 			else
-				@fields[name].sel.find('[data-selected]').removeClass('default')
-			
+				@fields[name].sel.find("[data-selected]").removeClass(self.classes.select.default)
+
+			@fields[name].sel.find("[data-options]").hide()
+
+			@fields[name].sel.find("[data-option]").removeAttr('data-checked')
+			@fields[name].sel.find("[data-option][data-value='#{@fields[name].val()}']").attr('data-checked','data-checked')
+
+	
 		else
 
 			@form.find("[data-select][data-name='#{name}']").remove()
 
 			$select  = $(selectTemplate)
-			$select.attr('data-field', name)
+			$select.attr('data-field', 'data-field')
 			$select.attr('data-select', 'data-select')
 			$select.attr('data-name', name)
 
@@ -401,24 +423,29 @@ class Form
 			@fields[name].el.after $select
 			@fields[name].sel = $select
 
-			$selected.click ->
-				if $select.hasClass('open')
-					$select.removeClass('open')
-					$options.hide()
-				else
-					$select.addClass('open')
-					$options.show()
+			if @fields[name].native
+				$select.click ->
+					self.fields[name].el.focus()
+				@fields[name].el.on 'blur', ->
+					self.setVal(name,self.fields[name].el.val())
+
+			else
+				$selected.click ->
+					if $select.hasClass(self.classes.select.open)
+						$select.removeClass(self.classes.select.open)
+						$options.hide()
+					else
+						$select.addClass(self.classes.select.open)
+						$options.show()
 
 			if @fields[name].defaultStyle and @fields[name].defaultStyle is selectedText
-				$selected.addClass 'default'
+				$selected.addClass self.classes.select.default
 
-			selectClose = true
-			$select.mouseover -> selectClose = false
-			$select.mouseout  -> selectClose = true
 
-			$(window).click ->
-				if selectClose
-					$select.removeClass('open')
+			$(window).click (event) ->
+
+				if !$(event.target).closest($select).length and !$(event.target).is($select)
+					$select.removeClass(self.classes.select.open)
 					$options.hide()
 
 			@fields[name].el.find('option').each ->
@@ -433,20 +460,13 @@ class Form
 				option = optionTemplate.replace('{text}',text)
 				$option = $(option)
 				$option.attr('data-option', 'data-option')
-				$option.attr('data-val', val)
+				$option.attr('data-value', val)
 
 				if $(@).is(':first-child')
 					$option.attr('data-checked','data-checked')
 
 				$option.click ->
-
-					self.setVal(name,$(@).attr('data-val'))
-
-					$options.find('[data-option]').removeAttr('data-checked')
-					$(@).attr('data-checked','data-checked')
-
-					$select.removeClass('open')
-					$options.hide()
+					self.setVal(name,$(@).attr('data-value'))
 
 				$options.append $option
 

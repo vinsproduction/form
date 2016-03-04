@@ -21,9 +21,30 @@ $.datepicker.regional.ru =
 
 $.datepicker.setDefaults($.datepicker.regional['ru'])
 
+# Скролл бар
 
+scroll = (el) ->
+
+	$select = el
+
+	$selected = $select.find('[data-selected]')
+	$options 	= $select.find('[data-options]')
+	$options.wrapInner """
+		<div class="viewport"><div class="overview"></div></div>
+	"""
+	$options.prepend """
+		<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+	"""
+
+	browserIsMobile = false
+
+	scrollbar = $options.tinyscrollbar({sizethumb: 44,invertscroll:browserIsMobile})
+	$selected.click -> scrollbar.tinyscrollbar_update()
+	return
 
 $ ->
+
+	window.forms = {}
 
 	$form = $('.form')
 
@@ -101,7 +122,7 @@ $ ->
 
 
 
-	window.formValidator = new Form
+	window.forms['form'] = new Form
 
 		logs: true
 
@@ -130,24 +151,6 @@ $ ->
 				console.log 'dropdown style'
 				scroll(self.fields['dropdown'].sel)
 
-
-			# Скролл бар
-
-			scroll = (el) ->
-
-				$select = el
-
-				$selected = $select.find('[data-selected]')
-				$options 	= $select.find('[data-options]')
-				$options.wrapInner """
-					<div class="viewport"><div class="overview"></div></div>
-				"""
-				$options.prepend """
-					<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
-				"""
-				scrollbar = $options.tinyscrollbar({sizethumb: 44})
-				$selected.click -> scrollbar.tinyscrollbar_update()
-				return
 
 		onSubmit: (data) ->
 
@@ -181,7 +184,7 @@ $ ->
 
 	window.addfield = ->
 
-		clone = $form.find('.example').eq(0).clone()
+		clone = forms['form'].form.find('.example').eq(0).clone()
 
 		fieldName = Date.now()
 
@@ -193,26 +196,23 @@ $ ->
 
 		$form.find('.error-list').before clone
 
-		formValidator.form.on 'formChange', ->
-			console.log 'form change 2'
-
-		formValidator.addField fieldName,
+		options = 
 			rules:
 				required:
 					reason: 'Своя ошибка'
 
-		formValidator.fields[fieldName].el.on 'change', (e,v) ->
-			console.log 'change',v.val
+		onInit = ->
+			forms['form'].fields[fieldName].el.on 'change', (e,v) ->
+				console.log 'change',v.val
 
-		
+			forms['form'].fields[fieldName].el.on 'style', ->
+				scroll(forms['form'].fields[fieldName].sel)
 
 
-
-		window.scroll()
-
+		forms['form'].addField(fieldName, options, onInit)
 
 	window.reset = ->
-		formValidator.reset()
-		$form.find('.example.new').remove()
+		forms['form'].reset()
+		forms['form'].form.find('.example.new').remove()
 
 	return

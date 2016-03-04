@@ -20,6 +20,8 @@ head
 		:coffee-script
 			$ ->
 
+				window.forms = {}
+
 				fields = 
 
 					'password':
@@ -37,7 +39,7 @@ head
 							email: true
 
 
-				formValidator = new Form
+				window.forms['registration'] = new Form
 
 					logs: true
 			

@@ -36,7 +36,11 @@ Form = (function() {
       placeholderClass: "placeholder",
       errorFieldClass: "error-field",
       errorClass: "error",
-      preloaderClass: "preloader"
+      preloaderClass: "preloader",
+      select: {
+        open: 'open',
+        "default": 'default'
+      }
     };
     this.templates = {
       checkbox: "<div class=\"checkbox\"></div>",
@@ -145,7 +149,10 @@ Form = (function() {
     };
     this.form.find('[data-field]').each(function() {
       var name;
-      name = $(this).attr('data-field');
+      name = $(this).attr('data-name') || $(this).attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
       $(this).removeClass(self.classes.errorFieldClass);
       if (self.fields[name].autoErrors) {
         return self.form.find('.' + self.classes.errorClass + '-' + name).empty();
@@ -153,7 +160,10 @@ Form = (function() {
     });
     this.form.on('style', '[data-field]', function() {
       var name;
-      name = $(this).attr('data-field');
+      name = $(this).attr('data-name') || $(this).attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
       self.fields[name].sel.removeClass(self.classes.errorFieldClass);
       if (self.fields[name].autoErrors) {
         return self.form.find('.' + self.classes.errorClass + '-' + name).empty();
@@ -161,7 +171,10 @@ Form = (function() {
     });
     this.form.on('click', '[data-field]', function() {
       var name;
-      name = $(this).attr('data-field');
+      name = $(this).attr('data-name') || $(this).attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
       if (self.fields[name].clearErrorsInFocus) {
         $(this).removeClass(self.classes.errorFieldClass);
       }
@@ -192,7 +205,7 @@ Form = (function() {
     this.fields[name].el = el;
     this.fields[name].sel = $([]);
     this.fields[name].el.unbind();
-    this.fields[name].el.attr('data-field', name);
+    this.fields[name].el.attr('data-field', 'data-field');
     if (isNew) {
       this.fields[name]["new"] = true;
     }
@@ -248,12 +261,15 @@ Form = (function() {
     }
   };
 
-  Form.prototype.addField = function(name, opt) {
+  Form.prototype.addField = function(name, opt, onInit) {
     if (opt == null) {
       opt = this.fieldsOptions;
     }
     this.fields[name] = opt;
     this.initField(name, true);
+    if (onInit) {
+      onInit();
+    }
     if (this.fields[name].style) {
       this.fields[name].el.trigger('style');
     }
@@ -263,6 +279,7 @@ Form = (function() {
   };
 
   Form.prototype.removeField = function(name) {
+    this.fields[name].el.removeAttr('data-field');
     if (this.fields[name].sel) {
       this.fields[name].sel.remove();
     }
@@ -278,7 +295,7 @@ Form = (function() {
   Form.prototype.createCheckbox = function(name, change) {
     var $checkbox, checkboxTemplate, self, val;
     self = this;
-    this.fields[name].el.hide();
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
     checkboxTemplate = this.templates.checkbox;
     if (change) {
       if (this.fields[name].val()) {
@@ -290,7 +307,7 @@ Form = (function() {
       this.form.find("[data-checkbox][data-name='" + name + "']").remove();
       val = this.fields[name].el.attr('value');
       $checkbox = $(checkboxTemplate);
-      $checkbox.attr('data-field', name);
+      $checkbox.attr('data-field', 'data-field');
       $checkbox.attr('data-checkbox', 'data-checkbox');
       $checkbox.attr('data-name', name);
       $checkbox.attr('data-value', val);
@@ -312,7 +329,7 @@ Form = (function() {
   Form.prototype.createRadio = function(name, change) {
     var radioTemplate, self;
     self = this;
-    this.fields[name].el.hide();
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
     radioTemplate = this.templates.radio;
     if (change) {
       this.fields[name].sel.removeAttr('data-checked');
@@ -326,7 +343,7 @@ Form = (function() {
         el.hide();
         val = el.attr('value');
         $radio = $(radioTemplate);
-        $radio.attr('data-field', name);
+        $radio.attr('data-field', 'data-field');
         $radio.attr('data-radio', 'data-radio');
         $radio.attr('data-name', name);
         $radio.attr('data-value', val);
@@ -343,24 +360,28 @@ Form = (function() {
   };
 
   Form.prototype.createSelect = function(name, change) {
-    var $options, $select, $selected, optionTemplate, optionsTemplate, selectClose, selectTemplate, selectedTemplate, selectedText, self;
+    var $options, $select, $selected, optionTemplate, optionsTemplate, selectTemplate, selectedTemplate, selectedText, self;
     self = this;
-    this.fields[name].el.hide();
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
     selectTemplate = this.templates.select.select;
     selectedTemplate = this.templates.select.selected;
     optionsTemplate = this.templates.select.options;
     optionTemplate = this.templates.select.option;
     if (change) {
-      this.fields[name].sel.find('[data-selected]').html(this.fields[name].sel.find("[data-option][data-val='" + (this.fields[name].val()) + "']").html());
+      this.fields[name].sel.removeClass(this.classes.select.open);
+      this.fields[name].sel.find("[data-selected]").html(this.fields[name].sel.find("[data-option][data-value='" + (this.fields[name].val()) + "']").html());
       if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === this.fields[name].el.val()) {
-        this.fields[name].sel.find('[data-selected]').addClass('default');
+        this.fields[name].sel.find("[data-selected]").addClass(self.classes.select["default"]);
       } else {
-        this.fields[name].sel.find('[data-selected]').removeClass('default');
+        this.fields[name].sel.find("[data-selected]").removeClass(self.classes.select["default"]);
       }
+      this.fields[name].sel.find("[data-options]").hide();
+      this.fields[name].sel.find("[data-option]").removeAttr('data-checked');
+      this.fields[name].sel.find("[data-option][data-value='" + (this.fields[name].val()) + "']").attr('data-checked', 'data-checked');
     } else {
       this.form.find("[data-select][data-name='" + name + "']").remove();
       $select = $(selectTemplate);
-      $select.attr('data-field', name);
+      $select.attr('data-field', 'data-field');
       $select.attr('data-select', 'data-select');
       $select.attr('data-name', name);
       if (this.fields[name].el.find('option[selected]').size()) {
@@ -378,28 +399,30 @@ Form = (function() {
       $select.append($options);
       this.fields[name].el.after($select);
       this.fields[name].sel = $select;
-      $selected.click(function() {
-        if ($select.hasClass('open')) {
-          $select.removeClass('open');
-          return $options.hide();
-        } else {
-          $select.addClass('open');
-          return $options.show();
-        }
-      });
-      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === selectedText) {
-        $selected.addClass('default');
+      if (this.fields[name]["native"]) {
+        $select.click(function() {
+          return self.fields[name].el.focus();
+        });
+        this.fields[name].el.on('blur', function() {
+          return self.setVal(name, self.fields[name].el.val());
+        });
+      } else {
+        $selected.click(function() {
+          if ($select.hasClass(self.classes.select.open)) {
+            $select.removeClass(self.classes.select.open);
+            return $options.hide();
+          } else {
+            $select.addClass(self.classes.select.open);
+            return $options.show();
+          }
+        });
       }
-      selectClose = true;
-      $select.mouseover(function() {
-        return selectClose = false;
-      });
-      $select.mouseout(function() {
-        return selectClose = true;
-      });
-      $(window).click(function() {
-        if (selectClose) {
-          $select.removeClass('open');
+      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === selectedText) {
+        $selected.addClass(self.classes.select["default"]);
+      }
+      $(window).click(function(event) {
+        if (!$(event.target).closest($select).length && !$(event.target).is($select)) {
+          $select.removeClass(self.classes.select.open);
           return $options.hide();
         }
       });
@@ -413,16 +436,12 @@ Form = (function() {
         option = optionTemplate.replace('{text}', text);
         $option = $(option);
         $option.attr('data-option', 'data-option');
-        $option.attr('data-val', val);
+        $option.attr('data-value', val);
         if ($(this).is(':first-child')) {
           $option.attr('data-checked', 'data-checked');
         }
         $option.click(function() {
-          self.setVal(name, $(this).attr('data-val'));
-          $options.find('[data-option]').removeAttr('data-checked');
-          $(this).attr('data-checked', 'data-checked');
-          $select.removeClass('open');
-          return $options.hide();
+          return self.setVal(name, $(this).attr('data-value'));
         });
         return $options.append($option);
       });

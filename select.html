@@ -22,68 +22,83 @@
   <link rel="stylesheet" type="text/css" href="css/form.css"/>
   <script>(function() {
   $(function() {
-    var formValidator2;
-    window.formValidator = new Form({
+    var scroll;
+    scroll = function(el) {
+      var $options, $select, $selected, browserIsMobile, scrollbar;
+      $select = el;
+      $selected = $select.find('[data-selected]');
+      $options = $select.find('[data-options]');
+      $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
+      $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
+      browserIsMobile = false;
+      scrollbar = $options.tinyscrollbar({
+        sizethumb: 44,
+        invertscroll: browserIsMobile
+      });
+      $selected.click(function() {
+        return scrollbar.tinyscrollbar_update();
+      });
+    };
+    window.forms = {};
+    window.forms['form-1'] = new Form({
       logs: true,
       formName: 'select',
       formEl: '.form-1',
       submitEl: '.submit a',
       fieldsOptions: {
+        defaultStyle: 'Выбрать',
         rules: {
           required: true
         }
       },
       onInit: function() {
-        var scroll, scrollbars;
-        scrollbars = {};
-        scroll = (function(_this) {
-          return function(el) {
-            var select;
-            select = el ? el : _this.form.find('.select');
-            return select.each(function() {
-              var $options, $select, $selected, selectName;
-              $select = $(this);
-              if ($select.find('.viewport').size()) {
-                return;
-              }
-              selectName = $select.attr('data-name');
-              $selected = $select.find('.selected');
-              $options = $select.find('.options');
-              $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
-              $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
-              scrollbars[selectName] = $options.tinyscrollbar({
-                sizethumb: 40
-              });
-              return $selected.click(function() {
-                return scrollbars[selectName].tinyscrollbar_update();
-              });
-            });
-          };
-        })(this);
-        return scroll();
+        var self;
+        self = this;
+        self.fields['dropdown'].el.on('style', function() {
+          return scroll(self.fields['dropdown'].sel);
+        });
+        return self.fields['dropdown'].el.on('change', function() {
+          return forms['form-2'].fields['dropdown-2'].val(2);
+        });
       },
       onSubmit: function(data) {
-        return this.form.find('.errors').empty();
+        var self;
+        self = this;
+        return self.form.find('.errors').empty();
       },
       onSuccess: function(data) {
-        this.lockSubmit();
-        return this.showPreloader();
+        var self;
+        self = this;
+        self.lockSubmit();
+        return self.showPreloader();
       },
       onFail: function(errors) {
-        return this.form.find('.errors').html("Исправьте ошибки в форме");
+        var self;
+        self = this;
+        return self.form.find('.errors').html("Исправьте ошибки в форме");
       }
     });
-    formValidator2 = new Form({
+    window.forms['form-2'] = new Form({
       logs: true,
       formName: 'select 2',
       formEl: '.form-2',
-      submitEl: '.submit a'
+      submitEl: '.submit a',
+      fieldsOptions: {
+        defaultStyle: 'Выбрать'
+      },
+      onInit: function() {
+        var self;
+        self = this;
+        return self.fields['dropdown-2'].el.on('style', function() {
+          return scroll(self.fields['dropdown-2'].sel);
+        });
+      }
     });
     window.reset = function() {
-      return formValidator.reset();
+      return window.forms['form-2'].reset();
     };
     window.reset2 = function() {
-      return formValidator2.reset();
+      return window.forms['form-2'].reset();
     };
   });
 

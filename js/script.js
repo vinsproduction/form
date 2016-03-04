@@ -1,3 +1,5 @@
+var scroll;
+
 $.datepicker.regional.ru = {
   closeText: "Закрыть",
   prevText: "&#x3C;Пред",
@@ -18,8 +20,26 @@ $.datepicker.regional.ru = {
 
 $.datepicker.setDefaults($.datepicker.regional['ru']);
 
+scroll = function(el) {
+  var $options, $select, $selected, browserIsMobile, scrollbar;
+  $select = el;
+  $selected = $select.find('[data-selected]');
+  $options = $select.find('[data-options]');
+  $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
+  $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
+  browserIsMobile = false;
+  scrollbar = $options.tinyscrollbar({
+    sizethumb: 44,
+    invertscroll: browserIsMobile
+  });
+  $selected.click(function() {
+    return scrollbar.tinyscrollbar_update();
+  });
+};
+
 $(function() {
   var $form, fields, fieldsOptions;
+  window.forms = {};
   $form = $('.form');
   fields = {
     'checkbox_1': {
@@ -49,7 +69,7 @@ $(function() {
       }
     }
   };
-  window.formValidator = new Form({
+  window.forms['form'] = new Form({
     logs: true,
     autoFields: true,
     disableSubmit: false,
@@ -59,31 +79,17 @@ $(function() {
     fields: fields,
     fieldsOptions: fieldsOptions,
     onInit: function() {
-      var scroll, self;
+      var self;
       self = this;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
       this.fields['dropdown'].el.on('change', function() {
         return console.log('dropdown change');
       });
-      this.fields['dropdown'].el.on('style', function() {
+      return this.fields['dropdown'].el.on('style', function() {
         console.log('dropdown style');
         return scroll(self.fields['dropdown'].sel);
       });
-      return scroll = function(el) {
-        var $options, $select, $selected, scrollbar;
-        $select = el;
-        $selected = $select.find('[data-selected]');
-        $options = $select.find('[data-options]');
-        $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
-        $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
-        scrollbar = $options.tinyscrollbar({
-          sizethumb: 44
-        });
-        $selected.click(function() {
-          return scrollbar.tinyscrollbar_update();
-        });
-      };
     },
     onSubmit: function(data) {
       return $form.find('.errors').empty();
@@ -101,8 +107,8 @@ $(function() {
     }
   });
   window.addfield = function() {
-    var clone, fieldName;
-    clone = $form.find('.example').eq(0).clone();
+    var clone, fieldName, onInit, options;
+    clone = forms['form'].form.find('.example').eq(0).clone();
     fieldName = Date.now();
     clone.find('.label').html(fieldName);
     clone.find('.error').removeAttr('class').addClass('error error-' + fieldName);
@@ -110,23 +116,25 @@ $(function() {
     clone.show();
     clone.addClass('new');
     $form.find('.error-list').before(clone);
-    formValidator.form.on('formChange', function() {
-      return console.log('form change 2');
-    });
-    formValidator.addField(fieldName, {
+    options = {
       rules: {
         required: {
           reason: 'Своя ошибка'
         }
       }
-    });
-    formValidator.fields[fieldName].el.on('change', function(e, v) {
-      return console.log('change', v.val);
-    });
-    return window.scroll();
+    };
+    onInit = function() {
+      forms['form'].fields[fieldName].el.on('change', function(e, v) {
+        return console.log('change', v.val);
+      });
+      return forms['form'].fields[fieldName].el.on('style', function() {
+        return scroll(forms['form'].fields[fieldName].sel);
+      });
+    };
+    return forms['form'].addField(fieldName, options, onInit);
   };
   window.reset = function() {
-    formValidator.reset();
-    return $form.find('.example.new').remove();
+    forms['form'].reset();
+    return forms['form'].form.find('.example.new').remove();
   };
 });
