@@ -57,8 +57,8 @@
         self.fields['dropdown'].el.on('style', function() {
           return scroll(self.fields['dropdown'].sel);
         });
-        return self.fields['dropdown'].el.on('change', function() {
-          return forms['form-2'].fields['dropdown-2'].val(2);
+        return self.fields['dropdown'].el.on('change', function(e, data) {
+          return forms['form-2'].fields['dropdown-2'].val(data.val);
         });
       },
       onSubmit: function(data) {

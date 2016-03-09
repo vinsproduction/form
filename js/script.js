@@ -44,6 +44,10 @@ $(function() {
   window.forms = {};
   $form = $('.form');
   fields = {
+    'id': false,
+    'login': {
+      placeholder: 'login'
+    },
     'checkbox_1': {
       name: 'checkbox new',
       rules: {
@@ -85,11 +89,11 @@ $(function() {
       self = this;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.fields['dropdown'].el.on('change', function() {
-        return console.log('dropdown change');
+      this.fields['dropdown'].el.on('change', function(e, data) {
+        return console.log('dropdown change', data);
       });
-      return this.fields['dropdown'].el.on('style', function() {
-        console.log('dropdown style');
+      return this.fields['dropdown'].el.on('style', function(e, sel) {
+        console.log('dropdown style', sel);
         return scroll(self.fields['dropdown'].sel);
       });
     },
@@ -112,24 +116,32 @@ $(function() {
     var clone, fieldName, onInit, options;
     clone = forms['form'].form.find('.example').eq(0).clone();
     fieldName = Date.now();
-    clone.find('.label').html(fieldName);
+    clone.find('.label .name').html(fieldName);
     clone.find('.error').removeAttr('class').addClass('error error-' + fieldName);
     clone.find('select').attr('name', fieldName);
     clone.show();
     clone.addClass('new');
     $form.find('.error-list').before(clone);
+    clone.find('.remove').click(function() {
+      clone.remove();
+      forms['form'].removeField(fieldName);
+      return false;
+    });
     options = {
+      defaultStyle: "Выбрать",
       rules: {
         required: {
+          not: 'Выбрать',
           reason: 'Своя ошибка'
         }
       }
     };
     onInit = function() {
       forms['form'].fields[fieldName].el.on('change', function(e, v) {
-        return console.log('change', v.val);
+        return console.log('change new', v.val);
       });
       return forms['form'].fields[fieldName].el.on('style', function() {
+        console.log('style new');
         return scroll(forms['form'].fields[fieldName].sel);
       });
     };

@@ -27,6 +27,11 @@
 <body>
   <div class="form">
     <div class="field">
+      <div class="label">Поле которое не валидируется</div>
+      <input name="id"/>
+      <div class="error error-id"></div>
+    </div>
+    <div class="field">
       <div class="label">login</div>
       <input type="text" name="login"/>
       <div class="error error-login"></div>
@@ -99,7 +104,7 @@
       <div class="error error-dropdown"></div>
     </div>
     <div style="display:none;" class="field example">
-      <div class="label">dropdown 2</div>
+      <div class="label"><span class="name">dropdown 2</span> (<span class='remove' style='cursor:pointer;'>удалить поле</span>)</div>
       <select>
         <option selected="selected">Выбрать</option>
         <option value="1">1</option>

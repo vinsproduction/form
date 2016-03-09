@@ -29,7 +29,7 @@ scroll = (el) ->
 
 	$selected = $select.find('[data-selected]')
 	$options 	= $select.find('[data-options]')
-	
+
 	if !$select.find('.scrollbar').size()
 		$options.wrapInner """
 			<div class="viewport"><div class="overview"></div></div>
@@ -52,8 +52,10 @@ $ ->
 
 	fields = 
 
-		# 'login':
-		# 	placeholder: 'login'
+		'id': false
+
+		'login':
+			placeholder: 'login'
 		# 	rules:
 		# 		required: true
 		# 		alpha: true
@@ -146,11 +148,14 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-			@fields['dropdown'].el.on 'change', ->
-				console.log 'dropdown change'
+			# @fields['dropdown'].el.on 'style', (e) ->
+			# 	console.log 'dropdown style'
 
-			@fields['dropdown'].el.on 'style', ->
-				console.log 'dropdown style'
+			@fields['dropdown'].el.on 'change', (e,data) ->
+				console.log 'dropdown change', data
+
+			@fields['dropdown'].el.on 'style', (e,sel) ->
+				console.log 'dropdown style',sel
 				scroll(self.fields['dropdown'].sel)
 
 
@@ -190,7 +195,7 @@ $ ->
 
 		fieldName = Date.now()
 
-		clone.find('.label').html(fieldName)
+		clone.find('.label .name').html(fieldName)
 		clone.find('.error').removeAttr('class').addClass('error error-' + fieldName)
 		clone.find('select').attr('name', fieldName)
 		clone.show()
@@ -198,16 +203,24 @@ $ ->
 
 		$form.find('.error-list').before clone
 
-		options = 
+		clone.find('.remove').click ->
+			clone.remove()
+			forms['form'].removeField(fieldName)
+			return false
+
+		options =
+			defaultStyle: "Выбрать"
 			rules:
 				required:
+					not: 'Выбрать'
 					reason: 'Своя ошибка'
 
 		onInit = ->
 			forms['form'].fields[fieldName].el.on 'change', (e,v) ->
-				console.log 'change',v.val
+				console.log 'change new',v.val
 
 			forms['form'].fields[fieldName].el.on 'style', ->
+				console.log 'style new'
 				scroll(forms['form'].fields[fieldName].sel)
 
 

@@ -30,6 +30,11 @@ body
 	.form
 
 		.field
+			.label Поле которое не валидируется
+			input(name='id')
+			.error.error-id
+
+		.field
 			.label login
 			input(type='text', name='login')
 			.error.error-login
@@ -102,7 +107,7 @@ body
 
 
 		.field.example(style="display:none;")
-			.label dropdown 2
+			.label <span class="name">dropdown 2</span> (<span class='remove' style='cursor:pointer;'>удалить поле</span>)
 			select
 				option(selected=true) Выбрать
 				option(value="1") 1

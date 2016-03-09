@@ -68,7 +68,6 @@ Form = (function() {
     this.onSuccess = function(data) {};
     this.onSubmit = function(data) {};
     this.onReset = function() {};
-    this.onLoad = function() {};
     this.onInit = function() {};
     $.extend(true, this, this.params);
     $(function() {
@@ -86,6 +85,14 @@ Form = (function() {
       if (!self.submitBtn.size() && self.logs) {
         return console.log("[Form: " + self.formName + "] Warning! submitEl not found in DOM");
       }
+      self.form.attr('data-form', self.formName || 'data-form');
+      self.submitBtn.attr('data-submit', 'data-submit');
+      self.form.mouseover(function() {
+        return self.form.inFocus = true;
+      });
+      self.form.mouseout(function() {
+        return self.form.inFocus = false;
+      });
       if (self.enter) {
         $(window).keydown(function(event) {
           if (self.form.inFocus && event.keyCode === 13) {
@@ -107,23 +114,70 @@ Form = (function() {
         });
       }
       self.init();
-      self.onLoad();
     });
   }
 
   Form.prototype.init = function() {
     var opts, self;
     self = this;
-    this.form.unbind();
-    this.submitBtn.unbind();
+    this.form.find('[data-field]').off('change').off('style');
+    this.form.off('_style').off('_change');
+    this.submitBtn.off('click');
+    this.form.on('click', '[data-field]', function() {
+      var name;
+      name = $(this).attr('data-name') || $(this).attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
+      if (self.fields[name].clearErrorsInFocus) {
+        $(this).removeClass(self.classes.errorFieldClass);
+      }
+      if (self.fields[name].autoErrors) {
+        self.form.find('.' + self.classes.errorClass + '-' + name).empty();
+      }
+      return true;
+    });
+    this.form.on('_style', '[data-field="original"]', function() {
+      var el, name;
+      el = $(this);
+      name = el.attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
+      el.removeClass(self.classes.errorFieldClass);
+      self.fields[name].sel.removeClass(self.classes.errorFieldClass);
+      if (self.fields[name].autoErrors) {
+        self.form.find('.' + self.classes.errorClass + '-' + name).empty();
+      }
+      if (el.is("select")) {
+        self.createSelect(name);
+      } else if (el.attr('type') === 'radio') {
+        self.createRadio(name);
+      } else if (el.attr('type') === 'checkbox') {
+        self.createCheckbox(name);
+      }
+      el.trigger('style', [self.fields[name].sel]);
+      return true;
+    });
+    this.form.on('_change', '[data-field="original"]', function(e, data) {
+      var el, name;
+      el = $(this);
+      name = el.attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
+      if (el.is("select")) {
+        self.createSelect(name, true);
+      } else if (el.attr('type') === 'radio') {
+        self.createRadio(name, true);
+      } else if (el.attr('type') === 'checkbox') {
+        self.createCheckbox(name, true);
+      }
+      self.fields[name].el.trigger('change', data);
+      return true;
+    });
     this.form.submit(function(e) {
       return e.preventDefault();
-    });
-    this.form.mouseover(function() {
-      return self.form.inFocus = true;
-    });
-    this.form.mouseout(function() {
-      return self.form.inFocus = false;
     });
     if (this.params.disableSubmit) {
       this.lockSubmit();
@@ -136,9 +190,6 @@ Form = (function() {
       }
       return false;
     });
-    $.each(this.fields, function(name) {
-      return self.initField(name);
-    });
     opts = {
       autoFields: this.autoFields,
       fields: this.fields,
@@ -147,48 +198,16 @@ Form = (function() {
       disableSubmit: this.disableSubmit,
       classes: this.classes
     };
-    this.form.find('[data-field]').each(function() {
-      var name;
-      name = $(this).attr('data-name') || $(this).attr('name');
-      if (!self.fields[name]) {
-        return;
-      }
-      $(this).removeClass(self.classes.errorFieldClass);
-      if (self.fields[name].autoErrors) {
-        return self.form.find('.' + self.classes.errorClass + '-' + name).empty();
-      }
-    });
-    this.form.on('style', '[data-field]', function() {
-      var name;
-      name = $(this).attr('data-name') || $(this).attr('name');
-      if (!self.fields[name]) {
-        return;
-      }
-      self.fields[name].sel.removeClass(self.classes.errorFieldClass);
-      if (self.fields[name].autoErrors) {
-        return self.form.find('.' + self.classes.errorClass + '-' + name).empty();
-      }
-    });
-    this.form.on('click', '[data-field]', function() {
-      var name;
-      name = $(this).attr('data-name') || $(this).attr('name');
-      if (!self.fields[name]) {
-        return;
-      }
-      if (self.fields[name].clearErrorsInFocus) {
-        $(this).removeClass(self.classes.errorFieldClass);
-      }
-      if (self.fields[name].autoErrors) {
-        return self.form.find('.' + self.classes.errorClass + '-' + name).empty();
-      }
-    });
     if (self.logs) {
       console.log("[Form: " + this.formName + "] init", opts);
     }
+    $.each(this.fields, function(name) {
+      return self.initField(name);
+    });
     this.onInit();
     $.each(this.fields, function(name) {
       if (self.fields[name].style) {
-        return self.fields[name].el.trigger('style');
+        return self.fields[name].el.trigger('_style');
       }
     });
   };
@@ -204,11 +223,14 @@ Form = (function() {
     this.fields[name] = $.extend(true, {}, this.fieldsOptions, this.fields[name]);
     this.fields[name].el = el;
     this.fields[name].sel = $([]);
-    this.fields[name].el.unbind();
-    this.fields[name].el.attr('data-field', 'data-field');
+    this.fields[name].el.attr('data-field', 'original');
     if (isNew) {
       this.fields[name]["new"] = true;
     }
+    this.fields[name].type = this.fields[name].el.attr('type') || 'text';
+    this.fields[name].stylize = function() {
+      self.fields[name].el.trigger('_style');
+    };
     this.fields[name].val = function(val) {
       if (val != null) {
         self.setVal(name, val);
@@ -216,42 +238,6 @@ Form = (function() {
         return self.getVal(name);
       }
     };
-    if (this.fields[name].el.is("select")) {
-      this.fields[name].type = 'select';
-      this.fields[name].el.on('change', function() {
-        return self.createSelect(name, true);
-      });
-      this.fields[name].el.on('style', function() {
-        return self.createSelect(name);
-      });
-    } else if (this.fields[name].el.attr('type') === 'radio') {
-      this.fields[name].type = 'radio';
-      this.fields[name].el.on('change', function() {
-        return self.createRadio(name, true);
-      });
-      this.fields[name].el.on('style', function() {
-        return self.createRadio(name);
-      });
-    } else if (this.fields[name].el.attr('type') === 'checkbox') {
-      this.fields[name].type = 'checkbox';
-      this.fields[name].el.on('change', function() {
-        return self.createCheckbox(name, true);
-      });
-      this.fields[name].el.on('style', function() {
-        return self.createCheckbox(name);
-      });
-    } else if (this.fields[name].el.is("textarea")) {
-      this.fields[name].type = 'textarea';
-      this.fields[name].style = false;
-    } else {
-      this.fields[name].type = 'text';
-      this.fields[name].style = false;
-    }
-    if (this.fields[name].style) {
-      this.fields[name].stylize = function() {
-        return self.fields[name].el.trigger('style');
-      };
-    }
     this.fields[name].originVal = this.fields[name].val();
     if (this.fields[name].placeholder && ((ref = this.fields[name].type) === 'text' || ref === 'textarea')) {
       this.placeholder(this.fields[name].el, this.fields[name].placeholder);
@@ -270,24 +256,27 @@ Form = (function() {
     if (onInit) {
       onInit();
     }
-    if (this.fields[name].style) {
-      this.fields[name].el.trigger('style');
-    }
     if (this.logs) {
-      console.log("[Form: " + this.formName + "] add", name);
+      console.log("[Form: " + this.formName + "] add field: " + name, this.fields[name]);
+    }
+    if (this.fields[name].style) {
+      this.fields[name].el.trigger('_style');
     }
   };
 
   Form.prototype.removeField = function(name) {
+    if (!this.fields[name]) {
+      return;
+    }
     this.fields[name].el.removeAttr('data-field');
+    if (this.fields[name].style) {
+      this.fields[name].el.removeAttr('style');
+    }
     if (this.fields[name].sel) {
       this.fields[name].sel.remove();
     }
-    if (this.fields[name].style) {
-      this.fields[name].el.show();
-    }
     if (this.logs) {
-      console.log("[Form: " + this.formName + "] delete", name);
+      console.log("[Form: " + this.formName + "] delete field", name);
     }
     delete this.fields[name];
   };
@@ -295,7 +284,7 @@ Form = (function() {
   Form.prototype.createCheckbox = function(name, change) {
     var $checkbox, checkboxTemplate, self, val;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
     checkboxTemplate = this.templates.checkbox;
     if (change) {
       if (this.fields[name].val()) {
@@ -307,7 +296,7 @@ Form = (function() {
       this.form.find("[data-checkbox][data-name='" + name + "']").remove();
       val = this.fields[name].el.attr('value');
       $checkbox = $(checkboxTemplate);
-      $checkbox.attr('data-field', 'data-field');
+      $checkbox.attr('data-field', 'styled');
       $checkbox.attr('data-checkbox', 'data-checkbox');
       $checkbox.attr('data-name', name);
       $checkbox.attr('data-value', val);
@@ -316,7 +305,7 @@ Form = (function() {
       if (this.fields[name].el.attr('checked')) {
         $checkbox.attr('data-checked', 'data-checked');
       }
-      $checkbox.click(function() {
+      $checkbox.on('click', function() {
         if (self.fields[name].el.is(':checked')) {
           return self.setVal(name, false);
         } else {
@@ -329,7 +318,7 @@ Form = (function() {
   Form.prototype.createRadio = function(name, change) {
     var radioTemplate, self;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
     radioTemplate = this.templates.radio;
     if (change) {
       this.fields[name].sel.removeAttr('data-checked');
@@ -343,7 +332,7 @@ Form = (function() {
         el.hide();
         val = el.attr('value');
         $radio = $(radioTemplate);
-        $radio.attr('data-field', 'data-field');
+        $radio.attr('data-field', 'styled');
         $radio.attr('data-radio', 'data-radio');
         $radio.attr('data-name', name);
         $radio.attr('data-value', val);
@@ -352,7 +341,7 @@ Form = (function() {
         }
         self.fields[name].sel = self.fields[name].sel.add($radio);
         el.after($radio);
-        return $radio.click(function() {
+        return $radio.on('click', function() {
           return self.setVal(name, val);
         });
       });
@@ -362,7 +351,7 @@ Form = (function() {
   Form.prototype.createSelect = function(name, change) {
     var $options, $select, $selected, optionTemplate, optionsTemplate, selectTemplate, selectedTemplate, selectedText, self;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;overflow:hidden !important;position:absolute;');
+    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
     selectTemplate = this.templates.select.select;
     selectedTemplate = this.templates.select.selected;
     optionsTemplate = this.templates.select.options;
@@ -381,7 +370,7 @@ Form = (function() {
     } else {
       this.form.find("[data-select][data-name='" + name + "']").remove();
       $select = $(selectTemplate);
-      $select.attr('data-field', 'data-field');
+      $select.attr('data-field', 'styled');
       $select.attr('data-select', 'data-select');
       $select.attr('data-name', name);
       if (this.fields[name].el.find('option[selected]').size()) {
@@ -400,14 +389,14 @@ Form = (function() {
       this.fields[name].el.after($select);
       this.fields[name].sel = $select;
       if (this.fields[name]["native"]) {
-        $select.click(function() {
+        $select.on('click', function() {
           return self.fields[name].el.focus();
         });
         this.fields[name].el.on('blur', function() {
           return self.setVal(name, self.fields[name].el.val());
         });
       } else {
-        $selected.click(function() {
+        $selected.on('click', function() {
           if ($select.hasClass(self.classes.select.open)) {
             $select.removeClass(self.classes.select.open);
             return $options.hide();
@@ -417,15 +406,15 @@ Form = (function() {
           }
         });
       }
-      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === selectedText) {
-        $selected.addClass(self.classes.select["default"]);
-      }
       $(window).click(function(event) {
         if (!$(event.target).closest($select).length && !$(event.target).is($select)) {
           $select.removeClass(self.classes.select.open);
           return $options.hide();
         }
       });
+      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === selectedText) {
+        $selected.addClass(self.classes.select["default"]);
+      }
       this.fields[name].el.find('option').each(function() {
         var $option, option, text, val;
         if (!$(this).attr('value') || self.isEmpty($(this).attr('value'))) {
@@ -440,7 +429,7 @@ Form = (function() {
         if ($(this).is(':first-child')) {
           $option.attr('data-checked', 'data-checked');
         }
-        $option.click(function() {
+        $option.on('click', function() {
           return self.setVal(name, $(this).attr('data-value'));
         });
         return $options.append($option);
@@ -456,19 +445,19 @@ Form = (function() {
       opt.el.filter("[value='" + val + "']").prop("checked", val);
     } else if (opt.type === 'checkbox') {
       opt.el.prop("checked", val);
-    } else if (opt.type === 'select') {
-      opt.el.val(val);
-    } else {
+    } else if ((ref = opt.type) === 'text' || ref === 'password' || ref === 'textarea') {
       opt.el.val(this.trim(val));
-    }
-    if (opt.placeholder && ((ref = opt.type) === 'text' || ref === 'textarea')) {
-      if (val === "" || val === opt.placeholder) {
-        this.placeholder(opt.el, opt.el.placeholder);
-      } else {
-        opt.el.removeClass(this.classes.placeholderClass);
+      if (opt.placeholder) {
+        if (val === "" || val === opt.placeholder) {
+          this.placeholder(opt.el, opt.el.placeholder);
+        } else {
+          opt.el.removeClass(this.classes.placeholderClass);
+        }
       }
+    } else {
+      opt.el.val(val);
     }
-    opt.el.trigger('change', [
+    opt.el.trigger('_change', [
       {
         name: name,
         val: val,
@@ -478,17 +467,17 @@ Form = (function() {
   };
 
   Form.prototype.getVal = function(name) {
-    var opt, ref, val;
+    var opt, ref, ref1, val;
     opt = this.fields[name];
     if ((ref = opt.type) === 'checkbox' || ref === 'radio') {
       val = opt.el.filter(":checked").val() || false;
-    } else if (opt.type === 'select') {
-      val = opt.el.val();
-    } else {
+    } else if ((ref1 = opt.type) === 'text' || ref1 === 'password' || ref1 === 'textarea') {
       val = this.trim(opt.el.val());
       if (opt.placeholder && (val === opt.placeholder)) {
         val = "";
       }
+    } else {
+      val = opt.el.val();
     }
     return val;
   };
@@ -601,9 +590,10 @@ Form = (function() {
     this.resetData();
     this.resetErorrs();
     $.each(this.fields, function(name, opt) {
-      self.setVal(name, opt.originVal);
       if (self.fields[name]["new"]) {
         return self.removeField(name);
+      } else {
+        return self.setVal(name, opt.originVal);
       }
     });
     if (this.logs) {

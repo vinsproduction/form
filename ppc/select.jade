@@ -62,8 +62,8 @@ head
 						self.fields['dropdown'].el.on 'style', ->
 							scroll(self.fields['dropdown'].sel)
 
-						self.fields['dropdown'].el.on 'change', ->
-							forms['form-2'].fields['dropdown-2'].val(2)
+						self.fields['dropdown'].el.on 'change', (e,data) ->
+							forms['form-2'].fields['dropdown-2'].val(data.val)
 
 					onSubmit: (data) ->
 
