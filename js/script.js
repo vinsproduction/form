@@ -76,9 +76,7 @@ $(function() {
     autoErrors: true,
     escape: true,
     rules: {
-      required: {
-        reason: 'ошибка'
-      }
+      required: true
     }
   };
   window.forms['form-1'] = new Form({

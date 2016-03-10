@@ -124,8 +124,8 @@ $ ->
 		autoErrors: true
 		escape: true
 		rules:
-			required:
-				reason: 'ошибка'
+			required: true
+				# reason: 'ошибка'
 		# onError: (name,errors) ->
 		# 	console.log 11
 
