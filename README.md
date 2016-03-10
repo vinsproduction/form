@@ -1,5 +1,7 @@
 # Form.js
 
+[Пример test form] (http://vinsproduction.com/projects/form)
+
 [Пример login form] (http://vinsproduction.com/projects/form/login.html)
 
 [Пример registration form](http://vinsproduction.com/projects/form/registration.html)
@@ -88,11 +90,24 @@ formValidator = new Form
 
 fields = 
 
+	'id': false # Если не надо чтобы поле участвовало в форме!
+
 	'email':
 		escape: false 
 		rules:
 			required: true
 			email: true
+
+	###
+		Если это выпадющий список, можно указать дефолтное значение для подсветки
+		и правило валидации not - для значения по умолчанию
+	###
+
+	'dropdown'
+		defaultStyle: 'Выбрать'
+		rules:
+			required:
+				not: 'Выбрать'
 
 # fieldsOptions - настройки для всех полей. Опционально
 # Такие же настройки внутри самого поля приоритетней! Как например escape выше
@@ -133,10 +148,10 @@ formValidator = new Form
 	disableSubmit: false # Заблокировать сабмит. По умолчанию false
 
 	classes:
-		disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
-		placeholderClass: "placeholder"
+		disableSubmitClass: 'disabled' # Класс заблокированного сабмита
+		placeholderClass: "placeholder" # Класс плейсхолдера
 		errorFieldClass: "error-field" # Стиль ошибки поля
-		errorClass: "error-" # Класс элемента вывода ошибки поля
+		errorClass: "error" # Класс элемента вывода ошибки поля
 		preloaderClass: "preloader" # Класс прелоадера формы
 
 ```
@@ -242,9 +257,12 @@ formValidator.reset()
 
 Добавление поля
 ```
-formValidator.addField 'название поля',
-	rules:
-		required: true
+formValidator.addField
+	name: 'название поля'
+	options:
+		rules:
+			required: true
+	onInit: -> 
 
 ```
 
@@ -254,9 +272,19 @@ formValidator.removeField 'название поля'
 
 ```
 
+Стилизация поля
+```
+formValidator.fields['название поля'].stylize()
+```
+
 Следить за изменениями поля
 ```
-formValidator.fields['название поля'].onChange (v) ->
+formValidator.fields['название поля'].on 'change', (e,data) ->
+```
+
+Следить за стилизацией поля
+```
+formValidator.fields['название поля'].on 'style', (e,sel) ->
 ```
 
 Установка значения поля

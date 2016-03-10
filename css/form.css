@@ -114,11 +114,11 @@ body {
 .form textarea:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 50px #ededed inset;
 }
-.form .disabled-submit {
+.form [data-submit].disabled {
   background: #a8abad !important;
   cursor: wait !important;
 }
-.form .disabled-submit:hover {
+.form [data-submit].disabled:hover {
   background: #a8abad !important;
 }
 .form {
@@ -350,6 +350,9 @@ body {
   zoom: 1;
   *display: inline;
 }
+.form .submit [data-submit],
+.form .reset [data-submit],
+.form .add-field [data-submit],
 .form .submit a,
 .form .reset a,
 .form .add-field a {

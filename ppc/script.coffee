@@ -50,6 +50,7 @@ $ ->
 
 	$form = $('.form')
 
+
 	fields = 
 
 		'id': false
@@ -69,10 +70,15 @@ $ ->
 		# 	rules:
 		# 		required: true
 
-		# 'password-confirmation':
-		# 	rules:
-		# 		compare:
-		# 			val: -> $form.find('input[name="password"]').val()
+		'password-confirmation':
+			rules:
+				compare:
+					val: -> $form.find('input[name="password"]').val()
+					reason: 'Не совпадает с полем password'
+			onError: (name,errors) ->
+				$form.find("[name='password']").addClass('error-field')
+
+
 
 		# 'phone':
 		# 	rules:
@@ -91,11 +97,10 @@ $ ->
 		# 	rules:
 		# 		required: true
 
-		'checkbox_1':
-			name: 'checkbox new'
-			rules:
-				required: false
-				alpha: true
+		# 'checkbox_1':
+			# name: 'checkbox new'
+			# rules:
+			# 	required: true
 			# onError: (name,errors) ->
 			# 	console.log 22
 
@@ -126,7 +131,7 @@ $ ->
 
 
 
-	window.forms['form'] = new Form
+	window.forms['form-1'] = new Form
 
 		logs: true
 
@@ -134,13 +139,14 @@ $ ->
 
 		disableSubmit: false
 
-		formName: 'nice form'
+		formName: 'test form'
 		formEl: $form
 		submitEl: $form.find('.submit a')
 		fields: fields
 		fieldsOptions: fieldsOptions
 
 		onInit: ->
+
 
 			self = @
 
@@ -152,11 +158,11 @@ $ ->
 			# 	console.log 'dropdown style'
 
 			@fields['dropdown'].el.on 'change', (e,data) ->
-				console.log 'dropdown change', data
+				# console.log 'dropdown change', data
 
 			@fields['dropdown'].el.on 'style', (e,sel) ->
-				console.log 'dropdown style',sel
-				scroll(self.fields['dropdown'].sel)
+				# console.log 'dropdown style',sel
+				scroll(sel)
 
 
 		onSubmit: (data) ->
@@ -181,7 +187,7 @@ $ ->
 			@unlockSubmit()
 			@hidePreloader()
 
-	# formValidator.addRule 
+	# forms['form-1'].addRule 
 	# 	field: 'password-confirmation'
 	# 	rule: 'password confirmation rule'
 	# 	reason: 'Пароли не совпадают'
@@ -191,7 +197,7 @@ $ ->
 
 	window.addfield = ->
 
-		clone = forms['form'].form.find('.example').eq(0).clone()
+		clone = forms['form-1'].form.find('.example').eq(0).clone()
 
 		fieldName = Date.now()
 
@@ -205,29 +211,29 @@ $ ->
 
 		clone.find('.remove').click ->
 			clone.remove()
-			forms['form'].removeField(fieldName)
+			forms['form-1'].removeField(fieldName)
 			return false
 
-		options =
-			defaultStyle: "Выбрать"
-			rules:
-				required:
-					not: 'Выбрать'
-					reason: 'Своя ошибка'
 
-		onInit = ->
-			forms['form'].fields[fieldName].el.on 'change', (e,v) ->
-				console.log 'change new',v.val
+		forms['form-1'].addField
 
-			forms['form'].fields[fieldName].el.on 'style', ->
-				console.log 'style new'
-				scroll(forms['form'].fields[fieldName].sel)
+			name: fieldName
+			options:
+				defaultStyle: "Выбрать"
+				rules:
+					required:
+						not: 'Выбрать'
+						reason: 'Своя ошибка'
+			onInit: ->
+				forms['form-1'].fields[fieldName].el.on 'change', (e,v) ->
+					console.log 'change new',v.val
 
-
-		forms['form'].addField(fieldName, options, onInit)
+				forms['form-1'].fields[fieldName].el.on 'style', (e,sel) ->
+					console.log 'style new'
+					scroll(sel)
 
 	window.reset = ->
-		forms['form'].reset()
-		forms['form'].form.find('.example.new').remove()
+		forms['form-1'].reset()
+		forms['form-1'].form.find('.example.new').remove()
 
 	return

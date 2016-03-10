@@ -48,11 +48,17 @@ $(function() {
     'login': {
       placeholder: 'login'
     },
-    'checkbox_1': {
-      name: 'checkbox new',
+    'password-confirmation': {
       rules: {
-        required: false,
-        alpha: true
+        compare: {
+          val: function() {
+            return $form.find('input[name="password"]').val();
+          },
+          reason: 'Не совпадает с полем password'
+        }
+      },
+      onError: function(name, errors) {
+        return $form.find("[name='password']").addClass('error-field');
       }
     },
     'dropdown': {
@@ -75,11 +81,11 @@ $(function() {
       }
     }
   };
-  window.forms['form'] = new Form({
+  window.forms['form-1'] = new Form({
     logs: true,
     autoFields: true,
     disableSubmit: false,
-    formName: 'nice form',
+    formName: 'test form',
     formEl: $form,
     submitEl: $form.find('.submit a'),
     fields: fields,
@@ -89,12 +95,9 @@ $(function() {
       self = this;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.fields['dropdown'].el.on('change', function(e, data) {
-        return console.log('dropdown change', data);
-      });
+      this.fields['dropdown'].el.on('change', function(e, data) {});
       return this.fields['dropdown'].el.on('style', function(e, sel) {
-        console.log('dropdown style', sel);
-        return scroll(self.fields['dropdown'].sel);
+        return scroll(sel);
       });
     },
     onSubmit: function(data) {
@@ -113,8 +116,8 @@ $(function() {
     }
   });
   window.addfield = function() {
-    var clone, fieldName, onInit, options;
-    clone = forms['form'].form.find('.example').eq(0).clone();
+    var clone, fieldName;
+    clone = forms['form-1'].form.find('.example').eq(0).clone();
     fieldName = Date.now();
     clone.find('.label .name').html(fieldName);
     clone.find('.error').removeAttr('class').addClass('error error-' + fieldName);
@@ -124,31 +127,33 @@ $(function() {
     $form.find('.error-list').before(clone);
     clone.find('.remove').click(function() {
       clone.remove();
-      forms['form'].removeField(fieldName);
+      forms['form-1'].removeField(fieldName);
       return false;
     });
-    options = {
-      defaultStyle: "Выбрать",
-      rules: {
-        required: {
-          not: 'Выбрать',
-          reason: 'Своя ошибка'
+    return forms['form-1'].addField({
+      name: fieldName,
+      options: {
+        defaultStyle: "Выбрать",
+        rules: {
+          required: {
+            not: 'Выбрать',
+            reason: 'Своя ошибка'
+          }
         }
+      },
+      onInit: function() {
+        forms['form-1'].fields[fieldName].el.on('change', function(e, v) {
+          return console.log('change new', v.val);
+        });
+        return forms['form-1'].fields[fieldName].el.on('style', function(e, sel) {
+          console.log('style new');
+          return scroll(sel);
+        });
       }
-    };
-    onInit = function() {
-      forms['form'].fields[fieldName].el.on('change', function(e, v) {
-        return console.log('change new', v.val);
-      });
-      return forms['form'].fields[fieldName].el.on('style', function() {
-        console.log('style new');
-        return scroll(forms['form'].fields[fieldName].sel);
-      });
-    };
-    return forms['form'].addField(fieldName, options, onInit);
+    });
   };
   window.reset = function() {
-    forms['form'].reset();
-    return forms['form'].form.find('.example.new').remove();
+    forms['form-1'].reset();
+    return forms['form-1'].form.find('.example.new').remove();
   };
 });

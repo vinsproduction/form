@@ -1,5 +1,7 @@
-### Form ###
-### https://github.com/vinsproduction/form ###
+###
+	Form
+	https://github.com/vinsproduction/form
+###
 
 class Form
 
@@ -9,7 +11,8 @@ class Form
 			window.console = {}
 
 		if !window.console.groupCollapsed
-			window.console.groupCollapsed = () ->
+			window.console.groupCollapsed = ->
+				console.log.apply(console,arguments) if window.console.log
 
 		if !window.console.groupEnd
 			window.console.groupEnd = ->
@@ -18,16 +21,13 @@ class Form
 
 		@logs = false
 
-		@formName = false
+		@formName = 'form'
 		@formEl = false
 		@submitEl = false
 
-		###
-		autoFields
-		Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
-		Если false - обрабатываться будут только указанные поля!
-		###
-
+		# autoFields
+		# Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
+		# Если false - обрабатываться будут только указанные поля!
 		@autoFields = true
 
 		@enter = true  # Отправка на Enter
@@ -36,15 +36,15 @@ class Form
 
 		@classes = 
 		
-			disableSubmitClass: 'disabled-submit' # Класс заблокированного сабмита
-			placeholderClass: "placeholder"
-			errorFieldClass: "error-field" # Стиль ошибки поля
+			disableSubmitClass: 'disabled' # Класс заблокированного сабмита
+			placeholderClass: "placeholder" # Класс плейсхолдера
+			errorFieldClass: "error-field" # Класс ошибки поля
 			errorClass: "error" # Класс элемента вывода ошибки поля
 			preloaderClass: "preloader" # Класс прелоадера формы
 
 			select:
 				open: 'open' # Класс открытого селекта
-				default: 'default' # Класс селекта значения по умолчанию, например 'Выбрать'
+				default: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'
 
 		@templates =
 			checkbox: """<div class="checkbox"></div>"""
@@ -88,7 +88,7 @@ class Form
 			if !self.form.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not found in DOM"
 			if !self.submitBtn.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! submitEl not found in DOM"
 
-			self.form.attr('data-form', self.formName || 'data-form')
+			self.form.attr('data-form', self.formName)
 			self.submitBtn.attr('data-submit','data-submit')
 
 			self.form.mouseover -> self.form.inFocus = true
@@ -98,8 +98,7 @@ class Form
 
 				$(window).keydown (event) ->
 					if self.form.inFocus and event.keyCode is 13
-						self.submit() if !self.disableSubmit
-
+						self.submit() if !self._disableSubmit
 
 			if self.autoFields
 				self.form.find('[name]').each ->
@@ -119,9 +118,18 @@ class Form
 
 		# Remove Events!
 
-		@form.find('[data-field]').off('change').off('style')
-		@form.off('_style').off('_change')
-		@submitBtn.off('click')
+		@form.find('[data-field]')
+			.off('change')
+			.off('style')
+			.off('click')
+
+		@form
+			.off('Style')
+			.off('Change')
+			.off('click')
+
+		@submitBtn
+			.off('click')
 
 		# Add Events!
 
@@ -139,7 +147,7 @@ class Form
 
 			return true
 
-		@form.on '_style', '[data-field="original"]', ->
+		@form.on 'Style', '[data-field]', ->
 
 			el = $(@)
 			name = el.attr('name')
@@ -165,7 +173,7 @@ class Form
 
 			return true
 		
-		@form.on '_change', '[data-field="original"]', (e,data) ->
+		@form.on 'Change', '[data-field]', (e,data) ->
 
 			el = $(@)
 			name = el.attr('name')
@@ -189,13 +197,13 @@ class Form
 
 		@form.submit (e) -> e.preventDefault()
 
-		if @params.disableSubmit
-			@lockSubmit() 
+		if @disableSubmit
+			@lockSubmit()
 		else
 			@unlockSubmit()
 
 		@submitBtn.click ->
-			self.submit() if !self.disableSubmit
+			self.submit() if !self._disableSubmit
 			return false
 
 		opts = {
@@ -215,13 +223,13 @@ class Form
 
 		do @onInit
 
-		# Init Event
+		# Run Style trigger
 		$.each @fields, (name) ->
-			self.fields[name].el.trigger('_style') if self.fields[name].style
+			self.fields[name].el.trigger('Style') if self.fields[name].style
 
 		return
 
-	initField: (name,isNew) ->
+	initField: (name) ->
 
 		self = @
 
@@ -238,12 +246,12 @@ class Form
 
 		@fields[name].el.attr('data-field','original')
 
-		@fields[name].new = true if isNew
+		@fields[name].type = if @fields[name].el.is('select') then 'select' else @fields[name].el.attr('type') || 'text'
 
-		@fields[name].type = @fields[name].el.attr('type') || 'text'
+		@fields[name].el.attr('data-type',@fields[name].type)
 
 		@fields[name].stylize = ->
-			self.fields[name].el.trigger('_style')
+			self.fields[name].el.trigger('Style')
 			return
 
 		@fields[name].val = (val) ->
@@ -259,33 +267,6 @@ class Form
 			@placeholder(@fields[name].el,@fields[name].placeholder)
 
 		@fields[name].el.focus() if @fields[name].focus
-
-		return
-
-	addField: (name,opt = @fieldsOptions, onInit) ->
-
-		@fields[name] = opt
-		@initField(name,true)
-
-		onInit() if onInit
-
-		console.log("[Form: #{@formName}] add field: #{name}", @fields[name]) if @logs
-
-		@fields[name].el.trigger('_style') if @fields[name].style
-		
-		return
-
-	removeField: (name) ->
-
-		return if !@fields[name]
-
-		@fields[name].el.removeAttr('data-field')
-		@fields[name].el.removeAttr('style') if @fields[name].style
-		@fields[name].sel.remove() if @fields[name].sel
-
-		console.log("[Form: #{@formName}] delete field", name) if @logs
-
-		delete @fields[name]
 
 		return
 
@@ -307,13 +288,13 @@ class Form
 
 		else
 
-			@form.find("[data-checkbox][data-name='#{name}']").remove()
+			@form.find("[data-type='checkbox'][data-name='#{name}']").remove()
 
 			val = @fields[name].el.attr('value')
 
 			$checkbox = $(checkboxTemplate)
 			$checkbox.attr('data-field','styled')
-			$checkbox.attr('data-checkbox','data-checkbox')
+			$checkbox.attr('data-type','checkbox')
 			$checkbox.attr('data-name',name)
 			$checkbox.attr('data-value',val)
 
@@ -321,11 +302,11 @@ class Form
 
 			@fields[name].el.after $checkbox
 
-			$checkbox.attr('data-checked','data-checked') if @fields[name].el.attr('checked')
+			$checkbox.attr('data-checked','data-checked') if @fields[name].el.prop( "checked" )
 
 			$checkbox.on 'click', ->
 
-				if self.fields[name].el.is(':checked')
+				if self.fields[name].el.prop("checked")
 					self.setVal(name, false)
 				else
 					self.setVal(name, val)
@@ -347,7 +328,7 @@ class Form
 
 		else
 
-			@form.find("[data-radio][data-name='#{name}']").remove()
+			@form.find("[data-type='radio'][data-name='#{name}']").remove()
 
 			@fields[name].sel = $([])
 
@@ -362,7 +343,7 @@ class Form
 				$radio 	= $(radioTemplate)
 
 				$radio.attr('data-field','styled')
-				$radio.attr('data-radio','data-radio')
+				$radio.attr('data-type','radio')
 				$radio.attr('data-name',name)
 				$radio.attr('data-value',val)
 
@@ -408,11 +389,11 @@ class Form
 	
 		else
 
-			@form.find("[data-select][data-name='#{name}']").remove()
+			@form.find("[data-type='select'][data-name='#{name}']").remove()
 
 			$select  = $(selectTemplate)
 			$select.attr('data-field', 'styled')
-			$select.attr('data-select', 'data-select')
+			$select.attr('data-type', 'select')
 			$select.attr('data-name', name)
 
 			if @fields[name].el.find('option[selected]').size()
@@ -506,7 +487,7 @@ class Form
 			opt.el.val(val)
 
 
-		opt.el.trigger('_change',[{name,val,el:opt.el}])
+		opt.el.trigger('Change',[{name,val,el:opt.el}])
 
 		return
 
@@ -669,6 +650,39 @@ class Form
 
 	getErrors: -> @errors
 
+	
+
+	addField: (opt) ->
+
+		name = opt.name
+
+		@fields[name] = opt.options || @fieldsOptions
+		@initField(name,true)
+
+		@fields[name].new = true
+
+		opt.onInit() if opt.onInit
+
+		console.log("[Form: #{@formName}] add field: #{name}", @fields[name]) if @logs
+
+		@fields[name].el.trigger('Style') if @fields[name].style
+		
+		return
+
+	removeField: (name) ->
+
+		return if !@fields[name]
+
+		@fields[name].el.removeAttr('data-field')
+		@fields[name].el.removeAttr('style') if @fields[name].style
+		@fields[name].sel.remove() if @fields[name].sel
+
+		console.log("[Form: #{@formName}] delete field", name) if @logs
+
+		delete @fields[name]
+
+		return
+
 	placeholder: (el,val) ->
 
 		el.focus =>
@@ -681,13 +695,12 @@ class Form
 
 	lockSubmit: ->
 
-		@disableSubmit = true
+		@_disableSubmit = true
 		@submitBtn.addClass(@classes.disableSubmitClass)
 		return
 
 	unlockSubmit: ->
-
-		@disableSubmit = false
+		@_disableSubmit = false
 		@submitBtn.removeClass(@classes.disableSubmitClass)
 		return
 
@@ -698,8 +711,6 @@ class Form
 	hidePreloader: ->
 		@form.find('.' + @classes.preloaderClass).hide()
 		return
-
-	### VALIDATION FUNCTIONS ###
 
 	validate:
 
@@ -809,9 +820,6 @@ class Form
 				
 			return valid
 
-
-	### ДОБАВЛЕНИЕ НОВОГО ПРАВИЛА ###
-
 	addRule: (opt) ->
 
 		@fields[opt.field]['rules'][opt.rule] = opt.reason
@@ -826,18 +834,7 @@ class Form
 
 		console.log("[Form: #{@formName}] add rule", opt)
 
-
-	### HELPERS ###
-
-	log: () ->
-		if console and @logs
-
-			formName = @formName || @formEl
-			
-			newArgs = ["[Form]","'#{formName}'"]
-			for argument in arguments
-				newArgs.push argument
-			console.log.apply(console,newArgs)
+	# HELPERS
 
 	trim: (text="") ->
 		return text if !@isString(text)

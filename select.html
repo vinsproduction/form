@@ -42,7 +42,7 @@
     window.forms = {};
     window.forms['form-1'] = new Form({
       logs: true,
-      formName: 'select',
+      formName: 'form 1',
       formEl: '.form-1',
       submitEl: '.submit a',
       fieldsOptions: {
@@ -76,11 +76,14 @@
         var self;
         self = this;
         return self.form.find('.errors').html("Исправьте ошибки в форме");
+      },
+      onReset: function() {
+        return this.hidePreloader();
       }
     });
     window.forms['form-2'] = new Form({
       logs: true,
-      formName: 'select 2',
+      formName: 'form 2',
       formEl: '.form-2',
       submitEl: '.submit a',
       fieldsOptions: {
@@ -95,7 +98,7 @@
       }
     });
     window.reset = function() {
-      return window.forms['form-2'].reset();
+      return window.forms['form-1'].reset();
     };
     window.reset2 = function() {
       return window.forms['form-2'].reset();

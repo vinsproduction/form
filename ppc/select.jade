@@ -46,10 +46,10 @@ head
 
 					logs: true
 
-					formName: 'select'
+					formName: 'form 1'
 					formEl: '.form-1'
 					submitEl: '.submit a'
-
+	
 					fieldsOptions:
 						defaultStyle: 'Выбрать'
 						rules:
@@ -88,12 +88,15 @@ head
 
 						self.form.find('.errors').html "Исправьте ошибки в форме"
 
+					onReset: ->
+
+						@hidePreloader()
 
 				window.forms['form-2'] = new Form
 
 					logs: true
 
-					formName: 'select 2'
+					formName: 'form 2'
 					formEl: '.form-2'
 					submitEl: '.submit a'
 					fieldsOptions:
@@ -109,7 +112,7 @@ head
 
 
 				window.reset = ->
-					window.forms['form-2'].reset()
+					window.forms['form-1'].reset()
 
 				window.reset2 = ->
 					window.forms['form-2'].reset()
