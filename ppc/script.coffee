@@ -154,13 +154,10 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-			# @fields['dropdown'].el.on 'style', (e) ->
-			# 	console.log 'dropdown style'
-
-			@fields['dropdown'].el.on 'change', (e,data) ->
+			@form.on 'change', '[data-field][data-name="dropdown"]', (e,data) ->
 				# console.log 'dropdown change', data
 
-			@fields['dropdown'].el.on 'style', (e,sel) ->
+			@form.on 'style', '[data-field][data-name="dropdown"]', (e,sel) ->
 				# console.log 'dropdown style',sel
 
 			@form.on 'style', '[data-field][data-type="select"]', (e,sel) ->

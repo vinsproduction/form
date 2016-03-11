@@ -95,8 +95,8 @@ $(function() {
       self = this;
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.fields['dropdown'].el.on('change', function(e, data) {});
-      this.fields['dropdown'].el.on('style', function(e, sel) {});
+      this.form.on('change', '[data-field][data-name="dropdown"]', function(e, data) {});
+      this.form.on('style', '[data-field][data-name="dropdown"]', function(e, sel) {});
       return this.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
         scroll(sel);
       });

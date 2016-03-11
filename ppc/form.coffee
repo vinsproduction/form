@@ -502,7 +502,7 @@ class Form
 			opt.el.val(val)
 
 
-		opt.el.trigger('Change',[{name,val,el:opt.el}])
+		opt.el.trigger('Change',[{name,val}])
 
 		return
 

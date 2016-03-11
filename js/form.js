@@ -438,8 +438,7 @@ Form = (function() {
     opt.el.trigger('Change', [
       {
         name: name,
-        val: val,
-        el: opt.el
+        val: val
       }
     ]);
   };

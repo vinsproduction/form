@@ -280,11 +280,23 @@ formValidator.fields['название поля'].stylize()
 Следить за изменениями поля
 ```
 formValidator.fields['название поля'].on 'change', (e,data) ->
+
+Или
+formValidator.on 'change', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
 Следить за стилизацией поля
 ```
 formValidator.fields['название поля'].on 'style', (e,sel) ->
+
+(Пример слежения за всеми полями одного типа)
+formValidator.on 'style', '[data-field][data-type="тип поля"]', (e,sel) ->
+	# sel - стилизованный селектор dom
+```
+
+Клик по полю
+```
+formValidator.on 'click', '[data-name="название поля"]', ->
 ```
 
 Установка значения поля
