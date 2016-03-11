@@ -21,7 +21,7 @@ $.datepicker.regional.ru = {
 $.datepicker.setDefaults($.datepicker.regional['ru']);
 
 scroll = function(el) {
-  var $options, $select, $selected, browserIsMobile, scrollbar;
+  var $options, $select, $selected, browserMobile, scrollbar;
   $select = el;
   $selected = $select.find('[data-selected]');
   $options = $select.find('[data-options]');
@@ -29,14 +29,16 @@ scroll = function(el) {
     $options.wrapInner("<div class=\"viewport\"><div class=\"overview\"></div></div>");
     $options.prepend("<div class=\"scrollbar\"><div class=\"track\"><div class=\"thumb\"><div class=\"end\"></div></div></div></div>");
   }
-  browserIsMobile = false;
+  browserMobile = false;
   scrollbar = $options.tinyscrollbar({
-    sizethumb: 44,
-    invertscroll: browserIsMobile
+    sizethumb: 40,
+    wheel: (browserMobile ? 2 : 40),
+    invertscroll: browserMobile
   });
   $selected.click(function() {
     return scrollbar.tinyscrollbar_update();
   });
+  return scrollbar.tinyscrollbar_update();
 };
 
 $(function() {
@@ -94,8 +96,9 @@ $(function() {
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
       this.fields['dropdown'].el.on('change', function(e, data) {});
-      return this.fields['dropdown'].el.on('style', function(e, sel) {
-        return scroll(sel);
+      this.fields['dropdown'].el.on('style', function(e, sel) {});
+      return this.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
+        scroll(sel);
       });
     },
     onSubmit: function(data) {
@@ -124,7 +127,6 @@ $(function() {
     clone.addClass('new');
     $form.find('.error-list').before(clone);
     clone.find('.remove').click(function() {
-      clone.remove();
       forms['form-1'].removeField(fieldName);
       return false;
     });
@@ -144,8 +146,7 @@ $(function() {
           return console.log('change new', v.val);
         });
         return forms['form-1'].fields[fieldName].el.on('style', function(e, sel) {
-          console.log('style new');
-          return scroll(sel);
+          return console.log('style new');
         });
       }
     });

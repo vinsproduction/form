@@ -17,9 +17,8 @@ class Form
 		if !window.console.groupEnd
 			window.console.groupEnd = ->
 
-		self = @
 
-		@logs = false
+		@logs = false # Логи отключены
 
 		@formName = 'form'
 		@formEl = false
@@ -34,8 +33,9 @@ class Form
 
 		@disableSubmit = false # Заблокировать сабмит
 
+
 		@classes = 
-		
+
 			disableSubmitClass: 'disabled' # Класс заблокированного сабмита
 			placeholderClass: "placeholder" # Класс плейсхолдера
 			errorFieldClass: "error-field" # Класс ошибки поля
@@ -47,6 +47,7 @@ class Form
 				default: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'
 
 		@templates =
+			hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
 			checkbox: """<div class="checkbox"></div>"""
 			radio: """<div class="radio"></div>"""
 			select:
@@ -76,6 +77,10 @@ class Form
 		@onInit = ->
 
 		$.extend(true, @, @params)
+
+		self = @
+
+		@validation()
 
 		$ ->
 
@@ -206,16 +211,20 @@ class Form
 			self.submit() if !self._disableSubmit
 			return false
 
-		opts = {
-			@autoFields
-			@fields
-			@fieldsOptions
-			@enter
-			@disableSubmit
-			@classes
-		}
+		if @logs
 
-		console.log("[Form: #{@formName}] init",opts) if self.logs
+			opts = {
+				@autoFields
+				@fields
+				@fieldsOptions
+				@enter
+				@disableSubmit
+				@classes
+			}
+
+			console.groupCollapsed("[Form: #{@formName}] init")
+			console.log(opts)
+			console.groupEnd()
 		
 		# Init Fields
 		$.each @fields, (name) ->
@@ -225,7 +234,7 @@ class Form
 
 		# Run Style trigger
 		$.each @fields, (name) ->
-			self.fields[name].el.trigger('Style') if self.fields[name].style
+			self.fields[name].el.eq(0).trigger('Style') if self.fields[name].style
 
 		return
 
@@ -241,9 +250,12 @@ class Form
 
 		@fields[name] = $.extend(true, {}, @fieldsOptions, @fields[name])
 
+		@fields[name].form = @
+
 		@fields[name].el = el
 		@fields[name].sel = $([])
 
+		@fields[name].el.attr('data-name',name)
 		@fields[name].el.attr('data-field','original')
 
 		@fields[name].type = if @fields[name].el.is('select') then 'select' else @fields[name].el.attr('type') || 'text'
@@ -251,7 +263,7 @@ class Form
 		@fields[name].el.attr('data-type',@fields[name].type)
 
 		@fields[name].stylize = ->
-			self.fields[name].el.trigger('Style')
+			self.fields[name].el.eq(0).trigger('Style')
 			return
 
 		@fields[name].val = (val) ->
@@ -274,9 +286,6 @@ class Form
 
 		self = @
 
-		@fields[name].el.attr('style','opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;')
-
-
 		checkboxTemplate = @templates.checkbox
 
 		if change
@@ -288,7 +297,10 @@ class Form
 
 		else
 
-			@form.find("[data-type='checkbox'][data-name='#{name}']").remove()
+			if @form.find("[data-field='original'][data-type='checkbox'][data-name='#{name}']").parent().attr('data-wrap')
+				@form.find("[data-field='original'][data-type='checkbox'][data-name='#{name}']").unwrap()
+
+			@form.find("[data-field='styled'][data-type='checkbox'][data-name='#{name}']").remove()
 
 			val = @fields[name].el.attr('value')
 
@@ -298,9 +310,12 @@ class Form
 			$checkbox.attr('data-name',name)
 			$checkbox.attr('data-value',val)
 
+			@fields[name].el.after $checkbox
 			@fields[name].sel = $checkbox
 
-			@fields[name].el.after $checkbox
+			$hiddenWrap = $(@templates.hidden)
+			$hiddenWrap.attr('data-wrap',name)
+			@fields[name].el.wrap($hiddenWrap)
 
 			$checkbox.attr('data-checked','data-checked') if @fields[name].el.prop( "checked" )
 
@@ -317,10 +332,6 @@ class Form
 
 		self = @
 
-		@fields[name].el.attr('style','opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;')
-
-		radioTemplate = @templates.radio
-
 		if change
 
 			@fields[name].sel.removeAttr('data-checked')
@@ -328,7 +339,10 @@ class Form
 
 		else
 
-			@form.find("[data-type='radio'][data-name='#{name}']").remove()
+			if @form.find("[data-field='original'][data-type='radio'][data-name='#{name}']").parent().attr('data-wrap')
+				@form.find("[data-field='original'][data-type='radio'][data-name='#{name}']").unwrap()
+			
+			@form.find("[data-field='styled'][data-type='radio'][data-name='#{name}']").remove()
 
 			@fields[name].sel = $([])
 
@@ -336,11 +350,9 @@ class Form
 
 				el = $(@)
 
-				el.hide()
-
 				val = el.attr('value')
 
-				$radio 	= $(radioTemplate)
+				$radio 	= $(self.templates.radio)
 
 				$radio.attr('data-field','styled')
 				$radio.attr('data-type','radio')
@@ -349,9 +361,12 @@ class Form
 
 				$radio.attr('data-checked','data-checked') if el.attr('checked')
 
+				el.after $radio
 				self.fields[name].sel = self.fields[name].sel.add($radio)
 
-				el.after $radio
+				$hiddenWrap = $(self.templates.hidden)
+				$hiddenWrap.attr('data-wrap',name)
+				el.wrap($hiddenWrap)
 
 				$radio.on 'click', ->
 					self.setVal(name, val)
@@ -362,13 +377,6 @@ class Form
 	createSelect: (name,change) ->
 
 		self = @
-
-		@fields[name].el.attr('style','opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;')
-
-		selectTemplate		= @templates.select.select
-		selectedTemplate	= @templates.select.selected
-		optionsTemplate 	= @templates.select.options
-		optionTemplate 		= @templates.select.option
 
 		if change
 
@@ -389,9 +397,12 @@ class Form
 	
 		else
 
-			@form.find("[data-type='select'][data-name='#{name}']").remove()
+			if @form.find("[data-field='original'][data-type='select'][data-name='#{name}']").parent().attr('data-wrap')
+				@form.find("[data-field='original'][data-type='select'][data-name='#{name}']").unwrap()
+			
+			@form.find("[data-field='styled'][data-type='select'][data-name='#{name}']").remove()
 
-			$select  = $(selectTemplate)
+			$select  = $(@templates.select.select)
 			$select.attr('data-field', 'styled')
 			$select.attr('data-type', 'select')
 			$select.attr('data-name', name)
@@ -401,11 +412,11 @@ class Form
 			else
 				selectedText 	= @fields[name].el.find('option:first-child').text()
 
-			selectedTemplate = selectedTemplate.replace('{selected}',selectedText)
+			selectedTemplate = @templates.select.selected.replace('{selected}',selectedText)
 			$selected = $(selectedTemplate)
 			$selected.attr('data-selected','data-selected')
 
-			$options = $(optionsTemplate)
+			$options = $(@templates.select.options)
 			$options.attr('data-options','data-options')
 			$options.hide()
 
@@ -414,6 +425,10 @@ class Form
 
 			@fields[name].el.after $select
 			@fields[name].sel = $select
+
+			$hiddenWrap = $(self.templates.hidden)
+			$hiddenWrap.attr('data-wrap',name)
+			@fields[name].el.wrap($hiddenWrap)
 
 			if @fields[name].native
 				$select.on 'click', ->
@@ -448,7 +463,7 @@ class Form
 
 				text = $(@).text()
 
-				option = optionTemplate.replace('{text}',text)
+				option = self.templates.select.option.replace('{text}',text)
 				$option = $(option)
 				$option.attr('data-option', 'data-option')
 				$option.attr('data-value', val)
@@ -516,7 +531,7 @@ class Form
 
 		data = {} # для отправки данных
 
-		console.groupCollapsed("[Form: #{@formName}] submit")
+		console.groupCollapsed("[Form: #{@formName}] submit") if @logs
 
 		$.each @fields, (name, opt) ->
 
@@ -547,7 +562,7 @@ class Form
 
 		console.log("data",data) if @logs
 
-		console.groupEnd()
+		console.groupEnd() if @logs
 
 		@onSubmit(data)
 
@@ -562,7 +577,7 @@ class Form
 
 		self = @
 
-		console.groupCollapsed("[Form: #{@formName}] fail")
+		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
 
 		$.each @fields, (name, opt) ->
 
@@ -584,7 +599,7 @@ class Form
 
 		console.log("data",@errors) if @logs
 
-		console.groupEnd()
+		console.groupEnd() if @logs
 
 		@onFail(@errors)
 
@@ -592,14 +607,14 @@ class Form
 
 	success: ->
 
-		console.groupCollapsed("[Form: #{@formName}] success")
+		console.groupCollapsed("[Form: #{@formName}] success") if @logs
 
 		for name,val of @data
 			console.log(name, val) if @logs
 
 		console.log("data",@data) if @logs
 
-		console.groupEnd()
+		console.groupEnd() if @logs
 
 		@onSuccess(@data)
 
@@ -663,7 +678,7 @@ class Form
 
 		opt.onInit() if opt.onInit
 
-		console.log("[Form: #{@formName}] add field: #{name}", @fields[name]) if @logs
+		console.log("[Form: #{@formName}] add field", name) if @logs
 
 		@fields[name].el.trigger('Style') if @fields[name].style
 		
@@ -674,7 +689,7 @@ class Form
 		return if !@fields[name]
 
 		@fields[name].el.removeAttr('data-field')
-		@fields[name].el.removeAttr('style') if @fields[name].style
+		@fields[name].el.unwrap() if @fields[name].style
 		@fields[name].sel.remove() if @fields[name].sel
 
 		console.log("[Form: #{@formName}] delete field", name) if @logs
@@ -712,113 +727,112 @@ class Form
 		@form.find('.' + @classes.preloaderClass).hide()
 		return
 
-	validate:
+	validation: ->
 
-		isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
-	
-		declOfNum: (number, titles) ->
-			cases = [2, 0, 1, 1, 1, 2]
-			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
-		
+		@validate =
 
-		required: (val,rule) ->
-			valid = 
-				state: val not in ["", false, rule.not]
-				reason: rule.reason || 'Обязательное поле для заполнения'
+			form: @
 
-			return valid
+			required: (val,rule) ->
+				valid = 
+					state: val not in ["", false, rule.not]
+					reason: rule.reason || 'Обязательное поле для заполнения'
 
-		numeric : (val,rule) ->
-			valid = 
-				state: /^[0-9]+$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только цифры'
+				return valid
 
-			return valid
+			numeric : (val,rule) ->
+				valid = 
+					state: /^[0-9]+$/.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только цифры'
 
-		numericDash : (val,rule) ->
-			valid = 
-				state: /^[\d\-\s]+$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только цифры и подчеркивания'
+				return valid
 
-			return valid
+			numericDash : (val,rule) ->
+				valid = 
+					state: /^[\d\-\s]+$/.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только цифры и подчеркивания'
 
-		alpha : (val,rule) ->
-			valid = 
-				state: /^[a-zа-я]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только буквы'
+				return valid
 
-			return valid
+			alpha : (val,rule) ->
+				valid = 
+					state: /^[a-zа-я]+$/i.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только буквы'
 
-		eng : (val,rule) ->
-			valid = 
-				state: /^[a-z]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только английские буквы'
+				return valid
 
-			return valid
+			eng : (val,rule) ->
+				valid = 
+					state: /^[a-z]+$/i.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только английские буквы'
 
-		cyrillic: (val, rule) ->
-			valid =
-				state: /^[а-я]+$/i.test(val) ||  val == ""
-				reason: rule.reason || 'Допустимы только русские буквы'
+				return valid
 
-			return valid
+			cyrillic: (val, rule) ->
+				valid =
+					state: /^[а-я]+$/i.test(val) ||  val == ""
+					reason: rule.reason || 'Допустимы только русские буквы'
 
-		alphaDash : (val,rule) ->
-			valid = 
-				state: /^[a-z0-9_\-]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только буквы и подчеркивания'
+				return valid
 
-			return valid
+			alphaDash : (val,rule) ->
+				valid = 
+					state: /^[a-z0-9_\-]+$/i.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только буквы и подчеркивания'
 
-		alphaNumeric : (val,rule) ->
-			valid = 
-				state: /^[a-z0-9]+$/i.test(val) ||  val == ""
-				reason: rule.reason  || 'Допустимы только буквы и цифры'
+				return valid
 
-			return valid
+			alphaNumeric : (val,rule) ->
+				valid = 
+					state: /^[a-z0-9]+$/i.test(val) ||  val == ""
+					reason: rule.reason  || 'Допустимы только буквы и цифры'
 
-		max: (val,rule) ->
+				return valid
 
-			rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
+			max: (val,rule) ->
 
-			valid = 
-				state:  val.length <= (rule.count || rule) ||  val == ""
-				reason: rule.reason || "Максимум #{(rule.count || rule)} #{@declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
+				rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
 
-			return valid
+				valid = 
+					state:  val.length <= (rule.count || rule) ||  val == ""
+					reason: rule.reason || "Максимум #{(rule.count || rule)} #{@form.declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
 
-		min : (val,rule) ->
+				return valid
 
-			rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
+			min : (val,rule) ->
 
-			valid = 
-				state: val.length >= (rule.count || rule) ||  val == ""
-				reason: rule.reason || "Минимум #{(rule.count || rule)} #{@declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
+				rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
 
-			return valid
+				valid = 
+					state: val.length >= (rule.count || rule) ||  val == ""
+					reason: rule.reason || "Минимум #{(rule.count || rule)} #{@form.declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
 
-		email: (val,rule) ->
-			valid = 
-				state: /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Неправильно заполненный E-mail'
+				return valid
 
-			return valid
+			email: (val,rule) ->
+				valid = 
+					state: /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val) ||  val == ""
+					reason: rule.reason  || 'Неправильно заполненный E-mail'
 
-		url: (val,rule) ->
-			valid = 
-				state: /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val) ||  val == ""
-				reason: rule.reason  || 'Неправильно заполненный url'
+				return valid
 
-			return valid
+			url: (val,rule) ->
+				valid = 
+					state: /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val) ||  val == ""
+					reason: rule.reason  || 'Неправильно заполненный url'
 
-		compare: (val,rule) ->
+				return valid
 
-			valid =
-				state: val is (if @isFunction(rule.val) then rule.val() else rule.val)
-				reason: rule.reason || "Поля не совпадают"
+			compare: (val,rule) ->
 
-				
-			return valid
+				rule.form = @form
+
+				valid =
+					state: val is (if @form.isFunction(rule.val) then rule.val() else rule.val)
+					reason: rule.reason || "Поля не совпадают"
+
+					
+				return valid
 
 	addRule: (opt) ->
 
@@ -845,6 +859,7 @@ class Form
 	escapeText: (text="") ->
 		return text if !@isString(text)
 		text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+	isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
 	isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
 	isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
 	isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
@@ -858,5 +873,7 @@ class Form
 				if o.hasOwnProperty(i)
 					return false
 			return true
-
+	declOfNum: (number, titles) ->
+		cases = [2, 0, 1, 1, 1, 2]
+		titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
 

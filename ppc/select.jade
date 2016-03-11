@@ -24,20 +24,23 @@ head
 				scroll = (el) ->
 
 					$select = el
-
 					$selected = $select.find('[data-selected]')
 					$options 	= $select.find('[data-options]')
-					$options.wrapInner """
-						<div class="viewport"><div class="overview"></div></div>
-					"""
-					$options.prepend """
-						<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
-					"""
 
-					browserIsMobile = false
+					if !$select.find('.scrollbar').size()
+						$options.wrapInner """
+							<div class="viewport"><div class="overview"></div></div>
+						"""
+						$options.prepend """
+							<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+						"""
 
-					scrollbar = $options.tinyscrollbar({sizethumb: 44,invertscroll:browserIsMobile})
+					browserMobile = false
+
+					scrollbar = $options.tinyscrollbar({sizethumb: 40,wheel: (if browserMobile then 2 else 40),invertscroll:browserMobile})
 					$selected.click -> scrollbar.tinyscrollbar_update()
+					scrollbar.tinyscrollbar_update()
+
 					return
 
 				window.forms = {}
@@ -59,8 +62,8 @@ head
 
 						self = @
 
-						self.fields['dropdown'].el.on 'style', ->
-							scroll(self.fields['dropdown'].sel)
+						self.fields['dropdown'].el.on 'style', (e,sel) ->
+							scroll(sel)
 
 						self.fields['dropdown'].el.on 'change', (e,data) ->
 							forms['form-2'].fields['dropdown-2'].val(data.val)
@@ -107,8 +110,8 @@ head
 
 						self =  @
 
-						self.fields['dropdown-2'].el.on 'style', ->
-							scroll(self.fields['dropdown-2'].sel)
+						self.fields['dropdown-2'].el.on 'style', (e,sel) ->
+							scroll(sel)
 
 
 				window.reset = ->

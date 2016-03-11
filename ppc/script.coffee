@@ -38,11 +38,11 @@ scroll = (el) ->
 			<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
 		"""
 
-	browserIsMobile = false
+	browserMobile = false
 
-	scrollbar = $options.tinyscrollbar({sizethumb: 44,invertscroll:browserIsMobile})
+	scrollbar = $options.tinyscrollbar({sizethumb: 40,wheel: (if browserMobile then 2 else 40),invertscroll:browserMobile})
 	$selected.click -> scrollbar.tinyscrollbar_update()
-	return
+	scrollbar.tinyscrollbar_update()
 
 $ ->
 
@@ -162,7 +162,10 @@ $ ->
 
 			@fields['dropdown'].el.on 'style', (e,sel) ->
 				# console.log 'dropdown style',sel
+
+			@form.on 'style', '[data-field][data-type="select"]', (e,sel) ->
 				scroll(sel)
+				return
 
 
 		onSubmit: (data) ->
@@ -210,7 +213,7 @@ $ ->
 		$form.find('.error-list').before clone
 
 		clone.find('.remove').click ->
-			clone.remove()
+			# clone.remove()
 			forms['form-1'].removeField(fieldName)
 			return false
 
@@ -230,7 +233,6 @@ $ ->
 
 				forms['form-1'].fields[fieldName].el.on 'style', (e,sel) ->
 					console.log 'style new'
-					scroll(sel)
 
 	window.reset = ->
 		forms['form-1'].reset()

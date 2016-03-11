@@ -22,7 +22,6 @@ Form = (function() {
     if (!window.console.groupEnd) {
       window.console.groupEnd = function() {};
     }
-    self = this;
     this.logs = false;
     this.formName = 'form';
     this.formEl = false;
@@ -42,6 +41,7 @@ Form = (function() {
       }
     };
     this.templates = {
+      hidden: "<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>",
       checkbox: "<div class=\"checkbox\"></div>",
       radio: "<div class=\"radio\"></div>",
       select: {
@@ -69,6 +69,8 @@ Form = (function() {
     this.onReset = function() {};
     this.onInit = function() {};
     $.extend(true, this, this.params);
+    self = this;
+    this.validation();
     $(function() {
       if (!self.formEl && self.logs) {
         return console.log("[Form: " + self.formName + "] Warning! formEl not set");
@@ -189,16 +191,18 @@ Form = (function() {
       }
       return false;
     });
-    opts = {
-      autoFields: this.autoFields,
-      fields: this.fields,
-      fieldsOptions: this.fieldsOptions,
-      enter: this.enter,
-      disableSubmit: this.disableSubmit,
-      classes: this.classes
-    };
-    if (self.logs) {
-      console.log("[Form: " + this.formName + "] init", opts);
+    if (this.logs) {
+      opts = {
+        autoFields: this.autoFields,
+        fields: this.fields,
+        fieldsOptions: this.fieldsOptions,
+        enter: this.enter,
+        disableSubmit: this.disableSubmit,
+        classes: this.classes
+      };
+      console.groupCollapsed("[Form: " + this.formName + "] init");
+      console.log(opts);
+      console.groupEnd();
     }
     $.each(this.fields, function(name) {
       return self.initField(name);
@@ -206,7 +210,7 @@ Form = (function() {
     this.onInit();
     $.each(this.fields, function(name) {
       if (self.fields[name].style) {
-        return self.fields[name].el.trigger('Style');
+        return self.fields[name].el.eq(0).trigger('Style');
       }
     });
   };
@@ -220,13 +224,15 @@ Form = (function() {
       return;
     }
     this.fields[name] = $.extend(true, {}, this.fieldsOptions, this.fields[name]);
+    this.fields[name].form = this;
     this.fields[name].el = el;
     this.fields[name].sel = $([]);
+    this.fields[name].el.attr('data-name', name);
     this.fields[name].el.attr('data-field', 'original');
     this.fields[name].type = this.fields[name].el.is('select') ? 'select' : this.fields[name].el.attr('type') || 'text';
     this.fields[name].el.attr('data-type', this.fields[name].type);
     this.fields[name].stylize = function() {
-      self.fields[name].el.trigger('Style');
+      self.fields[name].el.eq(0).trigger('Style');
     };
     this.fields[name].val = function(val) {
       if (val != null) {
@@ -245,9 +251,8 @@ Form = (function() {
   };
 
   Form.prototype.createCheckbox = function(name, change) {
-    var $checkbox, checkboxTemplate, self, val;
+    var $checkbox, $hiddenWrap, checkboxTemplate, self, val;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
     checkboxTemplate = this.templates.checkbox;
     if (change) {
       if (this.fields[name].val()) {
@@ -256,15 +261,21 @@ Form = (function() {
         this.fields[name].sel.removeAttr('data-checked');
       }
     } else {
-      this.form.find("[data-type='checkbox'][data-name='" + name + "']").remove();
+      if (this.form.find("[data-field='original'][data-type='checkbox'][data-name='" + name + "']").parent().attr('data-wrap')) {
+        this.form.find("[data-field='original'][data-type='checkbox'][data-name='" + name + "']").unwrap();
+      }
+      this.form.find("[data-field='styled'][data-type='checkbox'][data-name='" + name + "']").remove();
       val = this.fields[name].el.attr('value');
       $checkbox = $(checkboxTemplate);
       $checkbox.attr('data-field', 'styled');
       $checkbox.attr('data-type', 'checkbox');
       $checkbox.attr('data-name', name);
       $checkbox.attr('data-value', val);
-      this.fields[name].sel = $checkbox;
       this.fields[name].el.after($checkbox);
+      this.fields[name].sel = $checkbox;
+      $hiddenWrap = $(this.templates.hidden);
+      $hiddenWrap.attr('data-wrap', name);
+      this.fields[name].el.wrap($hiddenWrap);
       if (this.fields[name].el.prop("checked")) {
         $checkbox.attr('data-checked', 'data-checked');
       }
@@ -279,22 +290,22 @@ Form = (function() {
   };
 
   Form.prototype.createRadio = function(name, change) {
-    var radioTemplate, self;
+    var self;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
-    radioTemplate = this.templates.radio;
     if (change) {
       this.fields[name].sel.removeAttr('data-checked');
       this.fields[name].sel.filter("[data-value='" + (this.fields[name].val()) + "']").attr('data-checked', 'data-checked');
     } else {
-      this.form.find("[data-type='radio'][data-name='" + name + "']").remove();
+      if (this.form.find("[data-field='original'][data-type='radio'][data-name='" + name + "']").parent().attr('data-wrap')) {
+        this.form.find("[data-field='original'][data-type='radio'][data-name='" + name + "']").unwrap();
+      }
+      this.form.find("[data-field='styled'][data-type='radio'][data-name='" + name + "']").remove();
       this.fields[name].sel = $([]);
       this.fields[name].el.each(function() {
-        var $radio, el, val;
+        var $hiddenWrap, $radio, el, val;
         el = $(this);
-        el.hide();
         val = el.attr('value');
-        $radio = $(radioTemplate);
+        $radio = $(self.templates.radio);
         $radio.attr('data-field', 'styled');
         $radio.attr('data-type', 'radio');
         $radio.attr('data-name', name);
@@ -302,8 +313,11 @@ Form = (function() {
         if (el.attr('checked')) {
           $radio.attr('data-checked', 'data-checked');
         }
-        self.fields[name].sel = self.fields[name].sel.add($radio);
         el.after($radio);
+        self.fields[name].sel = self.fields[name].sel.add($radio);
+        $hiddenWrap = $(self.templates.hidden);
+        $hiddenWrap.attr('data-wrap', name);
+        el.wrap($hiddenWrap);
         return $radio.on('click', function() {
           return self.setVal(name, val);
         });
@@ -312,13 +326,8 @@ Form = (function() {
   };
 
   Form.prototype.createSelect = function(name, change) {
-    var $options, $select, $selected, optionTemplate, optionsTemplate, selectTemplate, selectedTemplate, selectedText, self;
+    var $hiddenWrap, $options, $select, $selected, selectedTemplate, selectedText, self;
     self = this;
-    this.fields[name].el.attr('style', 'opacity:0;width:0;height:0;border:0;margin:0;padding:0;position:absolute;-webkit-appearance:none;');
-    selectTemplate = this.templates.select.select;
-    selectedTemplate = this.templates.select.selected;
-    optionsTemplate = this.templates.select.options;
-    optionTemplate = this.templates.select.option;
     if (change) {
       this.fields[name].sel.removeClass(this.classes.select.open);
       this.fields[name].sel.find("[data-selected]").html(this.fields[name].sel.find("[data-option][data-value='" + (this.fields[name].val()) + "']").html());
@@ -331,8 +340,11 @@ Form = (function() {
       this.fields[name].sel.find("[data-option]").removeAttr('data-checked');
       this.fields[name].sel.find("[data-option][data-value='" + (this.fields[name].val()) + "']").attr('data-checked', 'data-checked');
     } else {
-      this.form.find("[data-type='select'][data-name='" + name + "']").remove();
-      $select = $(selectTemplate);
+      if (this.form.find("[data-field='original'][data-type='select'][data-name='" + name + "']").parent().attr('data-wrap')) {
+        this.form.find("[data-field='original'][data-type='select'][data-name='" + name + "']").unwrap();
+      }
+      this.form.find("[data-field='styled'][data-type='select'][data-name='" + name + "']").remove();
+      $select = $(this.templates.select.select);
       $select.attr('data-field', 'styled');
       $select.attr('data-type', 'select');
       $select.attr('data-name', name);
@@ -341,16 +353,19 @@ Form = (function() {
       } else {
         selectedText = this.fields[name].el.find('option:first-child').text();
       }
-      selectedTemplate = selectedTemplate.replace('{selected}', selectedText);
+      selectedTemplate = this.templates.select.selected.replace('{selected}', selectedText);
       $selected = $(selectedTemplate);
       $selected.attr('data-selected', 'data-selected');
-      $options = $(optionsTemplate);
+      $options = $(this.templates.select.options);
       $options.attr('data-options', 'data-options');
       $options.hide();
       $select.append($selected);
       $select.append($options);
       this.fields[name].el.after($select);
       this.fields[name].sel = $select;
+      $hiddenWrap = $(self.templates.hidden);
+      $hiddenWrap.attr('data-wrap', name);
+      this.fields[name].el.wrap($hiddenWrap);
       if (this.fields[name]["native"]) {
         $select.on('click', function() {
           return self.fields[name].el.focus();
@@ -385,7 +400,7 @@ Form = (function() {
         }
         val = $(this).attr('value');
         text = $(this).text();
-        option = optionTemplate.replace('{text}', text);
+        option = self.templates.select.option.replace('{text}', text);
         $option = $(option);
         $option.attr('data-option', 'data-option');
         $option.attr('data-value', val);
@@ -451,7 +466,9 @@ Form = (function() {
     this.resetData();
     this.resetErorrs();
     data = {};
-    console.groupCollapsed("[Form: " + this.formName + "] submit");
+    if (this.logs) {
+      console.groupCollapsed("[Form: " + this.formName + "] submit");
+    }
     $.each(this.fields, function(name, opt) {
       var val;
       val = self.getVal(name);
@@ -486,7 +503,9 @@ Form = (function() {
     if (this.logs) {
       console.log("data", data);
     }
-    console.groupEnd();
+    if (this.logs) {
+      console.groupEnd();
+    }
     this.onSubmit(data);
     if (this.isEmpty(this.errors)) {
       this.success();
@@ -498,7 +517,9 @@ Form = (function() {
   Form.prototype.fail = function() {
     var self;
     self = this;
-    console.groupCollapsed("[Form: " + this.formName + "] fail");
+    if (this.logs) {
+      console.groupCollapsed("[Form: " + this.formName + "] fail");
+    }
     $.each(this.fields, function(name, opt) {
       var error, i, ref;
       if (self.errors[name]) {
@@ -526,13 +547,17 @@ Form = (function() {
     if (this.logs) {
       console.log("data", this.errors);
     }
-    console.groupEnd();
+    if (this.logs) {
+      console.groupEnd();
+    }
     this.onFail(this.errors);
   };
 
   Form.prototype.success = function() {
     var name, ref, val;
-    console.groupCollapsed("[Form: " + this.formName + "] success");
+    if (this.logs) {
+      console.groupCollapsed("[Form: " + this.formName + "] success");
+    }
     ref = this.data;
     for (name in ref) {
       val = ref[name];
@@ -543,7 +568,9 @@ Form = (function() {
     if (this.logs) {
       console.log("data", this.data);
     }
-    console.groupEnd();
+    if (this.logs) {
+      console.groupEnd();
+    }
     this.onSuccess(this.data);
   };
 
@@ -605,7 +632,7 @@ Form = (function() {
       opt.onInit();
     }
     if (this.logs) {
-      console.log("[Form: " + this.formName + "] add field: " + name, this.fields[name]);
+      console.log("[Form: " + this.formName + "] add field", name);
     }
     if (this.fields[name].style) {
       this.fields[name].el.trigger('Style');
@@ -618,7 +645,7 @@ Form = (function() {
     }
     this.fields[name].el.removeAttr('data-field');
     if (this.fields[name].style) {
-      this.fields[name].el.removeAttr('style');
+      this.fields[name].el.unwrap();
     }
     if (this.fields[name].sel) {
       this.fields[name].sel.remove();
@@ -664,125 +691,121 @@ Form = (function() {
     this.form.find('.' + this.classes.preloaderClass).hide();
   };
 
-  Form.prototype.validate = {
-    isFunction: function(obj) {
-      return Object.prototype.toString.call(obj) === '[object Function]';
-    },
-    declOfNum: function(number, titles) {
-      var cases;
-      cases = [2, 0, 1, 1, 1, 2];
-      return titles[(number % 100 > 4 && number % 100 < 20 ? 2 : cases[(number % 10 < 5 ? number % 10 : 5)])];
-    },
-    required: function(val, rule) {
-      var valid;
-      valid = {
-        state: val !== "" && val !== false && val !== rule.not,
-        reason: rule.reason || 'Обязательное поле для заполнения'
-      };
-      return valid;
-    },
-    numeric: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[0-9]+$/.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только цифры'
-      };
-      return valid;
-    },
-    numericDash: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[\d\-\s]+$/.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только цифры и подчеркивания'
-      };
-      return valid;
-    },
-    alpha: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[a-zа-я]+$/i.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только буквы'
-      };
-      return valid;
-    },
-    eng: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[a-z]+$/i.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только английские буквы'
-      };
-      return valid;
-    },
-    cyrillic: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[а-я]+$/i.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только русские буквы'
-      };
-      return valid;
-    },
-    alphaDash: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[a-z0-9_\-]+$/i.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только буквы и подчеркивания'
-      };
-      return valid;
-    },
-    alphaNumeric: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[a-z0-9]+$/i.test(val) || val === "",
-        reason: rule.reason || 'Допустимы только буквы и цифры'
-      };
-      return valid;
-    },
-    max: function(val, rule) {
-      var valid;
-      if (rule.reason) {
-        rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
+  Form.prototype.validation = function() {
+    return this.validate = {
+      form: this,
+      required: function(val, rule) {
+        var valid;
+        valid = {
+          state: val !== "" && val !== false && val !== rule.not,
+          reason: rule.reason || 'Обязательное поле для заполнения'
+        };
+        return valid;
+      },
+      numeric: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[0-9]+$/.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только цифры'
+        };
+        return valid;
+      },
+      numericDash: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[\d\-\s]+$/.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только цифры и подчеркивания'
+        };
+        return valid;
+      },
+      alpha: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[a-zа-я]+$/i.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только буквы'
+        };
+        return valid;
+      },
+      eng: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[a-z]+$/i.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только английские буквы'
+        };
+        return valid;
+      },
+      cyrillic: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[а-я]+$/i.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только русские буквы'
+        };
+        return valid;
+      },
+      alphaDash: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[a-z0-9_\-]+$/i.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только буквы и подчеркивания'
+        };
+        return valid;
+      },
+      alphaNumeric: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[a-z0-9]+$/i.test(val) || val === "",
+          reason: rule.reason || 'Допустимы только буквы и цифры'
+        };
+        return valid;
+      },
+      max: function(val, rule) {
+        var valid;
+        if (rule.reason) {
+          rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        }
+        valid = {
+          state: val.length <= (rule.count || rule) || val === "",
+          reason: rule.reason || ("Максимум " + (rule.count || rule) + " " + (this.form.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
+        };
+        return valid;
+      },
+      min: function(val, rule) {
+        var valid;
+        if (rule.reason) {
+          rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        }
+        valid = {
+          state: val.length >= (rule.count || rule) || val === "",
+          reason: rule.reason || ("Минимум " + (rule.count || rule) + " " + (this.form.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
+        };
+        return valid;
+      },
+      email: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val) || val === "",
+          reason: rule.reason || 'Неправильно заполненный E-mail'
+        };
+        return valid;
+      },
+      url: function(val, rule) {
+        var valid;
+        valid = {
+          state: /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val) || val === "",
+          reason: rule.reason || 'Неправильно заполненный url'
+        };
+        return valid;
+      },
+      compare: function(val, rule) {
+        var valid;
+        rule.form = this.form;
+        valid = {
+          state: val === (this.form.isFunction(rule.val) ? rule.val() : rule.val),
+          reason: rule.reason || "Поля не совпадают"
+        };
+        return valid;
       }
-      valid = {
-        state: val.length <= (rule.count || rule) || val === "",
-        reason: rule.reason || ("Максимум " + (rule.count || rule) + " " + (this.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
-      };
-      return valid;
-    },
-    min: function(val, rule) {
-      var valid;
-      if (rule.reason) {
-        rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
-      }
-      valid = {
-        state: val.length >= (rule.count || rule) || val === "",
-        reason: rule.reason || ("Минимум " + (rule.count || rule) + " " + (this.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
-      };
-      return valid;
-    },
-    email: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val) || val === "",
-        reason: rule.reason || 'Неправильно заполненный E-mail'
-      };
-      return valid;
-    },
-    url: function(val, rule) {
-      var valid;
-      valid = {
-        state: /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val) || val === "",
-        reason: rule.reason || 'Неправильно заполненный url'
-      };
-      return valid;
-    },
-    compare: function(val, rule) {
-      var valid;
-      valid = {
-        state: val === (this.isFunction(rule.val) ? rule.val() : rule.val),
-        reason: rule.reason || "Поля не совпадают"
-      };
-      return valid;
-    }
+    };
   };
 
   Form.prototype.addRule = function(opt) {
@@ -828,6 +851,10 @@ Form = (function() {
     return text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
 
+  Form.prototype.isFunction = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object Function]';
+  };
+
   Form.prototype.isString = function(obj) {
     return Object.prototype.toString.call(obj) === '[object String]';
   };
@@ -864,6 +891,12 @@ Form = (function() {
       }
       return true;
     }
+  };
+
+  Form.prototype.declOfNum = function(number, titles) {
+    var cases;
+    cases = [2, 0, 1, 1, 1, 2];
+    return titles[(number % 100 > 4 && number % 100 < 20 ? 2 : cases[(number % 10 < 5 ? number % 10 : 5)])];
   };
 
   return Form;

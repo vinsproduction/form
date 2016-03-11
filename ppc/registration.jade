@@ -10,7 +10,7 @@ head
 			console.debug "[LiveReload] #{url}"
 
 	script(type="text/javascript", src="http://code.jquery.com/jquery-1.12.0.min.js")
-
+	script(type="text/javascript", src="js/jquery.tinyscrollbar.min.js")
 	link(rel="stylesheet", type="text/css", href="css/normalize.css")
 
 	script(type="text/javascript", src="js/form.js")
@@ -19,6 +19,29 @@ head
 	script
 		:coffee-script
 			$ ->
+
+
+				scroll = (el) ->
+
+					$select = el
+					$selected = $select.find('[data-selected]')
+					$options 	= $select.find('[data-options]')
+
+					if !$select.find('.scrollbar').size()
+						$options.wrapInner """
+							<div class="viewport"><div class="overview"></div></div>
+						"""
+						$options.prepend """
+							<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>
+						"""
+
+					browserMobile = false
+
+					scrollbar = $options.tinyscrollbar({sizethumb: 40,wheel: (if browserMobile then 2 else 40),invertscroll:browserMobile})
+					$selected.click -> scrollbar.tinyscrollbar_update()
+					scrollbar.tinyscrollbar_update()
+
+					return
 
 				window.forms = {}
 
@@ -32,11 +55,37 @@ head
 						rules:
 							required: true
 							compare:
-								val: -> formValidator.fields['password'].val()
+								val: ->
+									@form.fields['password'].val()
 
 					'email':
 						rules:
 							email: true
+
+					'day':
+						defaultStyle: 'Выбрать'
+						rules:
+							required:
+								not: 'Выбрать'
+						onError: (name,errors) ->
+							@form.form.find(".error-birthday").html(errors[0])
+
+					'month':
+						defaultStyle: 'Выбрать'
+						rules:
+							required:
+								not: 'Выбрать'
+						onError: (name,errors) ->
+							@form.form.find(".error-birthday").html(errors[0])
+
+
+					'year':
+						defaultStyle: 'Выбрать'
+						rules:
+							required:
+								not: 'Выбрать'
+						onError: (name,errors) ->
+							@form.form.find(".error-birthday").html(errors[0])
 
 
 				window.forms['registration'] = new Form
@@ -50,7 +99,6 @@ head
 					fields: fields
 					fieldsOptions:
 						escape: true
-						style: true
 						autoErrors: true
 						clearErrorsInFocus: true
 
@@ -60,6 +108,14 @@ head
 					onInit: ->
 
 						self = @
+
+						self.form.on 'click', '[data-name="day"],[data-name="month"],[data-name="year"]', ->
+							self.form.find(".error-birthday").empty()
+							return
+
+						self.form.on 'style', '[data-field][data-type="select"]', (e,sel) ->
+							scroll(sel)
+							return
 
 					onSubmit: (data) ->
 
@@ -99,6 +155,30 @@ body
 			.label Фамилия
 			input(type='text', name='lastname')
 			.error.error-lastname
+
+		.field.birthday
+			.label Дата рождения
+
+			select(name='day')
+				option(selected=true) Выбрать
+				- for (var i = 1; i < 31; ++i) {
+				option(value="#{i}") #{i}
+				- }
+
+			select(name='month')
+				option(selected=true) Выбрать
+				- months = [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ]
+				- for (var i = 0; i < months.length; ++i) {
+				option(value="#{i+1}") #{months[i]}
+				- }
+
+			select(name='year')
+				option(selected=true) Выбрать
+				- for (var i = 1905; i < 2017; ++i) {
+				option(value="#{i}") #{i}
+				- }
+
+			.error.error-birthday
 
 		.field
 			.label Email
