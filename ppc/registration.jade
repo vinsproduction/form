@@ -49,6 +49,7 @@ head
 
 					'password':
 						rules:
+							required: true
 							min: 3
 
 					'password-confirmation':
@@ -161,15 +162,15 @@ body
 
 			select(name='day')
 				option(selected=true) Выбрать
-				- for (var i = 1; i < 31; ++i) {
-				option(value="#{i}") #{i}
+				- for (var i = 1; i <= 31; ++i) {
+				option(value="#{(i < 10) ? '0' + i : i}") #{i}
 				- }
 
 			select(name='month')
 				option(selected=true) Выбрать
 				- months = [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ]
-				- for (var i = 0; i < months.length; ++i) {
-				option(value="#{i+1}") #{months[i]}
+				- for (var i = 1; i <= months.length; ++i) {
+				option(value="#{(i < 10) ? '0' + i : i}") #{months[i-1]}
 				- }
 
 			select(name='year')
