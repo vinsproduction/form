@@ -57,13 +57,13 @@ $ ->
 
 		'login':
 			placeholder: 'login'
-		# 	rules:
-		# 		required: true
-		# 		alpha: true
-		# 		max:
-		# 			count: 4
-		# 		min:
-		# 			count: 2
+			rules:
+				required: true
+				alpha: true
+				max:
+					count: 4
+				min:
+					count: 2
 
 
 		# 'password':
@@ -186,6 +186,8 @@ $ ->
 
 			@unlockSubmit()
 			@hidePreloader()
+
+			$form.find('.errors').empty()
 
 	# forms['form-1'].addRule 
 	# 	field: 'password-confirmation'

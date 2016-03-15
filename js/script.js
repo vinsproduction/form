@@ -48,7 +48,17 @@ $(function() {
   fields = {
     'id': false,
     'login': {
-      placeholder: 'login'
+      placeholder: 'login',
+      rules: {
+        required: true,
+        alpha: true,
+        max: {
+          count: 4
+        },
+        min: {
+          count: 2
+        }
+      }
     },
     'password-confirmation': {
       rules: {
@@ -113,7 +123,8 @@ $(function() {
     },
     onReset: function() {
       this.unlockSubmit();
-      return this.hidePreloader();
+      this.hidePreloader();
+      return $form.find('.errors').empty();
     }
   });
   window.addfield = function() {

@@ -49,12 +49,12 @@ Form = (function() {
         selected: "<div class=\"selected\"><span>{selected}</span></div>",
         options: "<div class=\"options\"></div>",
         option: "<div class=\"option\"><span>{text}</span></div>"
-      }
+      },
+      error: "<div>{error}</div>"
     };
     this.fields = {};
     this.fieldsOptions = {
       style: true,
-      focus: false,
       clearErrorsInFocus: true,
       autoErrors: true,
       escape: false,
@@ -131,10 +131,7 @@ Form = (function() {
         return;
       }
       if (self.fields[name].clearErrorsInFocus) {
-        $(this).removeClass(self.classes.errorFieldClass);
-      }
-      if (self.fields[name].autoErrors) {
-        self.form.find('.' + self.classes.errorClass + '-' + name).empty();
+        self.errorField(name, false);
       }
       return true;
     });
@@ -145,11 +142,7 @@ Form = (function() {
       if (!self.fields[name]) {
         return;
       }
-      el.removeClass(self.classes.errorFieldClass);
-      self.fields[name].sel.removeClass(self.classes.errorFieldClass);
-      if (self.fields[name].autoErrors) {
-        self.form.find('.' + self.classes.errorClass + '-' + name).empty();
-      }
+      self.errorField(name, false);
       if (el.is("select")) {
         self.createSelect(name);
       } else if (el.attr('type') === 'radio') {
@@ -231,6 +224,10 @@ Form = (function() {
     this.fields[name].el.attr('data-field', 'original');
     this.fields[name].type = this.fields[name].el.is('select') ? 'select' : this.fields[name].el.attr('type') || 'text';
     this.fields[name].el.attr('data-type', this.fields[name].type);
+    this.fields[name].originalVal = self.getVal(name);
+    if (this.fields[name].placeholder && ((ref = this.fields[name].type) === 'text' || ref === 'textarea' || ref === 'password')) {
+      this.placeholder(name);
+    }
     this.fields[name].stylize = function() {
       self.fields[name].el.eq(0).trigger('Style');
     };
@@ -241,13 +238,15 @@ Form = (function() {
         return self.getVal(name);
       }
     };
-    this.fields[name].originVal = this.fields[name].val();
-    if (this.fields[name].placeholder && ((ref = this.fields[name].type) === 'text' || ref === 'textarea')) {
-      this.placeholder(this.fields[name].el, this.fields[name].placeholder);
-    }
-    if (this.fields[name].focus) {
-      this.fields[name].el.focus();
-    }
+    this.fields[name].reset = function() {
+      self.resetField(name);
+    };
+    this.fields[name].error = function(errors) {
+      if (errors == null) {
+        errors = false;
+      }
+      self.errorField(name, errors);
+    };
   };
 
   Form.prototype.createCheckbox = function(name, change) {
@@ -426,11 +425,7 @@ Form = (function() {
     } else if ((ref = opt.type) === 'text' || ref === 'password' || ref === 'textarea') {
       opt.el.val(this.trim(val));
       if (opt.placeholder) {
-        if (val === "" || val === opt.placeholder) {
-          this.placeholder(opt.el, opt.el.placeholder);
-        } else {
-          opt.el.removeClass(this.classes.placeholderClass);
-        }
+        this.placeholder(name, this.trim(val));
       }
     } else {
       opt.el.val(val);
@@ -480,13 +475,7 @@ Form = (function() {
       if (self.logs) {
         console.log(name + ': ' + val);
       }
-      opt.el.removeClass(self.classes.errorFieldClass);
-      if (opt.sel) {
-        opt.sel.removeClass(self.classes.errorFieldClass);
-      }
-      if (opt.autoErrors) {
-        self.form.find('.' + self.classes.errorClass + '-' + name).empty();
-      }
+      self.errorField(name, false);
       if (opt.rules && !self.isEmpty(opt.rules)) {
         return $.each(opt.rules, function(ruleName, rule) {
           var valid;
@@ -520,24 +509,15 @@ Form = (function() {
       console.groupCollapsed("[Form: " + this.formName + "] fail");
     }
     $.each(this.fields, function(name, opt) {
-      var error, i, ref;
       if (self.errors[name]) {
         if (self.logs) {
           console.log(name + ': ', self.errors[name]);
         }
-        opt.el.addClass(self.classes.errorFieldClass);
-        if (opt.sel) {
-          opt.sel.addClass(self.classes.errorFieldClass);
-        }
         if (self.fields[name].autoErrors) {
           if (self.fields[name].autoErrors === 'all') {
-            ref = self.errors[name];
-            for (i in ref) {
-              error = ref[i];
-              self.form.find('.' + self.classes.errorClass + '-' + name).append(error + "<br/>");
-            }
-          } else {
-            self.form.find('.' + self.classes.errorClass + '-' + name).html(self.errors[name][0]);
+            self.errorField(name, self.errors[name]);
+          } else if (self.errors[name][0]) {
+            self.errorField(name, self.errors[name][0]);
           }
         }
         return opt.onError(name, self.errors[name]);
@@ -582,14 +562,13 @@ Form = (function() {
       if (self.fields[name]["new"]) {
         return self.removeField(name);
       } else {
-        return self.setVal(name, opt.originVal);
+        return self.fields[name].reset();
       }
     });
     if (this.logs) {
       console.log("[Form: " + this.formName + "] reset");
     }
     this.onReset();
-    this.init();
   };
 
   Form.prototype.resetErorrs = function() {
@@ -619,6 +598,50 @@ Form = (function() {
 
   Form.prototype.getErrors = function() {
     return this.errors;
+  };
+
+  Form.prototype.errorField = function(name, errors) {
+    var $error, error, self;
+    if (!this.fields[name]) {
+      return;
+    }
+    self = this;
+    if (errors) {
+      this.fields[name].el.addClass(this.classes.errorFieldClass);
+      if (this.fields[name].sel) {
+        this.fields[name].sel.addClass(this.classes.errorFieldClass);
+      }
+      if (this.fields[name].autoErrors) {
+        $error = this.form.find('.' + this.classes.errorClass + '-' + name);
+        if (this.isArray(errors)) {
+          $error.empty();
+          $.each(errors, function(k, v) {
+            var error;
+            error = self.templates.error.replace('{error}', v);
+            return $error.append(error);
+          });
+        } else {
+          error = self.templates.error.replace('{error}', errors);
+          $error.html(error);
+        }
+      }
+    } else {
+      this.fields[name].el.removeClass(this.classes.errorFieldClass);
+      if (this.fields[name].sel) {
+        this.fields[name].sel.removeClass(this.classes.errorFieldClass);
+      }
+      if (this.fields[name].autoErrors) {
+        this.form.find('.' + this.classes.errorClass + '-' + name).empty();
+      }
+    }
+  };
+
+  Form.prototype.resetField = function(name) {
+    if (!this.fields[name]) {
+      return;
+    }
+    this.setVal(name, this.fields[name].originalVal);
+    return this.errorField(name, false);
   };
 
   Form.prototype.addField = function(opt) {
@@ -655,21 +678,30 @@ Form = (function() {
     delete this.fields[name];
   };
 
-  Form.prototype.placeholder = function(el, val) {
-    el.focus((function(_this) {
-      return function() {
-        if (el.val() === val) {
-          return el.val("").removeClass(_this.classes.placeholderClass);
-        }
-      };
-    })(this)).blur((function(_this) {
-      return function() {
-        if (el.val() === "") {
-          return el.val(val).addClass(_this.classes.placeholderClass);
-        }
-      };
-    })(this));
-    el.blur();
+  Form.prototype.placeholder = function(name, val) {
+    var self;
+    if (!this.fields[name]) {
+      return;
+    }
+    self = this;
+    if (val) {
+      if (val === self.fields[name].placeholder) {
+        self.fields[name].el.removeClass(self.classes.placeholderClass);
+      } else {
+        self.fields[name].el.addClass(self.classes.placeholderClass);
+      }
+      return;
+    }
+    this.fields[name].el.focus(function() {
+      if ($(this).val() === self.fields[name].placeholder) {
+        return $(this).val("").removeClass(self.classes.placeholderClass);
+      }
+    }).blur(function() {
+      if (self.isEmpty($(this).val()) || $(this).val() === self.fields[name].placeholder) {
+        return $(this).val(self.fields[name].placeholder).addClass(self.classes.placeholderClass);
+      }
+    });
+    this.fields[name].el.blur();
   };
 
   Form.prototype.lockSubmit = function() {

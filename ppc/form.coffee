@@ -55,12 +55,12 @@ class Form
 				selected: """<div class="selected"><span>{selected}</span></div>"""
 				options: """<div class="options"></div>"""
 				option: """<div class="option"><span>{text}</span></div>"""
+			error: """<div>{error}</div>"""
 
 		@fields = {}
 
 		@fieldsOptions =
 			style: true # Cтилизовать поле
-			focus: false # Поставить фокус на поле
 			clearErrorsInFocus: true # Удалять ошибки в фокусе
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
 			escape: false # Очищать инпут от тегов в отправке
@@ -145,10 +145,7 @@ class Form
 			return if !self.fields[name]
 
 			if self.fields[name].clearErrorsInFocus
-				$(@).removeClass(self.classes.errorFieldClass)
-
-			if self.fields[name].autoErrors
-				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
+				self.errorField(name,false)
 
 			return true
 
@@ -159,11 +156,7 @@ class Form
 
 			return if !self.fields[name]
 
-			el.removeClass(self.classes.errorFieldClass)
-			self.fields[name].sel.removeClass(self.classes.errorFieldClass)
-
-			if self.fields[name].autoErrors
-				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
+			self.errorField(name,false)
 
 			if el.is("select")
 				self.createSelect(name)
@@ -262,6 +255,11 @@ class Form
 
 		@fields[name].el.attr('data-type',@fields[name].type)
 
+		@fields[name].originalVal = self.getVal(name)
+
+		if @fields[name].placeholder and (@fields[name].type in ['text','textarea','password'])
+			@placeholder(name)
+
 		@fields[name].stylize = ->
 			self.fields[name].el.eq(0).trigger('Style')
 			return
@@ -273,12 +271,13 @@ class Form
 			else 
 				return self.getVal(name)
 
-		@fields[name].originVal = @fields[name].val()
+		@fields[name].reset = ->
+			self.resetField(name)
+			return
 
-		if @fields[name].placeholder and (@fields[name].type in ['text','textarea'])
-			@placeholder(@fields[name].el,@fields[name].placeholder)
-
-		@fields[name].el.focus() if @fields[name].focus
+		@fields[name].error = (errors=false) ->
+			self.errorField(name,errors)
+			return
 
 		return
 
@@ -493,10 +492,7 @@ class Form
 			opt.el.val(@trim(val))
 
 			if opt.placeholder
-				if val in ["",opt.placeholder]
-					@placeholder(opt.el,opt.el.placeholder)
-				else
-					opt.el.removeClass(@classes.placeholderClass)
+				@placeholder(name,@trim(val))
 
 		else
 			opt.el.val(val)
@@ -546,11 +542,7 @@ class Form
 
 			console.log(name + ': ' + val) if self.logs
 
-			opt.el.removeClass(self.classes.errorFieldClass)
-			opt.sel.removeClass(self.classes.errorFieldClass) if opt.sel
-
-			if opt.autoErrors
-				self.form.find('.' + self.classes.errorClass + '-' + name).empty()
+			self.errorField(name,false)
 
 			if opt.rules and !self.isEmpty(opt.rules)
 
@@ -582,17 +574,14 @@ class Form
 		$.each @fields, (name, opt) ->
 
 			if self.errors[name]
-				console.log(name + ': ', self.errors[name]) if self.logs
 
-				opt.el.addClass(self.classes.errorFieldClass)
-				opt.sel.addClass(self.classes.errorFieldClass) if opt.sel
+				console.log(name + ': ', self.errors[name]) if self.logs
 
 				if self.fields[name].autoErrors
 					if self.fields[name].autoErrors is 'all'
-						for i,error of self.errors[name]
-							self.form.find('.' + self.classes.errorClass + '-' + name).append(error + "<br/>")
-					else
-						self.form.find('.' + self.classes.errorClass + '-' + name).html(self.errors[name][0])
+						self.errorField(name,self.errors[name])
+					else if self.errors[name][0]
+						self.errorField(name,self.errors[name][0])
 
 
 				opt.onError(name, self.errors[name])
@@ -632,13 +621,11 @@ class Form
 			if self.fields[name].new
 				self.removeField name
 			else
-				self.setVal(name,opt.originVal)
+				self.fields[name].reset()
 
 		console.log("[Form: #{@formName}] reset") if @logs
 
 		do @onReset
-
-		do @init
 
 		return
 
@@ -665,7 +652,45 @@ class Form
 
 	getErrors: -> @errors
 
-	
+	errorField: (name,errors) ->
+
+		return if !@fields[name]
+
+		self = @
+
+		if errors
+
+			@fields[name].el.addClass(@classes.errorFieldClass)
+			@fields[name].sel.addClass(@classes.errorFieldClass) if @fields[name].sel
+
+			if @fields[name].autoErrors
+				$error = @form.find('.' + @classes.errorClass + '-' + name)
+
+				if @isArray(errors)
+					$error.empty()
+					$.each errors, (k,v) ->
+						error  = self.templates.error.replace('{error}',v)
+						$error.append(error)
+				else
+					error = self.templates.error.replace('{error}',errors)
+					$error.html(error)
+
+		else
+
+			@fields[name].el.removeClass(@classes.errorFieldClass)
+			@fields[name].sel.removeClass(@classes.errorFieldClass) if @fields[name].sel
+
+			if @fields[name].autoErrors
+				@form.find('.' + @classes.errorClass + '-' + name).empty()
+
+		return
+
+	resetField: (name) ->
+
+		return if !@fields[name]
+
+		@setVal(name,@fields[name].originalVal)
+		@errorField(name,false)
 
 	addField: (opt) ->
 
@@ -698,13 +723,26 @@ class Form
 
 		return
 
-	placeholder: (el,val) ->
+	placeholder: (name,val) ->
 
-		el.focus =>
-			if el.val() is val then el.val("").removeClass(@classes.placeholderClass)      
-		.blur =>
-			if el.val() is "" then el.val(val).addClass(@classes.placeholderClass)
-		el.blur()
+		return if !@fields[name]
+
+		self = @
+
+		if val
+			if val is self.fields[name].placeholder
+				self.fields[name].el.removeClass(self.classes.placeholderClass) 
+			else
+				self.fields[name].el.addClass(self.classes.placeholderClass)      
+			return
+
+		@fields[name].el
+			.focus ->
+				if $(@).val() is self.fields[name].placeholder then $(@).val("").removeClass(self.classes.placeholderClass)      
+			.blur ->
+				if self.isEmpty($(@).val()) or $(@).val() is self.fields[name].placeholder then $(@).val(self.fields[name].placeholder).addClass(self.classes.placeholderClass)
+		
+		@fields[name].el.blur()
 
 		return
 
