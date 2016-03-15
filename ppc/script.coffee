@@ -150,7 +150,7 @@ $ ->
 
 			self = @
 
-			@fields['test'].active = false
+			@fields['test'].activate(false)
 
 			@fields['date'].el.datepicker()
 

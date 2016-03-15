@@ -35,31 +35,32 @@ class Form
 
 
 		@classes =
-
 			input:
 				placeholder: "placeholder" # Класс плейсхолдера
-			
+			checkbox: 'checkbox'
+			radio: 'radio'			
 			select:
+				select: 'select'
+				selected: 'selected'
+				options: 'options'
+				option: 'option'
 				open: 'open' # Класс открытого селекта
-				placeholder: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'
-			
+				placeholder: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'		
 			submit:
 				disable: 'disabled' # Класс заблокированного сабмита
-
 			errorField: "error-field" # Класс ошибки поля
 			error: "error" # Класс элемента вывода ошибки поля
 			preloader: "preloader" # Класс прелоадера формы
-			required: "required" # Класс обязательного поля
 
 		@templates =
 			hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
-			checkbox: """<div class="checkbox"></div>"""
-			radio: """<div class="radio"></div>"""
+			checkbox: """<div></div>"""
+			radio: """<div></div>"""
 			select:
-				select: """<div class="select"></div>"""
-				selected: """<div class="selected"><span>{selected}</span></div>"""
-				options: """<div class="options"></div>"""
-				option: """<div class="option"><span>{text}</span></div>"""
+				select: """<div></div>"""
+				selected: """<div><span>{selected}</span></div>"""
+				options: """<div></div>"""
+				option: """<div><span>{text}</span></div>"""
 			error: """<div>{error}</div>"""
 
 		@fields = {}
@@ -86,7 +87,7 @@ class Form
 
 		self = @
 
-		@validation()
+		do @validation
 
 		$ ->
 
@@ -270,12 +271,16 @@ class Form
 			@placeholder(name)
 
 		if @fields[name].rules.required
-			@required(name,@fields[name].rules.required)
+			@fields[name]._required = @fields[name].rules.required
 
 		# Field functions
 
-		@fields[name].required = (flag) ->
-			self.required(name,flag)
+		@fields[name].activate = (flag=true) ->
+			self.activate(name,flag)
+			return
+
+		@fields[name].require = (opt={}) ->
+			self.require(name,opt)
 			return
 
 		@fields[name].stylize = ->
@@ -286,7 +291,7 @@ class Form
 			if val?
 				self.setVal(name, val)
 				return
-			else 
+			else
 				return self.getVal(name)
 
 		@fields[name].reset = ->
@@ -322,6 +327,7 @@ class Form
 			val = @fields[name].el.attr('value')
 
 			$checkbox = $(checkboxTemplate)
+			$checkbox.addClass(@classes.checkbox)
 			$checkbox.attr('data-field','styled')
 			$checkbox.attr('data-type','checkbox')
 			$checkbox.attr('data-name',name)
@@ -371,6 +377,7 @@ class Form
 
 				$radio 	= $(self.templates.radio)
 
+				$radio.addClass(self.classes.radio)
 				$radio.attr('data-field','styled')
 				$radio.attr('data-type','radio')
 				$radio.attr('data-name',name)
@@ -420,6 +427,8 @@ class Form
 			@form.find("[data-field='styled'][data-type='select'][data-name='#{name}']").remove()
 
 			$select  = $(@templates.select.select)
+
+			$select.addClass(@classes.select.select)
 			$select.attr('data-field', 'styled')
 			$select.attr('data-type', 'select')
 			$select.attr('data-name', name)
@@ -431,9 +440,13 @@ class Form
 
 			selectedTemplate = @templates.select.selected.replace('{selected}',selectedText)
 			$selected = $(selectedTemplate)
+
+			$selected.addClass(@classes.select.selected)
 			$selected.attr('data-selected','data-selected')
 
 			$options = $(@templates.select.options)
+
+			$options.addClass(@classes.select.options)
 			$options.attr('data-options','data-options')
 			$options.hide()
 
@@ -482,6 +495,8 @@ class Form
 
 				option = self.templates.select.option.replace('{text}',text)
 				$option = $(option)
+
+				$option.addClass(self.classes.select.option)
 				$option.attr('data-option', 'data-option')
 				$option.attr('data-value', val)
 
@@ -540,16 +555,12 @@ class Form
 
 		return val
 
-	required: (name,opt) ->
+	activate: (name,flag) ->
 
 		return if !@fields[name]
 
-		if opt
-			@fields[name].rules.required = opt
-			@fields[name].el.addClass(@classes.required)
-		else
-			@fields[name].rules.required = false
-			@fields[name].el.removeClass(@classes.required)
+		@fields[name].active = flag
+
 		return
 
 	submit: ->
@@ -587,7 +598,7 @@ class Form
 				if opt.rules and !self.isEmpty(opt.rules)
 
 					$.each opt.rules, (ruleName,rule) ->
-						if rule
+						if rule and self.validate[ruleName]
 							valid = self.validate[ruleName](val, rule)
 							if !valid.state
 								self.setError(name,valid.reason)
@@ -802,6 +813,17 @@ class Form
 
 	hidePreloader: ->
 		@form.find('.' + @classes.preloader).hide()
+		return
+
+	require: (name,opt) ->
+
+		return if !@fields[name]
+
+		if opt and @fields[name]._required
+			@fields[name].rules.required = @fields[name]._required
+		else
+			@fields[name].rules.required = opt
+
 		return
 
 	validation: ->

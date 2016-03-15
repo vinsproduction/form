@@ -33,7 +33,13 @@ Form = (function() {
       input: {
         placeholder: "placeholder"
       },
+      checkbox: 'checkbox',
+      radio: 'radio',
       select: {
+        select: 'select',
+        selected: 'selected',
+        options: 'options',
+        option: 'option',
         open: 'open',
         placeholder: 'default'
       },
@@ -42,18 +48,17 @@ Form = (function() {
       },
       errorField: "error-field",
       error: "error",
-      preloader: "preloader",
-      required: "required"
+      preloader: "preloader"
     };
     this.templates = {
       hidden: "<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>",
-      checkbox: "<div class=\"checkbox\"></div>",
-      radio: "<div class=\"radio\"></div>",
+      checkbox: "<div></div>",
+      radio: "<div></div>",
       select: {
-        select: "<div class=\"select\"></div>",
-        selected: "<div class=\"selected\"><span>{selected}</span></div>",
-        options: "<div class=\"options\"></div>",
-        option: "<div class=\"option\"><span>{text}</span></div>"
+        select: "<div></div>",
+        selected: "<div><span>{selected}</span></div>",
+        options: "<div></div>",
+        option: "<div><span>{text}</span></div>"
       },
       error: "<div>{error}</div>"
     };
@@ -238,10 +243,19 @@ Form = (function() {
       this.placeholder(name);
     }
     if (this.fields[name].rules.required) {
-      this.required(name, this.fields[name].rules.required);
+      this.fields[name]._required = this.fields[name].rules.required;
     }
-    this.fields[name].required = function(flag) {
-      self.required(name, flag);
+    this.fields[name].activate = function(flag) {
+      if (flag == null) {
+        flag = true;
+      }
+      self.activate(name, flag);
+    };
+    this.fields[name].require = function(opt) {
+      if (opt == null) {
+        opt = {};
+      }
+      self.require(name, opt);
     };
     this.fields[name].stylize = function() {
       self.fields[name].el.eq(0).trigger('Style');
@@ -281,6 +295,7 @@ Form = (function() {
       this.form.find("[data-field='styled'][data-type='checkbox'][data-name='" + name + "']").remove();
       val = this.fields[name].el.attr('value');
       $checkbox = $(checkboxTemplate);
+      $checkbox.addClass(this.classes.checkbox);
       $checkbox.attr('data-field', 'styled');
       $checkbox.attr('data-type', 'checkbox');
       $checkbox.attr('data-name', name);
@@ -320,6 +335,7 @@ Form = (function() {
         el = $(this);
         val = el.attr('value');
         $radio = $(self.templates.radio);
+        $radio.addClass(self.classes.radio);
         $radio.attr('data-field', 'styled');
         $radio.attr('data-type', 'radio');
         $radio.attr('data-name', name);
@@ -359,6 +375,7 @@ Form = (function() {
       }
       this.form.find("[data-field='styled'][data-type='select'][data-name='" + name + "']").remove();
       $select = $(this.templates.select.select);
+      $select.addClass(this.classes.select.select);
       $select.attr('data-field', 'styled');
       $select.attr('data-type', 'select');
       $select.attr('data-name', name);
@@ -369,8 +386,10 @@ Form = (function() {
       }
       selectedTemplate = this.templates.select.selected.replace('{selected}', selectedText);
       $selected = $(selectedTemplate);
+      $selected.addClass(this.classes.select.selected);
       $selected.attr('data-selected', 'data-selected');
       $options = $(this.templates.select.options);
+      $options.addClass(this.classes.select.options);
       $options.attr('data-options', 'data-options');
       $options.hide();
       $select.append($selected);
@@ -416,6 +435,7 @@ Form = (function() {
         text = $(this).text();
         option = self.templates.select.option.replace('{text}', text);
         $option = $(option);
+        $option.addClass(self.classes.select.option);
         $option.attr('data-option', 'data-option');
         $option.attr('data-value', val);
         if ($(this).is(':first-child')) {
@@ -475,17 +495,11 @@ Form = (function() {
     return val;
   };
 
-  Form.prototype.required = function(name, opt) {
+  Form.prototype.activate = function(name, flag) {
     if (!this.fields[name]) {
       return;
     }
-    if (opt) {
-      this.fields[name].rules.required = opt;
-      this.fields[name].el.addClass(this.classes.required);
-    } else {
-      this.fields[name].rules.required = false;
-      this.fields[name].el.removeClass(this.classes.required);
-    }
+    this.fields[name].active = flag;
   };
 
   Form.prototype.submit = function() {
@@ -516,7 +530,7 @@ Form = (function() {
         if (opt.rules && !self.isEmpty(opt.rules)) {
           return $.each(opt.rules, function(ruleName, rule) {
             var valid;
-            if (rule) {
+            if (rule && self.validate[ruleName]) {
               valid = self.validate[ruleName](val, rule);
               if (!valid.state) {
                 return self.setError(name, valid.reason);
@@ -752,6 +766,17 @@ Form = (function() {
 
   Form.prototype.hidePreloader = function() {
     this.form.find('.' + this.classes.preloader).hide();
+  };
+
+  Form.prototype.require = function(name, opt) {
+    if (!this.fields[name]) {
+      return;
+    }
+    if (opt && this.fields[name]._required) {
+      this.fields[name].rules.required = this.fields[name]._required;
+    } else {
+      this.fields[name].rules.required = opt;
+    }
   };
 
   Form.prototype.validation = function() {

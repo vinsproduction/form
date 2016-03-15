@@ -103,7 +103,7 @@ $(function() {
     onInit: function() {
       var self;
       self = this;
-      this.fields['test'].active = false;
+      this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
       this.form.on('change', '[data-field][data-name="dropdown"]', function(e, data) {});
