@@ -30,15 +30,20 @@ Form = (function() {
     this.enter = true;
     this.disableSubmit = false;
     this.classes = {
-      disableSubmitClass: 'disabled',
-      placeholderClass: "placeholder",
-      errorFieldClass: "error-field",
-      errorClass: "error",
-      preloaderClass: "preloader",
+      input: {
+        placeholder: "placeholder"
+      },
       select: {
         open: 'open',
-        "default": 'default'
-      }
+        placeholder: 'default'
+      },
+      submit: {
+        disable: 'disabled'
+      },
+      errorField: "error-field",
+      error: "error",
+      preloader: "preloader",
+      required: "required"
     };
     this.templates = {
       hidden: "<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>",
@@ -54,6 +59,7 @@ Form = (function() {
     };
     this.fields = {};
     this.fieldsOptions = {
+      active: true,
       style: true,
       clearErrorsInFocus: true,
       autoErrors: true,
@@ -222,12 +228,21 @@ Form = (function() {
     this.fields[name].sel = $([]);
     this.fields[name].el.attr('data-name', name);
     this.fields[name].el.attr('data-field', 'original');
-    this.fields[name].type = this.fields[name].el.is('select') ? 'select' : this.fields[name].el.attr('type') || 'text';
+    if (!this.fields[name].el.attr('type')) {
+      this.fields[name].el.attr('type', 'text');
+    }
+    this.fields[name].type = this.fields[name].el.is('select') ? 'select' : this.fields[name].el.attr('type');
     this.fields[name].el.attr('data-type', this.fields[name].type);
     this.fields[name].originalVal = self.getVal(name);
     if (this.fields[name].placeholder && ((ref = this.fields[name].type) === 'text' || ref === 'textarea' || ref === 'password')) {
       this.placeholder(name);
     }
+    if (this.fields[name].rules.required) {
+      this.required(name, this.fields[name].rules.required);
+    }
+    this.fields[name].required = function(flag) {
+      self.required(name, flag);
+    };
     this.fields[name].stylize = function() {
       self.fields[name].el.eq(0).trigger('Style');
     };
@@ -330,10 +345,10 @@ Form = (function() {
     if (change) {
       this.fields[name].sel.removeClass(this.classes.select.open);
       this.fields[name].sel.find("[data-selected]").html(this.fields[name].sel.find("[data-option][data-value='" + (this.fields[name].val()) + "']").html());
-      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === this.fields[name].el.val()) {
-        this.fields[name].sel.find("[data-selected]").addClass(self.classes.select["default"]);
+      if (this.fields[name].placeholder && this.fields[name].placeholder === this.fields[name].el.val()) {
+        this.fields[name].sel.find("[data-selected]").addClass(self.classes.select.placeholder);
       } else {
-        this.fields[name].sel.find("[data-selected]").removeClass(self.classes.select["default"]);
+        this.fields[name].sel.find("[data-selected]").removeClass(self.classes.select.placeholder);
       }
       this.fields[name].sel.find("[data-options]").hide();
       this.fields[name].sel.find("[data-option]").removeAttr('data-checked');
@@ -389,8 +404,8 @@ Form = (function() {
           return $options.hide();
         }
       });
-      if (this.fields[name].defaultStyle && this.fields[name].defaultStyle === selectedText) {
-        $selected.addClass(self.classes.select["default"]);
+      if (this.fields[name].placeholder && this.fields[name].placeholder === selectedText) {
+        $selected.addClass(self.classes.select.placeholder);
       }
       this.fields[name].el.find('option').each(function() {
         var $option, option, text, val;
@@ -416,6 +431,9 @@ Form = (function() {
 
   Form.prototype.setVal = function(name, val) {
     var opt, ref;
+    if (!this.fields[name]) {
+      return;
+    }
     opt = this.fields[name];
     if (opt.type === 'radio') {
       opt.el.prop("checked", false);
@@ -425,7 +443,7 @@ Form = (function() {
     } else if ((ref = opt.type) === 'text' || ref === 'password' || ref === 'textarea') {
       opt.el.val(this.trim(val));
       if (opt.placeholder) {
-        this.placeholder(name, this.trim(val));
+        opt.el.trigger('blur');
       }
     } else {
       opt.el.val(val);
@@ -440,6 +458,9 @@ Form = (function() {
 
   Form.prototype.getVal = function(name) {
     var opt, ref, ref1, val;
+    if (!this.fields[name]) {
+      return;
+    }
     opt = this.fields[name];
     if ((ref = opt.type) === 'checkbox' || ref === 'radio') {
       val = opt.el.filter(":checked").val() || false;
@@ -452,6 +473,19 @@ Form = (function() {
       val = opt.el.val();
     }
     return val;
+  };
+
+  Form.prototype.required = function(name, opt) {
+    if (!this.fields[name]) {
+      return;
+    }
+    if (opt) {
+      this.fields[name].rules.required = opt;
+      this.fields[name].el.addClass(this.classes.required);
+    } else {
+      this.fields[name].rules.required = false;
+      this.fields[name].el.removeClass(this.classes.required);
+    }
   };
 
   Form.prototype.submit = function() {
@@ -471,21 +505,25 @@ Form = (function() {
       } else {
         data[name] = opt.escape ? self.escapeText(val) : val;
       }
-      self.setData(name, val);
-      if (self.logs) {
-        console.log(name + ': ' + val);
-      }
-      self.errorField(name, false);
-      if (opt.rules && !self.isEmpty(opt.rules)) {
-        return $.each(opt.rules, function(ruleName, rule) {
-          var valid;
-          if (rule) {
-            valid = self.validate[ruleName](val, rule);
-            if (!valid.state) {
-              return self.setError(name, valid.reason);
+      if (!opt.active) {
+        return delete data[name];
+      } else {
+        self.setData(name, val);
+        if (self.logs) {
+          console.log(name + ': ' + val);
+        }
+        self.errorField(name, false);
+        if (opt.rules && !self.isEmpty(opt.rules)) {
+          return $.each(opt.rules, function(ruleName, rule) {
+            var valid;
+            if (rule) {
+              valid = self.validate[ruleName](val, rule);
+              if (!valid.state) {
+                return self.setError(name, valid.reason);
+              }
             }
-          }
-        });
+          });
+        }
       }
     });
     if (this.logs) {
@@ -607,12 +645,12 @@ Form = (function() {
     }
     self = this;
     if (errors) {
-      this.fields[name].el.addClass(this.classes.errorFieldClass);
+      this.fields[name].el.addClass(this.classes.errorField);
       if (this.fields[name].sel) {
-        this.fields[name].sel.addClass(this.classes.errorFieldClass);
+        this.fields[name].sel.addClass(this.classes.errorField);
       }
       if (this.fields[name].autoErrors) {
-        $error = this.form.find('.' + this.classes.errorClass + '-' + name);
+        $error = this.form.find('.' + this.classes.error + '-' + name);
         if (this.isArray(errors)) {
           $error.empty();
           $.each(errors, function(k, v) {
@@ -626,12 +664,12 @@ Form = (function() {
         }
       }
     } else {
-      this.fields[name].el.removeClass(this.classes.errorFieldClass);
+      this.fields[name].el.removeClass(this.classes.errorField);
       if (this.fields[name].sel) {
-        this.fields[name].sel.removeClass(this.classes.errorFieldClass);
+        this.fields[name].sel.removeClass(this.classes.errorField);
       }
       if (this.fields[name].autoErrors) {
-        this.form.find('.' + this.classes.errorClass + '-' + name).empty();
+        this.form.find('.' + this.classes.error + '-' + name).empty();
       }
     }
   };
@@ -641,7 +679,7 @@ Form = (function() {
       return;
     }
     this.setVal(name, this.fields[name].originalVal);
-    return this.errorField(name, false);
+    this.errorField(name, false);
   };
 
   Form.prototype.addField = function(opt) {
@@ -678,27 +716,21 @@ Form = (function() {
     delete this.fields[name];
   };
 
-  Form.prototype.placeholder = function(name, val) {
+  Form.prototype.placeholder = function(name) {
     var self;
     if (!this.fields[name]) {
       return;
     }
     self = this;
-    if (val) {
-      if (val === self.fields[name].placeholder) {
-        self.fields[name].el.removeClass(self.classes.placeholderClass);
-      } else {
-        self.fields[name].el.addClass(self.classes.placeholderClass);
-      }
-      return;
-    }
     this.fields[name].el.focus(function() {
       if ($(this).val() === self.fields[name].placeholder) {
-        return $(this).val("").removeClass(self.classes.placeholderClass);
+        return $(this).val("").removeClass(self.classes.input.placeholder);
       }
     }).blur(function() {
       if (self.isEmpty($(this).val()) || $(this).val() === self.fields[name].placeholder) {
-        return $(this).val(self.fields[name].placeholder).addClass(self.classes.placeholderClass);
+        return $(this).val(self.fields[name].placeholder).addClass(self.classes.input.placeholder);
+      } else {
+        return $(this).removeClass(self.classes.input.placeholder);
       }
     });
     this.fields[name].el.blur();
@@ -706,20 +738,20 @@ Form = (function() {
 
   Form.prototype.lockSubmit = function() {
     this._disableSubmit = true;
-    this.submitBtn.addClass(this.classes.disableSubmitClass);
+    this.submitBtn.addClass(this.classes.submit.disable);
   };
 
   Form.prototype.unlockSubmit = function() {
     this._disableSubmit = false;
-    this.submitBtn.removeClass(this.classes.disableSubmitClass);
+    this.submitBtn.removeClass(this.classes.submit.disable);
   };
 
   Form.prototype.showPreloader = function() {
-    this.form.find('.' + this.classes.preloaderClass).show();
+    this.form.find('.' + this.classes.preloader).show();
   };
 
   Form.prototype.hidePreloader = function() {
-    this.form.find('.' + this.classes.preloaderClass).hide();
+    this.form.find('.' + this.classes.preloader).hide();
   };
 
   Form.prototype.validation = function() {

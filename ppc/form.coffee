@@ -34,17 +34,22 @@ class Form
 		@disableSubmit = false # Заблокировать сабмит
 
 
-		@classes = 
+		@classes =
 
-			disableSubmitClass: 'disabled' # Класс заблокированного сабмита
-			placeholderClass: "placeholder" # Класс плейсхолдера
-			errorFieldClass: "error-field" # Класс ошибки поля
-			errorClass: "error" # Класс элемента вывода ошибки поля
-			preloaderClass: "preloader" # Класс прелоадера формы
-
+			input:
+				placeholder: "placeholder" # Класс плейсхолдера
+			
 			select:
 				open: 'open' # Класс открытого селекта
-				default: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'
+				placeholder: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'
+			
+			submit:
+				disable: 'disabled' # Класс заблокированного сабмита
+
+			errorField: "error-field" # Класс ошибки поля
+			error: "error" # Класс элемента вывода ошибки поля
+			preloader: "preloader" # Класс прелоадера формы
+			required: "required" # Класс обязательного поля
 
 		@templates =
 			hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
@@ -60,6 +65,7 @@ class Form
 		@fields = {}
 
 		@fieldsOptions =
+			active: true # Активное поле
 			style: true # Cтилизовать поле
 			clearErrorsInFocus: true # Удалять ошибки в фокусе
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
@@ -251,7 +257,10 @@ class Form
 		@fields[name].el.attr('data-name',name)
 		@fields[name].el.attr('data-field','original')
 
-		@fields[name].type = if @fields[name].el.is('select') then 'select' else @fields[name].el.attr('type') || 'text'
+		if !@fields[name].el.attr('type')
+			@fields[name].el.attr('type','text')
+
+		@fields[name].type = if @fields[name].el.is('select') then 'select' else @fields[name].el.attr('type')
 
 		@fields[name].el.attr('data-type',@fields[name].type)
 
@@ -259,6 +268,15 @@ class Form
 
 		if @fields[name].placeholder and (@fields[name].type in ['text','textarea','password'])
 			@placeholder(name)
+
+		if @fields[name].rules.required
+			@required(name,@fields[name].rules.required)
+
+		# Field functions
+
+		@fields[name].required = (flag) ->
+			self.required(name,flag)
+			return
 
 		@fields[name].stylize = ->
 			self.fields[name].el.eq(0).trigger('Style')
@@ -383,10 +401,10 @@ class Form
 
 			@fields[name].sel.find("[data-selected]").html @fields[name].sel.find("[data-option][data-value='#{@fields[name].val()}']").html()
 
-			if @fields[name].defaultStyle and @fields[name].defaultStyle is @fields[name].el.val()
-				@fields[name].sel.find("[data-selected]").addClass(self.classes.select.default)
+			if @fields[name].placeholder and @fields[name].placeholder is @fields[name].el.val()
+				@fields[name].sel.find("[data-selected]").addClass(self.classes.select.placeholder)
 			else
-				@fields[name].sel.find("[data-selected]").removeClass(self.classes.select.default)
+				@fields[name].sel.find("[data-selected]").removeClass(self.classes.select.placeholder)
 
 			@fields[name].sel.find("[data-options]").hide()
 
@@ -450,8 +468,8 @@ class Form
 					$select.removeClass(self.classes.select.open)
 					$options.hide()
 
-			if @fields[name].defaultStyle and @fields[name].defaultStyle is selectedText
-				$selected.addClass self.classes.select.default
+			if @fields[name].placeholder and @fields[name].placeholder is selectedText
+				$selected.addClass self.classes.select.placeholder
 
 			@fields[name].el.find('option').each ->
 
@@ -479,6 +497,8 @@ class Form
 
 	setVal: (name,val) ->
 
+		return if !@fields[name]
+
 		opt  = @fields[name]
 
 		if opt.type is 'radio'
@@ -492,7 +512,7 @@ class Form
 			opt.el.val(@trim(val))
 
 			if opt.placeholder
-				@placeholder(name,@trim(val))
+				opt.el.trigger('blur')
 
 		else
 			opt.el.val(val)
@@ -503,6 +523,8 @@ class Form
 		return
 
 	getVal: (name) ->
+
+		return if !@fields[name]
 
 		opt = @fields[name]
 
@@ -517,6 +539,18 @@ class Form
 			val = opt.el.val()
 
 		return val
+
+	required: (name,opt) ->
+
+		return if !@fields[name]
+
+		if opt
+			@fields[name].rules.required = opt
+			@fields[name].el.addClass(@classes.required)
+		else
+			@fields[name].rules.required = false
+			@fields[name].el.removeClass(@classes.required)
+		return
 
 	submit: ->
 
@@ -538,19 +572,25 @@ class Form
 			else
 				data[name] = if opt.escape then self.escapeText(val) else val
 
-			self.setData(name,val)
+			if !opt.active
 
-			console.log(name + ': ' + val) if self.logs
+				delete data[name]
 
-			self.errorField(name,false)
+			else
 
-			if opt.rules and !self.isEmpty(opt.rules)
+				self.setData(name,val)
 
-				$.each opt.rules, (ruleName,rule) ->
-					if rule
-						valid = self.validate[ruleName](val, rule)
-						if !valid.state
-							self.setError(name,valid.reason)
+				console.log(name + ': ' + val) if self.logs
+
+				self.errorField(name,false)
+
+				if opt.rules and !self.isEmpty(opt.rules)
+
+					$.each opt.rules, (ruleName,rule) ->
+						if rule
+							valid = self.validate[ruleName](val, rule)
+							if !valid.state
+								self.setError(name,valid.reason)
 
 		console.log("data",data) if @logs
 
@@ -660,11 +700,11 @@ class Form
 
 		if errors
 
-			@fields[name].el.addClass(@classes.errorFieldClass)
-			@fields[name].sel.addClass(@classes.errorFieldClass) if @fields[name].sel
+			@fields[name].el.addClass(@classes.errorField)
+			@fields[name].sel.addClass(@classes.errorField) if @fields[name].sel
 
 			if @fields[name].autoErrors
-				$error = @form.find('.' + @classes.errorClass + '-' + name)
+				$error = @form.find('.' + @classes.error + '-' + name)
 
 				if @isArray(errors)
 					$error.empty()
@@ -677,11 +717,11 @@ class Form
 
 		else
 
-			@fields[name].el.removeClass(@classes.errorFieldClass)
-			@fields[name].sel.removeClass(@classes.errorFieldClass) if @fields[name].sel
+			@fields[name].el.removeClass(@classes.errorField)
+			@fields[name].sel.removeClass(@classes.errorField) if @fields[name].sel
 
 			if @fields[name].autoErrors
-				@form.find('.' + @classes.errorClass + '-' + name).empty()
+				@form.find('.' + @classes.error + '-' + name).empty()
 
 		return
 
@@ -691,6 +731,8 @@ class Form
 
 		@setVal(name,@fields[name].originalVal)
 		@errorField(name,false)
+
+		return
 
 	addField: (opt) ->
 
@@ -723,24 +765,21 @@ class Form
 
 		return
 
-	placeholder: (name,val) ->
+	placeholder: (name) ->
 
 		return if !@fields[name]
 
 		self = @
 
-		if val
-			if val is self.fields[name].placeholder
-				self.fields[name].el.removeClass(self.classes.placeholderClass) 
-			else
-				self.fields[name].el.addClass(self.classes.placeholderClass)      
-			return
-
 		@fields[name].el
 			.focus ->
-				if $(@).val() is self.fields[name].placeholder then $(@).val("").removeClass(self.classes.placeholderClass)      
+				if $(@).val() is self.fields[name].placeholder
+					$(@).val("").removeClass(self.classes.input.placeholder)
 			.blur ->
-				if self.isEmpty($(@).val()) or $(@).val() is self.fields[name].placeholder then $(@).val(self.fields[name].placeholder).addClass(self.classes.placeholderClass)
+				if self.isEmpty($(@).val()) or $(@).val() is self.fields[name].placeholder
+					$(@).val(self.fields[name].placeholder).addClass(self.classes.input.placeholder)
+				else
+					$(@).removeClass(self.classes.input.placeholder)
 		
 		@fields[name].el.blur()
 
@@ -749,20 +788,20 @@ class Form
 	lockSubmit: ->
 
 		@_disableSubmit = true
-		@submitBtn.addClass(@classes.disableSubmitClass)
+		@submitBtn.addClass(@classes.submit.disable)
 		return
 
 	unlockSubmit: ->
 		@_disableSubmit = false
-		@submitBtn.removeClass(@classes.disableSubmitClass)
+		@submitBtn.removeClass(@classes.submit.disable)
 		return
 
 	showPreloader: ->
-		@form.find('.' + @classes.preloaderClass).show()
+		@form.find('.' + @classes.preloader).show()
 		return
 
 	hidePreloader: ->
-		@form.find('.' + @classes.preloaderClass).hide()
+		@form.find('.' + @classes.preloader).hide()
 		return
 
 	validation: ->

@@ -112,7 +112,7 @@ $ ->
 		# 		required: true
 
 		'dropdown':
-			defaultStyle: 'Выбрать'
+			placeholder: 'Выбрать'
 			rules:
 				required:
 					not: 'Выбрать'
@@ -149,6 +149,8 @@ $ ->
 
 
 			self = @
+
+			@fields['test'].active = false
 
 			@fields['date'].el.datepicker()
 
@@ -221,7 +223,7 @@ $ ->
 
 			name: fieldName
 			options:
-				defaultStyle: "Выбрать"
+				placeholder: "Выбрать"
 				rules:
 					required:
 						not: 'Выбрать'
