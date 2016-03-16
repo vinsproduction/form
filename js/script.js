@@ -143,7 +143,6 @@ $(function() {
         }
       },
       onInit: function() {
-        console.log(2);
         forms['form-1'].fields[fieldName].el.on('change', function(e, v) {
           return console.log('change new', v.val);
         });

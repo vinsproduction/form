@@ -153,6 +153,7 @@ $ ->
 
 			@fields['test'].activate(false)
 
+
 			# @fields['login'].addRule
 			# 	name: 'test'
 			# 	condition: (val) ->
@@ -224,15 +225,14 @@ $ ->
 			forms['form-1'].removeField(fieldName)
 			return false
 
-
 		forms['form-1'].addField fieldName,
 			placeholder: "Выбрать"
 			rules:
 				required:
 					not: 'Выбрать'
 					reason: 'Своя ошибка'
+
 			onInit: ->
-				console.log 2
 				forms['form-1'].fields[fieldName].el.on 'change', (e,v) ->
 					console.log 'change new',v.val
 

@@ -612,6 +612,7 @@ class Form
 								if !valid.state
 									self.setError(name,valid.reason)
 
+
 		console.log("data",data) if @logs
 
 		console.groupEnd() if @logs
