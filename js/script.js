@@ -50,23 +50,14 @@ $(function() {
     'login': {
       placeholder: 'login',
       rules: {
-        required: true,
-        alpha: true,
-        max: {
-          count: 4
-        },
-        min: {
-          count: 2
-        }
+        required: true
       }
     },
     'password-confirmation': {
       rules: {
         compare: {
-          val: function() {
-            return $form.find('input[name="password"]').val();
-          },
-          reason: 'Не совпадает с полем password'
+          field: 'login',
+          reason: 'Не совпадает с полем {field}'
         }
       },
       onError: function(name, errors) {
@@ -74,7 +65,7 @@ $(function() {
       }
     },
     'dropdown': {
-      defaultStyle: 'Выбрать',
+      placeholder: 'Выбрать',
       rules: {
         required: {
           not: 'Выбрать'
@@ -103,6 +94,7 @@ $(function() {
     onInit: function() {
       var self;
       self = this;
+      this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
       this.form.on('change', '[data-field][data-name="dropdown"]', function(e, data) {});
@@ -138,21 +130,20 @@ $(function() {
     clone.addClass('new');
     $form.find('.error-list').before(clone);
     clone.find('.remove').click(function() {
+      $(this).parents().eq(1).remove();
       forms['form-1'].removeField(fieldName);
       return false;
     });
-    return forms['form-1'].addField({
-      name: fieldName,
-      options: {
-        defaultStyle: "Выбрать",
-        rules: {
-          required: {
-            not: 'Выбрать',
-            reason: 'Своя ошибка'
-          }
+    return forms['form-1'].addField(fieldName, {
+      placeholder: "Выбрать",
+      rules: {
+        required: {
+          not: 'Выбрать',
+          reason: 'Своя ошибка'
         }
       },
       onInit: function() {
+        console.log(2);
         forms['form-1'].fields[fieldName].el.on('change', function(e, v) {
           return console.log('change new', v.val);
         });

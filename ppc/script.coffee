@@ -59,11 +59,11 @@ $ ->
 			placeholder: 'login'
 			rules:
 				required: true
-				alpha: true
-				max:
-					count: 4
-				min:
-					count: 2
+				# alpha: true
+				# max:
+				# 	count: 4
+				# min:
+				# 	count: 2
 
 
 		# 'password':
@@ -73,8 +73,9 @@ $ ->
 		'password-confirmation':
 			rules:
 				compare:
-					val: -> $form.find('input[name="password"]').val()
-					reason: 'Не совпадает с полем password'
+					field: 'login'
+					# val: -> $form.find('input[name="password"]').val()
+					reason: 'Не совпадает с полем {field}'
 			onError: (name,errors) ->
 				$form.find("[name='password']").addClass('error-field')
 
@@ -112,7 +113,7 @@ $ ->
 		# 		required: true
 
 		'dropdown':
-			defaultStyle: 'Выбрать'
+			placeholder: 'Выбрать'
 			rules:
 				required:
 					not: 'Выбрать'
@@ -149,6 +150,20 @@ $ ->
 
 
 			self = @
+
+			@fields['test'].activate(false)
+
+			# @fields['login'].addRule
+			# 	name: 'test'
+			# 	condition: (val) ->
+			# 		return parseInt(val) is 1
+
+			# @addFieldRule 'login',
+			# 	name: 'test'
+			# 	reason: 'Какая то ошибка'
+			# 	condition: (val) ->
+			# 		return parseInt(val) is 1
+			
 
 			@fields['date'].el.datepicker()
 
@@ -189,13 +204,6 @@ $ ->
 
 			$form.find('.errors').empty()
 
-	# forms['form-1'].addRule 
-	# 	field: 'password-confirmation'
-	# 	rule: 'password confirmation rule'
-	# 	reason: 'Пароли не совпадают'
-	# 	condition: (val) ->
-	# 		return $form.find('input[name="password"]').val() is val
-
 
 	window.addfield = ->
 
@@ -212,21 +220,19 @@ $ ->
 		$form.find('.error-list').before clone
 
 		clone.find('.remove').click ->
-			# clone.remove()
+			$(@).parents().eq(1).remove()
 			forms['form-1'].removeField(fieldName)
 			return false
 
 
-		forms['form-1'].addField
-
-			name: fieldName
-			options:
-				defaultStyle: "Выбрать"
-				rules:
-					required:
-						not: 'Выбрать'
-						reason: 'Своя ошибка'
+		forms['form-1'].addField fieldName,
+			placeholder: "Выбрать"
+			rules:
+				required:
+					not: 'Выбрать'
+					reason: 'Своя ошибка'
 			onInit: ->
+				console.log 2
 				forms['form-1'].fields[fieldName].el.on 'change', (e,v) ->
 					console.log 'change new',v.val
 
