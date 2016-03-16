@@ -73,6 +73,7 @@ class Form
 			escape: false # Очищать инпут от тегов в отправке
 			rules: {}
 			onError: (fieldName, errors) ->
+			onReset: (fieldName) ->
 	
 		@data = {}
 		@errors = {}
@@ -110,7 +111,7 @@ class Form
 
 				$(window).keydown (event) ->
 					if self.form.inFocus and event.keyCode is 13
-						self.submit() if !self._disableSubmit
+						self.Submit() if !self._disableSubmit
 
 			if self.autoFields
 				self.form.find('[name]').each ->
@@ -178,7 +179,7 @@ class Form
 
 			return true
 		
-		@form.on 'Change', '[data-field]', (e,data) ->
+		@form.on 'Change', '[data-field]', (e,data,trigger) ->
 
 			el = $(@)
 			name = el.attr('name')
@@ -194,7 +195,8 @@ class Form
 			else if el.attr('type') is 'checkbox'
 				self.createCheckbox(name,true)
 
-			self.fields[name].el.trigger('change',data)
+			if trigger
+				self.fields[name].el.trigger('change',data)
 
 			return true
 
@@ -203,12 +205,12 @@ class Form
 		@form.submit (e) -> e.preventDefault()
 
 		if @disableSubmit
-			@lockSubmit()
+			@submit(false)
 		else
-			@unlockSubmit()
+			@submit(true)
 
 		@submitBtn.click ->
-			self.submit() if !self._disableSubmit
+			self.Submit() if !self._disableSubmit
 			return false
 
 		if @logs
@@ -312,6 +314,107 @@ class Form
 			return
 
 		return
+
+	
+	Submit: ->
+
+		self = @
+
+		do @resetData
+		do @resetErorrs
+
+		data = {} # для отправки данных
+
+		console.groupCollapsed("[Form: #{@formName}] submit") if @logs
+
+		$.each @fields, (name, opt) ->
+
+			val = self.getVal(name)
+
+			if opt.name
+				data[opt.name] = if opt.escape then self.escapeText(val) else val
+			else
+				data[name] = if opt.escape then self.escapeText(val) else val
+
+			if !opt.active
+
+				delete data[name]
+
+			else
+
+				self.setData(name,val)
+
+				console.log(name + ': ' + val) if self.logs
+
+				self.errorField(name,false)
+
+				if opt.rules and !self.isEmpty(opt.rules)
+
+					$.each opt.rules, (ruleName,rule) ->
+						if rule and self.validate[ruleName]
+							if !self.isEmpty(val) or ruleName is 'required'
+								valid = self.validate[ruleName](val, rule)
+								if !valid.state
+									self.setError(name,valid.reason)
+
+
+		console.log("data",data) if @logs
+
+		console.groupEnd() if @logs
+
+		@onSubmit(data)
+
+		if @isEmpty(@errors)
+			do @Success
+		else
+			do @Fail
+
+		return
+
+	Fail: ->
+
+		self = @
+
+		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
+
+		$.each @fields, (name, opt) ->
+
+			if self.errors[name]
+
+				console.log(name + ': ', self.errors[name]) if self.logs
+
+				if self.fields[name].autoErrors
+					if self.fields[name].autoErrors is 'all'
+						self.errorField(name,self.errors[name])
+					else if self.errors[name][0]
+						self.errorField(name,self.errors[name][0])
+
+
+				opt.onError(name, self.errors[name])
+
+		console.log("data",@errors) if @logs
+
+		console.groupEnd() if @logs
+
+		@onFail(@errors)
+
+		return
+
+	Success: ->
+
+		console.groupCollapsed("[Form: #{@formName}] success") if @logs
+
+		for name,val of @data
+			console.log(name, val) if @logs
+
+		console.log("data",@data) if @logs
+
+		console.groupEnd() if @logs
+
+		@onSuccess(@data)
+
+		return
+
 
 	createCheckbox: (name,change) ->
 
@@ -519,7 +622,7 @@ class Form
 
 		return
 
-	setVal: (name,val) ->
+	setVal: (name,val,trigger=true) ->
 
 		return if !@fields[name]
 
@@ -541,8 +644,7 @@ class Form
 		else
 			opt.el.val(val)
 
-
-		opt.el.trigger('Change',[{name,val}])
+		opt.el.trigger('Change',[{name,val},trigger])
 
 		return
 
@@ -568,105 +670,6 @@ class Form
 		return if !@fields[name]
 
 		@fields[name].active = flag
-
-		return
-
-	submit: ->
-
-		self = @
-
-		do @resetData
-		do @resetErorrs
-
-		data = {} # для отправки данных
-
-		console.groupCollapsed("[Form: #{@formName}] submit") if @logs
-
-		$.each @fields, (name, opt) ->
-
-			val = self.getVal(name)
-
-			if opt.name
-				data[opt.name] = if opt.escape then self.escapeText(val) else val
-			else
-				data[name] = if opt.escape then self.escapeText(val) else val
-
-			if !opt.active
-
-				delete data[name]
-
-			else
-
-				self.setData(name,val)
-
-				console.log(name + ': ' + val) if self.logs
-
-				self.errorField(name,false)
-
-				if opt.rules and !self.isEmpty(opt.rules)
-
-					$.each opt.rules, (ruleName,rule) ->
-						if rule and self.validate[ruleName]
-							if !self.isEmpty(val) or ruleName is 'required'
-								valid = self.validate[ruleName](val, rule)
-								if !valid.state
-									self.setError(name,valid.reason)
-
-
-		console.log("data",data) if @logs
-
-		console.groupEnd() if @logs
-
-		@onSubmit(data)
-
-		if @isEmpty(@errors)
-			do @success
-		else
-			do @fail
-
-		return
-
-	fail: ->
-
-		self = @
-
-		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
-
-		$.each @fields, (name, opt) ->
-
-			if self.errors[name]
-
-				console.log(name + ': ', self.errors[name]) if self.logs
-
-				if self.fields[name].autoErrors
-					if self.fields[name].autoErrors is 'all'
-						self.errorField(name,self.errors[name])
-					else if self.errors[name][0]
-						self.errorField(name,self.errors[name][0])
-
-
-				opt.onError(name, self.errors[name])
-
-		console.log("data",@errors) if @logs
-
-		console.groupEnd() if @logs
-
-		@onFail(@errors)
-
-		return
-
-	success: ->
-
-		console.groupCollapsed("[Form: #{@formName}] success") if @logs
-
-		for name,val of @data
-			console.log(name, val) if @logs
-
-		console.log("data",@data) if @logs
-
-		console.groupEnd() if @logs
-
-		@onSuccess(@data)
 
 		return
 
@@ -713,6 +716,15 @@ class Form
 
 	getErrors: -> @errors
 
+	clearErrors: ->
+
+		self = @
+
+		@form.find('.' + @classes.error).empty()
+		@form.find('[data-field]').removeClass(@classes.errorField)
+
+		return
+
 	errorField: (name,errors) ->
 
 		return if !@fields[name]
@@ -750,8 +762,9 @@ class Form
 
 		return if !@fields[name]
 
-		@setVal(name,@fields[name].originalVal)
+		@setVal(name,@fields[name].originalVal,false)
 		@errorField(name,false)
+		@fields[name].onReset(name)
 
 		return
 
@@ -804,24 +817,27 @@ class Form
 
 		return
 
-	lockSubmit: ->
+	submit: (flag=true) ->
 
-		@_disableSubmit = true
-		@submitBtn.addClass(@classes.submit.disable)
+		if flag
+			@_disableSubmit = false
+			@submitBtn.removeClass(@classes.submit.disable)
+		else
+			@_disableSubmit = true
+			@submitBtn.addClass(@classes.submit.disable)
+
 		return
 
-	unlockSubmit: ->
-		@_disableSubmit = false
-		@submitBtn.removeClass(@classes.submit.disable)
+	preloader: (flag=true) ->
+
+		preloader = @form.find('.' + @classes.preloader)
+
+		if flag
+			preloader.show()
+		else
+			preloader.hide()
 		return
 
-	showPreloader: ->
-		@form.find('.' + @classes.preloader).show()
-		return
-
-	hidePreloader: ->
-		@form.find('.' + @classes.preloader).hide()
-		return
 
 	validation: ->
 

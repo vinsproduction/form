@@ -118,6 +118,10 @@ head
 							scroll(sel)
 							return
 
+						self.form.on 'change', '[data-field]', (e,data) ->
+							console.log 'change',data
+							return
+
 					onSubmit: (data) ->
 
 						self = @

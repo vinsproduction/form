@@ -121,8 +121,11 @@
         self.form.on('click', '[data-name="day"],[data-name="month"],[data-name="year"]', function() {
           self.form.find(".error-birthday").empty();
         });
-        return self.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
+        self.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
           scroll(sel);
+        });
+        return self.form.on('change', '[data-field]', function(e, data) {
+          console.log('change', data);
         });
       },
       onSubmit: function(data) {
