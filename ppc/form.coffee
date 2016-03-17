@@ -3,20 +3,21 @@
 	https://github.com/vinsproduction/form
 ###
 
+if !window.console
+	window.console = {}
+
+if !window.console.log
+	window.console.log = ->
+
+if !window.console.groupCollapsed
+	window.console.groupCollapsed = window.console.log
+
+if !window.console.groupEnd
+	window.console.groupEnd = ->
+		
 class Form
 
 	constructor: (@params={}) ->
-
-		if !window.console
-			window.console = {}
-
-		if !window.console.groupCollapsed
-			window.console.groupCollapsed = ->
-				console.log.apply(console,arguments) if window.console.log
-
-		if !window.console.groupEnd
-			window.console.groupEnd = ->
-
 
 		@logs = false # Логи отключены
 
@@ -32,7 +33,6 @@ class Form
 		@enter = true  # Отправка на Enter
 
 		@disableSubmit = false # Заблокировать сабмит
-
 
 		@classes =
 			input:
@@ -72,9 +72,7 @@ class Form
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
 			escape: false # Очищать инпут от тегов в отправке
 			rules: {}
-			onError: (fieldName, errors) ->
-			onReset: (fieldName) ->
-	
+
 		@data = {}
 		@errors = {}
 
@@ -86,9 +84,9 @@ class Form
 
 		$.extend(true, @, @params)
 
-		self = @
-
 		do @validation
+
+		self = @
 
 		$ ->
 
@@ -134,11 +132,15 @@ class Form
 		@form.find('[data-field]')
 			.off('change')
 			.off('style')
+			.off('error')
+			.off('reset')
 			.off('click')
 
 		@form
 			.off('Style')
 			.off('Change')
+			.off('Error')
+			.off('Reset')
 			.off('click')
 
 		@submitBtn
@@ -196,7 +198,23 @@ class Form
 				self.createCheckbox(name,true)
 
 			if trigger
-				self.fields[name].el.trigger('change',data)
+				el.trigger('change',data)
+
+			return true
+
+		@form.on 'Error', '[data-field]', (e,errors) ->
+
+			el = $(@)
+			name = el.attr('name')
+			el.trigger('error', [errors,name])
+
+			return true
+
+		@form.on 'Reset', '[data-field]', ->
+
+			el = $(@)
+			name = el.attr('name')
+			el.trigger('reset', [name])
 
 			return true
 
@@ -309,8 +327,8 @@ class Form
 			valid = self.validate[ruleName](self.getVal(name),opt)
 			return valid.state
 
-		@fields[name].addRule = (rule) ->
-			self.addFieldRule(name,rule)
+		@fields[name].addRule = (ruleName,rule) ->
+			self.addFieldRule(name,ruleName,rule)
 			return
 
 		return
@@ -389,8 +407,7 @@ class Form
 					else if self.errors[name][0]
 						self.errorField(name,self.errors[name][0])
 
-
-				opt.onError(name, self.errors[name])
+				self.fields[name].el.trigger('Error',[self.errors[name]])
 
 		console.log("data",@errors) if @logs
 
@@ -764,7 +781,7 @@ class Form
 
 		@setVal(name,@fields[name].originalVal,false)
 		@errorField(name,false)
-		@fields[name].onReset(name)
+		@fields[name].el.trigger('Reset')
 
 		return
 
@@ -837,7 +854,6 @@ class Form
 		else
 			preloader.hide()
 		return
-
 
 	validation: ->
 
@@ -1026,15 +1042,18 @@ class Form
 
 				self = @form
 
-				rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
+				obj = {state: false}
 
-				obj =
-					state: false
-					reason: rule.reason || "Максимум #{(rule.count || rule)} #{self.declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
+				count = rule.count || rule
+
+				if rule.reason
+					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+				else
+					obj.reason = "Максимум #{count} #{self.declOfNum(count, ['символ', 'символа', 'символов'])}"
 
 				valid = ->
 
-					if val.length <= (rule.count || rule)
+					if val.length <= count
 						obj.state = true
 
 					return obj
@@ -1045,15 +1064,18 @@ class Form
 
 				self = @form
 
-				rule.reason = rule.reason.replace(/\{count\}/g, rule.count) if rule.reason
+				obj = {state: false}
 
-				obj =
-					state: false
-					reason: rule.reason || "Минимум #{(rule.count || rule)} #{self.declOfNum((rule.count || rule), ['символ', 'символа', 'символов'])}"
+				count = rule.count || rule
+
+				if rule.reason
+					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+				else
+					obj.reason = "Минимум #{count} #{self.declOfNum(count, ['символ', 'символа', 'символов'])}"
 
 				valid = ->
 
-					if val.length >= (rule.count || rule)
+					if val.length >= count
 						obj.state = true
 
 					return obj
@@ -1099,8 +1121,6 @@ class Form
 				self = @form
 				rule.form = @form
 
-				rule.reason = rule.reason.replace(/\{field\}/g, rule.field) if rule.reason
-
 				obj =
 					state: false
 					reason: rule.reason || "Поля не совпадают"
@@ -1108,9 +1128,14 @@ class Form
 				valid = ->
 
 					if rule.field and self.fields[rule.field]
+
+						if rule.reason
+							obj.reason = rule.reason.replace(/\{rule.field\}/g, rule.field)
+						else
+							obj.reason = "Поле не совпадает с #{rule.field}"
+
 						if val is self.fields[rule.field].val()
 							obj.state = true
-
 						return obj
 
 					if rule.val
@@ -1155,16 +1180,16 @@ class Form
 
 		return
 
-	addFieldRule: (name,rule={}) ->
+	addFieldRule: (name,ruleName,rule={}) ->
 
-		return if !@fields[name] or !rule.name or !rule.condition
+		return if !@fields[name] or !ruleName or !rule.condition
 
-		if !@validate[rule.name]
-			@newRule(rule.name, rule)
+		if !@validate[ruleName]
+			@newRule(ruleName, rule)
 		
-		@fields[name].rules[rule.name] = rule
+		@fields[name].rules[ruleName] = rule
 
-		console.log("[Form: #{@formName}] add rule", rule.name) if @logs
+		console.log("[Form: #{@formName}] add rule", ruleName) if @logs
 
 		return 
 

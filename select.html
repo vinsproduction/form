@@ -50,7 +50,7 @@
       formEl: '.form-1',
       submitEl: '.submit a',
       fieldsOptions: {
-        defaultStyle: 'Выбрать',
+        placeholder: 'Выбрать',
         rules: {
           required: true
         }
@@ -73,8 +73,8 @@
       onSuccess: function(data) {
         var self;
         self = this;
-        self.lockSubmit();
-        return self.showPreloader();
+        this.submit(false);
+        return this.preloader(true);
       },
       onFail: function(errors) {
         var self;
@@ -82,7 +82,8 @@
         return self.form.find('.errors').html("Исправьте ошибки в форме");
       },
       onReset: function() {
-        return this.hidePreloader();
+        this.submit(false);
+        return this.preloader(false);
       }
     });
     window.forms['form-2'] = new Form({
@@ -99,6 +100,10 @@
         return self.fields['dropdown-2'].el.on('style', function(e, sel) {
           return scroll(sel);
         });
+      },
+      onReset: function() {
+        this.submit(false);
+        return this.preloader(false);
       }
     });
     window.reset = function() {

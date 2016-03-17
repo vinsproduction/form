@@ -55,9 +55,7 @@
         rules: {
           required: true,
           compare: {
-            val: function() {
-              return this.form.fields['password'].val();
-            }
+            field: 'password'
           }
         }
       },
@@ -72,9 +70,6 @@
           required: {
             not: 'Выбрать'
           }
-        },
-        onError: function(name, errors) {
-          return this.form.form.find(".error-birthday").html(errors[0]);
         }
       },
       'month': {
@@ -83,9 +78,6 @@
           required: {
             not: 'Выбрать'
           }
-        },
-        onError: function(name, errors) {
-          return this.form.form.find(".error-birthday").html(errors[0]);
         }
       },
       'year': {
@@ -94,9 +86,6 @@
           required: {
             not: 'Выбрать'
           }
-        },
-        onError: function(name, errors) {
-          return this.form.form.find(".error-birthday").html(errors[0]);
         }
       }
     };
@@ -118,6 +107,12 @@
       onInit: function() {
         var self;
         self = this;
+        self.form.on('error', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, errors, field) {
+          self.form.find(".error-birthday").html(errors[0]);
+        });
+        self.form.on('reset', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
+          self.form.find(".error-birthday").empty();
+        });
         self.form.on('click', '[data-name="day"],[data-name="month"],[data-name="year"]', function() {
           self.form.find(".error-birthday").empty();
         });
@@ -136,13 +131,17 @@
       onSuccess: function(data) {
         var self;
         self = this;
-        self.lockSubmit();
-        return self.showPreloader();
+        this.submit(false);
+        return this.preloader(true);
       },
       onFail: function(errors) {
         var self;
         self = this;
         return self.form.find('.errors').html("Исправьте ошибки в форме");
+      },
+      onReset: function() {
+        this.submit(false);
+        return this.preloader(false);
       }
     });
   });

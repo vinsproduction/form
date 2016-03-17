@@ -54,7 +54,7 @@ head
 					submitEl: '.submit a'
 	
 					fieldsOptions:
-						defaultStyle: 'Выбрать'
+						placeholder: 'Выбрать'
 						rules:
 							required: true
 						
@@ -78,12 +78,13 @@ head
 
 						self = @
 
-						self.lockSubmit()
-						self.showPreloader()
+						@submit(false)
+						@preloader(true)
 
 						# API.success ->
-						# self.unlockSubmit()
-						# self.hidePreloader()
+						# self.submit(true)
+						# self.preloader(false)
+
 
 					onFail: (errors) ->
 
@@ -93,7 +94,8 @@ head
 
 					onReset: ->
 
-						@hidePreloader()
+						@submit(false)
+						@preloader(false)
 
 				window.forms['form-2'] = new Form
 
@@ -112,6 +114,11 @@ head
 
 						self.fields['dropdown-2'].el.on 'style', (e,sel) ->
 							scroll(sel)
+
+					onReset: ->
+
+						@submit(false)
+						@preloader(false)
 
 
 				window.reset = ->

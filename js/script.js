@@ -59,9 +59,6 @@ $(function() {
           field: 'login',
           reason: 'Не совпадает с полем {field}'
         }
-      },
-      onError: function(name, errors) {
-        return $form.find("[name='password']").addClass('error-field');
       }
     },
     'dropdown': {
@@ -97,6 +94,8 @@ $(function() {
       this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
+      this.form.on('reset', '[data-field]', function(e, field) {});
+      this.form.on('error', '[data-field]', function(e, errors) {});
       this.form.on('change', '[data-field][data-name="dropdown"]', function(e, data) {});
       this.form.on('style', '[data-field][data-name="dropdown"]', function(e, sel) {});
       return this.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
@@ -107,15 +106,15 @@ $(function() {
       return $form.find('.errors').empty();
     },
     onSuccess: function(data) {
-      this.lockSubmit();
-      return this.showPreloader();
+      this.submit(false);
+      return this.preloader(true);
     },
     onFail: function(errors) {
       return $form.find('.errors').html("Исправьте ошибки в форме");
     },
     onReset: function() {
-      this.unlockSubmit();
-      this.hidePreloader();
+      this.submit(true);
+      this.preloader(false);
       return $form.find('.errors').empty();
     }
   });

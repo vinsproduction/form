@@ -62,13 +62,17 @@
       onSuccess: function(data) {
         var self;
         self = this;
-        self.lockSubmit();
-        return self.showPreloader();
+        this.submit(false);
+        return this.preloader(true);
       },
       onFail: function(errors) {
         var self;
         self = this;
         return self.form.find('.errors').html("Исправьте ошибки в форме");
+      },
+      onReset: function() {
+        this.submit(false);
+        return this.preloader(false);
       }
     });
   });

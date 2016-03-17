@@ -56,8 +56,7 @@ head
 						rules:
 							required: true
 							compare:
-								val: ->
-									@form.fields['password'].val()
+								field: 'password'
 
 					'email':
 						rules:
@@ -68,26 +67,18 @@ head
 						rules:
 							required:
 								not: 'Выбрать'
-						onError: (name,errors) ->
-							@form.form.find(".error-birthday").html(errors[0])
 
 					'month':
 						placeholder: 'Выбрать'
 						rules:
 							required:
 								not: 'Выбрать'
-						onError: (name,errors) ->
-							@form.form.find(".error-birthday").html(errors[0])
-
 
 					'year':
 						placeholder: 'Выбрать'
 						rules:
 							required:
 								not: 'Выбрать'
-						onError: (name,errors) ->
-							@form.form.find(".error-birthday").html(errors[0])
-
 
 				window.forms['registration'] = new Form
 
@@ -109,6 +100,14 @@ head
 					onInit: ->
 
 						self = @
+
+						self.form.on 'error', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,errors,field) ->
+							self.form.find(".error-birthday").html(errors[0])
+							return
+
+						self.form.on 'reset', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
+							self.form.find(".error-birthday").empty()
+							return
 
 						self.form.on 'click', '[data-name="day"],[data-name="month"],[data-name="year"]', ->
 							self.form.find(".error-birthday").empty()
@@ -132,18 +131,23 @@ head
 
 						self = @
 
-						self.lockSubmit()
-						self.showPreloader()
+						@submit(false)
+						@preloader(true)
 
 						# API.success ->
-						# self.unlockSubmit()
-						# self.hidePreloader()
+						# self.submit(true)
+						# self.preloader(false)
 
 					onFail: (errors) ->
 
 						self = @
 
 						self.form.find('.errors').html "Исправьте ошибки в форме"
+
+					onReset: ->
+
+						@submit(false)
+						@preloader(false)
 
 				return
 

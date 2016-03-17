@@ -53,6 +53,7 @@ head
 
 						self = @
 
+
 					onSubmit: (data) ->
 
 						self = @
@@ -63,12 +64,12 @@ head
 
 						self = @
 
-						self.lockSubmit()
-						self.showPreloader()
+						@submit(false)
+						@preloader(true)
 
 						# API.success ->
-						# self.unlockSubmit()
-						# self.hidePreloader()
+						# self.submit(true)
+						# self.preloader(false)
 
 					onFail: (errors) ->
 
@@ -76,6 +77,10 @@ head
 
 						self.form.find('.errors').html "Исправьте ошибки в форме"
 
+					onReset: ->
+
+						@submit(false)
+						@preloader(false)
 
 				return
 

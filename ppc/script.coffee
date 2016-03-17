@@ -76,10 +76,6 @@ $ ->
 					field: 'login'
 					# val: -> $form.find('input[name="password"]').val()
 					reason: 'Не совпадает с полем {field}'
-			onError: (name,errors) ->
-				$form.find("[name='password']").addClass('error-field')
-
-
 
 		# 'phone':
 		# 	rules:
@@ -102,8 +98,6 @@ $ ->
 			# name: 'checkbox new'
 			# rules:
 			# 	required: true
-			# onError: (name,errors) ->
-			# 	console.log 22
 
 
 		# 'checkbox_2': false
@@ -127,9 +121,6 @@ $ ->
 		rules:
 			required: true
 				# reason: 'ошибка'
-		# onError: (name,errors) ->
-		# 	console.log 11
-
 
 
 	window.forms['form-1'] = new Form
@@ -170,6 +161,12 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
+			@form.on 'reset', '[data-field]', (e,field) ->
+				# console.log 'reset',field
+
+			@form.on 'error', '[data-field]', (e,errors) ->
+				# console.log 'errors',errors
+
 			@form.on 'change', '[data-field][data-name="dropdown"]', (e,data) ->
 				# console.log 'dropdown change', data
 
@@ -187,12 +184,13 @@ $ ->
 
 		onSuccess: (data) ->
 
-			@lockSubmit()
-			@showPreloader()
+			@submit(false)
+			@preloader(true)
 
 			# API.success ->
-			# @unlockSubmit()
-			# @hidePreloader()
+			# self.submit(true)
+			# self.preloader(false)
+
 
 		onFail: (errors) ->
 
@@ -200,8 +198,8 @@ $ ->
 
 		onReset: ->
 
-			@unlockSubmit()
-			@hidePreloader()
+			@submit(true)
+			@preloader(false)
 
 			$form.find('.errors').empty()
 

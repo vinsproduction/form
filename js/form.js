@@ -6,23 +6,26 @@
 var Form,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+if (!window.console) {
+  window.console = {};
+}
+
+if (!window.console.log) {
+  window.console.log = function() {};
+}
+
+if (!window.console.groupCollapsed) {
+  window.console.groupCollapsed = window.console.log;
+}
+
+if (!window.console.groupEnd) {
+  window.console.groupEnd = function() {};
+}
+
 Form = (function() {
   function Form(params) {
     var self;
     this.params = params != null ? params : {};
-    if (!window.console) {
-      window.console = {};
-    }
-    if (!window.console.groupCollapsed) {
-      window.console.groupCollapsed = function() {
-        if (window.console.log) {
-          return console.log.apply(console, arguments);
-        }
-      };
-    }
-    if (!window.console.groupEnd) {
-      window.console.groupEnd = function() {};
-    }
     this.logs = false;
     this.formName = 'form';
     this.formEl = false;
@@ -70,9 +73,7 @@ Form = (function() {
       clearErrorsInFocus: true,
       autoErrors: true,
       escape: false,
-      rules: {},
-      onError: function(fieldName, errors) {},
-      onReset: function(fieldName) {}
+      rules: {}
     };
     this.data = {};
     this.errors = {};
@@ -82,8 +83,8 @@ Form = (function() {
     this.onReset = function() {};
     this.onInit = function() {};
     $.extend(true, this, this.params);
-    self = this;
     this.validation();
+    self = this;
     $(function() {
       if (!self.formEl && self.logs) {
         return console.log("[Form: " + self.formName + "] Warning! formEl not set");
@@ -134,8 +135,8 @@ Form = (function() {
   Form.prototype.init = function() {
     var opts, self;
     self = this;
-    this.form.find('[data-field]').off('change').off('style').off('click');
-    this.form.off('Style').off('Change').off('click');
+    this.form.find('[data-field]').off('change').off('style').off('error').off('reset').off('click');
+    this.form.off('Style').off('Change').off('Error').off('Reset').off('click');
     this.submitBtn.off('click');
     this.form.on('click', '[data-field]', function() {
       var name;
@@ -181,8 +182,22 @@ Form = (function() {
         self.createCheckbox(name, true);
       }
       if (trigger) {
-        self.fields[name].el.trigger('change', data);
+        el.trigger('change', data);
       }
+      return true;
+    });
+    this.form.on('Error', '[data-field]', function(e, errors) {
+      var el, name;
+      el = $(this);
+      name = el.attr('name');
+      el.trigger('error', [errors, name]);
+      return true;
+    });
+    this.form.on('Reset', '[data-field]', function() {
+      var el, name;
+      el = $(this);
+      name = el.attr('name');
+      el.trigger('reset', [name]);
       return true;
     });
     this.form.submit(function(e) {
@@ -297,8 +312,8 @@ Form = (function() {
       valid = self.validate[ruleName](self.getVal(name), opt);
       return valid.state;
     };
-    this.fields[name].addRule = function(rule) {
-      self.addFieldRule(name, rule);
+    this.fields[name].addRule = function(ruleName, rule) {
+      self.addFieldRule(name, ruleName, rule);
     };
   };
 
@@ -374,7 +389,7 @@ Form = (function() {
             self.errorField(name, self.errors[name][0]);
           }
         }
-        return opt.onError(name, self.errors[name]);
+        return self.fields[name].el.trigger('Error', [self.errors[name]]);
       }
     });
     if (this.logs) {
@@ -727,7 +742,7 @@ Form = (function() {
     }
     this.setVal(name, this.fields[name].originalVal, false);
     this.errorField(name, false);
-    this.fields[name].onReset(name);
+    this.fields[name].el.trigger('Reset');
   };
 
   Form.prototype.addField = function(name, opt) {
@@ -980,17 +995,19 @@ Form = (function() {
         return valid();
       },
       max: function(val, rule) {
-        var obj, self, valid;
+        var count, obj, self, valid;
         self = this.form;
-        if (rule.reason) {
-          rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
-        }
         obj = {
-          state: false,
-          reason: rule.reason || ("Максимум " + (rule.count || rule) + " " + (self.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
+          state: false
         };
+        count = rule.count || rule;
+        if (rule.reason) {
+          obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        } else {
+          obj.reason = "Максимум " + count + " " + (self.declOfNum(count, ['символ', 'символа', 'символов']));
+        }
         valid = function() {
-          if (val.length <= (rule.count || rule)) {
+          if (val.length <= count) {
             obj.state = true;
           }
           return obj;
@@ -998,17 +1015,19 @@ Form = (function() {
         return valid();
       },
       min: function(val, rule) {
-        var obj, self, valid;
+        var count, obj, self, valid;
         self = this.form;
-        if (rule.reason) {
-          rule.reason = rule.reason.replace(/\{count\}/g, rule.count);
-        }
         obj = {
-          state: false,
-          reason: rule.reason || ("Минимум " + (rule.count || rule) + " " + (self.declOfNum(rule.count || rule, ['символ', 'символа', 'символов'])))
+          state: false
         };
+        count = rule.count || rule;
+        if (rule.reason) {
+          obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        } else {
+          obj.reason = "Минимум " + count + " " + (self.declOfNum(count, ['символ', 'символа', 'символов']));
+        }
         valid = function() {
-          if (val.length >= (rule.count || rule)) {
+          if (val.length >= count) {
             obj.state = true;
           }
           return obj;
@@ -1049,15 +1068,17 @@ Form = (function() {
         var obj, self, valid;
         self = this.form;
         rule.form = this.form;
-        if (rule.reason) {
-          rule.reason = rule.reason.replace(/\{field\}/g, rule.field);
-        }
         obj = {
           state: false,
           reason: rule.reason || "Поля не совпадают"
         };
         valid = function() {
           if (rule.field && self.fields[rule.field]) {
+            if (rule.reason) {
+              obj.reason = rule.reason.replace(/\{rule.field\}/g, rule.field);
+            } else {
+              obj.reason = "Поле не совпадает с " + rule.field;
+            }
             if (val === self.fields[rule.field].val()) {
               obj.state = true;
             }
@@ -1109,19 +1130,19 @@ Form = (function() {
     };
   };
 
-  Form.prototype.addFieldRule = function(name, rule) {
+  Form.prototype.addFieldRule = function(name, ruleName, rule) {
     if (rule == null) {
       rule = {};
     }
-    if (!this.fields[name] || !rule.name || !rule.condition) {
+    if (!this.fields[name] || !ruleName || !rule.condition) {
       return;
     }
-    if (!this.validate[rule.name]) {
-      this.newRule(rule.name, rule);
+    if (!this.validate[ruleName]) {
+      this.newRule(ruleName, rule);
     }
-    this.fields[name].rules[rule.name] = rule;
+    this.fields[name].rules[ruleName] = rule;
     if (this.logs) {
-      console.log("[Form: " + this.formName + "] add rule", rule.name);
+      console.log("[Form: " + this.formName + "] add rule", ruleName);
     }
   };
 
