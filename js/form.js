@@ -1123,6 +1123,21 @@ Form = (function() {
       };
       return valid();
     },
+    alphaNumericSpace: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только буквы, цифры и пробелы"
+      };
+      valid = function() {
+        if (/^[a-zа-я0-9\s]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
     engSpace: function(val, rule) {
       var obj, self, valid;
       self = this.form;

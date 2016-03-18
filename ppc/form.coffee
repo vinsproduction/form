@@ -1092,6 +1092,23 @@ class Form
 
 			return valid()
 
+		alphaNumericSpace : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы, цифры и пробелы"
+
+			valid = ->
+
+				if /^[a-zа-я0-9\s]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+		
 		engSpace : (val,rule) ->
 
 			self = @form
