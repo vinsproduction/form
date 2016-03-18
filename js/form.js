@@ -85,7 +85,6 @@ Form = (function() {
     this.mobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     $.extend(true, this, this.params);
     self = this;
-    this.validation.init(self);
     $(function() {
       if (!self.formEl && self.logs) {
         return console.log("[Form: " + self.formName + "] Warning! formEl not set");
@@ -122,8 +121,8 @@ Form = (function() {
     var opts, self;
     self = this;
     this.resetData();
-    this.resetErorrs();
     this.clearErrors();
+    this.resetErorrs();
     this.form.find('[data-field]').off();
     this.form.off();
     this.submitBtn.off();
@@ -262,6 +261,7 @@ Form = (function() {
         return self.fields[name].el.eq(0).trigger('style');
       }
     });
+    this.validation.init(this);
   };
 
   Form.prototype.initField = function(name) {
@@ -780,6 +780,7 @@ Form = (function() {
   Form.prototype.addField = function(name, opt) {
     this.fields[name] = opt;
     this.initField(name, true);
+    this.validation.init(this);
     this.fields[name]["new"] = true;
     if (opt.onInit) {
       opt.onInit();
@@ -907,7 +908,81 @@ Form = (function() {
   };
 
 
-  /*  Validation */
+  /* Helpers */
+
+  Form.prototype.h = {
+    trim: function(text) {
+      if (text == null) {
+        text = "";
+      }
+      if (!this.isString(text)) {
+        return text;
+      }
+      return text.replace(/^\s+|\s+$/g, '');
+    },
+    stripHTML: function(text) {
+      if (text == null) {
+        text = "";
+      }
+      if (!this.isString(text)) {
+        return text;
+      }
+      return text.replace(/<(?:.|\s)*?>/g, '');
+    },
+    escapeText: function(text) {
+      if (text == null) {
+        text = "";
+      }
+      if (!this.isString(text)) {
+        return text;
+      }
+      return text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+    isFunction: function(obj) {
+      return Object.prototype.toString.call(obj) === '[object Function]';
+    },
+    isString: function(obj) {
+      return Object.prototype.toString.call(obj) === '[object String]';
+    },
+    isArray: function(obj) {
+      return Object.prototype.toString.call(obj) === '[object Array]';
+    },
+    isObject: function(obj) {
+      return Object.prototype.toString.call(obj) === '[object Object]';
+    },
+    isEmpty: function(o) {
+      var i;
+      if (this.isString(o)) {
+        if (this.trim(o) === "") {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      if (this.isArray(o)) {
+        if (o.length === 0) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      if (this.isObject(o)) {
+        for (i in o) {
+          if (o.hasOwnProperty(i)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    },
+    declOfNum: function(number, titles) {
+      var cases;
+      cases = [2, 0, 1, 1, 1, 2];
+      return titles[(number % 100 > 4 && number % 100 < 20 ? 2 : cases[(number % 10 < 5 ? number % 10 : 5)])];
+    }
+
+    /*  Validation */
+  };
 
   Form.prototype.validation = {
     init: function(form) {
@@ -990,9 +1065,6 @@ Form = (function() {
     },
     numericDash: function(val, rule) {
       var obj, self, valid;
-      if (rule == null) {
-        rule = {};
-      }
       self = this.form;
       obj = {
         state: false,
@@ -1051,6 +1123,36 @@ Form = (function() {
       };
       return valid();
     },
+    engDash: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только буквы и подчеркивания"
+      };
+      valid = function() {
+        if (/^[a-z_\-]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
+    engNumeric: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только буквы и цифры"
+      };
+      valid = function() {
+        if (/^[a-z0-9]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
     alphaDash: function(val, rule) {
       var obj, self, valid;
       self = this.form;
@@ -1059,7 +1161,7 @@ Form = (function() {
         reason: rule.reason || "Допустимы только буквы и подчеркивания"
       };
       valid = function() {
-        if (/^[a-z0-9_\-]+$/i.test(val)) {
+        if (/^[a-zа-я_\-]+$/i.test(val)) {
           obj.state = true;
         }
         return obj;
@@ -1074,7 +1176,7 @@ Form = (function() {
         reason: rule.reason || "Допустимы только буквы и цифры"
       };
       valid = function() {
-        if (/^[a-z0-9]+$/i.test(val)) {
+        if (/^[a-zа-я0-9]+$/i.test(val)) {
           obj.state = true;
         }
         return obj;
@@ -1165,6 +1267,7 @@ Form = (function() {
           } else {
             obj.reason = "Поле не совпадает с " + rule.field;
           }
+          console.log('_____', self.fields);
           if (val === self.fields[rule.field].val()) {
             obj.state = true;
           }
@@ -1184,81 +1287,91 @@ Form = (function() {
         }
       };
       return valid();
-    }
-  };
+    },
 
+    /* 1 Alphabet and 1 Number */
+    pass1: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || '1 Alphabet and 1 Number'
+      };
+      valid = function() {
+        if (/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]/.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
 
-  /* Helpers */
+    /* 1 Alphabet, 1 Number and 1 Special Character */
+    pass2: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || '1 Alphabet, 1 Number and 1 Special Character'
+      };
+      valid = function() {
+        if (/^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]/.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
 
-  Form.prototype.h = {
-    trim: function(text) {
-      if (text == null) {
-        text = "";
-      }
-      if (!this.isString(text)) {
-        return text;
-      }
-      return text.replace(/^\s+|\s+$/g, '');
-    },
-    stripHTML: function(text) {
-      if (text == null) {
-        text = "";
-      }
-      if (!this.isString(text)) {
-        return text;
-      }
-      return text.replace(/<(?:.|\s)*?>/g, '');
-    },
-    escapeText: function(text) {
-      if (text == null) {
-        text = "";
-      }
-      if (!this.isString(text)) {
-        return text;
-      }
-      return text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    },
-    isFunction: function(obj) {
-      return Object.prototype.toString.call(obj) === '[object Function]';
-    },
-    isString: function(obj) {
-      return Object.prototype.toString.call(obj) === '[object String]';
-    },
-    isArray: function(obj) {
-      return Object.prototype.toString.call(obj) === '[object Array]';
-    },
-    isObject: function(obj) {
-      return Object.prototype.toString.call(obj) === '[object Object]';
-    },
-    isEmpty: function(o) {
-      var i;
-      if (this.isString(o)) {
-        if (this.trim(o) === "") {
-          return true;
-        } else {
-          return false;
+    /* 1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number */
+    pass3: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || '1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number'
+      };
+      valid = function() {
+        if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]/.test(val)) {
+          obj.state = true;
         }
-      }
-      if (this.isArray(o)) {
-        if (o.length === 0) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-      if (this.isObject(o)) {
-        for (i in o) {
-          if (o.hasOwnProperty(i)) {
-            return false;
-          }
-        }
-        return true;
-      }
+        return obj;
+      };
+      return valid();
     },
-    declOfNum: function(number, titles) {
-      var cases;
-      cases = [2, 0, 1, 1, 1, 2];
-      return titles[(number % 100 > 4 && number % 100 < 20 ? 2 : cases[(number % 10 < 5 ? number % 10 : 5)])];
+
+    /* 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character */
+    pass4: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+      };
+      valid = function() {
+        if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
+
+    /* 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character */
+    pass5: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+      };
+      valid = function() {
+        if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
     }
   };
 

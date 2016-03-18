@@ -1,0 +1,260 @@
+
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0"/>
+  <script>(function() {
+  var port, url;
+
+  port = 777;
+
+  url = "http://localhost:" + port + "/livereload.js";
+
+  window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>');
+
+  console.debug("[LiveReload] " + url);
+
+}).call(this);
+
+  </script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.0.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/normalize.css"/>
+  <script type="text/javascript" src="js/form.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/form.css"/>
+  <script>(function() {
+  $(function() {
+    var fields;
+    window.forms = {};
+    fields = {
+      'test-1': {
+        rules: {
+          required: true
+        }
+      },
+      'test-2': {
+        rules: {
+          not: ['test']
+        }
+      },
+      'test-3': {
+        rules: {
+          numeric: true
+        }
+      },
+      'test-4': {
+        rules: {
+          numericDash: true
+        }
+      },
+      'test-5': {
+        rules: {
+          alpha: true
+        }
+      },
+      'test-6': {
+        rules: {
+          eng: true
+        }
+      },
+      'test-7': {
+        rules: {
+          cyrillic: true
+        }
+      },
+      'test-8': {
+        rules: {
+          engDash: true
+        }
+      },
+      'test-9': {
+        rules: {
+          engNumeric: true
+        }
+      },
+      'test-10': {
+        rules: {
+          max: 3
+        }
+      },
+      'test-11': {
+        rules: {
+          min: 3
+        }
+      },
+      'test-12': {
+        rules: {
+          email: true
+        }
+      },
+      'test-13': {
+        rules: {
+          url: true
+        }
+      },
+      'test-14': {
+        rules: {
+          compare: {
+            field: 'test-13'
+          }
+        }
+      },
+      'test-15': {
+        rules: {
+          pass1: true
+        }
+      },
+      'test-16': {
+        rules: {
+          pass2: true
+        }
+      },
+      'test-17': {
+        rules: {
+          pass3: true
+        }
+      },
+      'test-18': {
+        rules: {
+          pass4: true
+        }
+      }
+    };
+    window.forms['test'] = new Form({
+      logs: true,
+      formName: 'test',
+      formEl: '.form',
+      submitEl: '.submit a',
+      autoFields: true,
+      fields: fields,
+      fieldsOptions: {
+        escape: true,
+        autoErrors: true,
+        clearErrorsInFocus: true
+      },
+      onInit: function() {
+        var self;
+        return self = this;
+      },
+      onSubmit: function(data) {
+        var self;
+        return self = this;
+      },
+      onSuccess: function(data) {
+        var self;
+        return self = this;
+      },
+      onFail: function(errors) {
+        var self;
+        return self = this;
+      },
+      onReset: function() {
+        var self;
+        return self = this;
+      }
+    });
+  });
+
+}).call(this);
+
+  </script>
+</head>
+<body>
+  <div class="form">
+    <div class="field">
+      <div class="label">required</div>
+      <input type="text" name="test-1"/>
+      <div class="error error-test-1"></div>
+    </div>
+    <div class="field">
+      <div class="label">not test</div>
+      <input type="text" name="test-2"/>
+      <div class="error error-test-2"></div>
+    </div>
+    <div class="field">
+      <div class="label">numeric</div>
+      <input type="text" name="test-3"/>
+      <div class="error error-test-3"></div>
+    </div>
+    <div class="field">
+      <div class="label">numericDash</div>
+      <input type="text" name="test-4"/>
+      <div class="error error-test-4"></div>
+    </div>
+    <div class="field">
+      <div class="label">alpha</div>
+      <input type="text" name="test-5"/>
+      <div class="error error-test-5"></div>
+    </div>
+    <div class="field">
+      <div class="label">eng</div>
+      <input type="text" name="test-6"/>
+      <div class="error error-test-6"></div>
+    </div>
+    <div class="field">
+      <div class="label">cyrillic</div>
+      <input type="text" name="test-7"/>
+      <div class="error error-test-7"></div>
+    </div>
+    <div class="field">
+      <div class="label">engDash</div>
+      <input type="text" name="test-8"/>
+      <div class="error error-test-8"></div>
+    </div>
+    <div class="field">
+      <div class="label">engNumeric</div>
+      <input type="text" name="test-9"/>
+      <div class="error error-test-9"></div>
+    </div>
+    <div class="field">
+      <div class="label">max 3</div>
+      <input type="text" name="test-10"/>
+      <div class="error error-test-10"></div>
+    </div>
+    <div class="field">
+      <div class="label">min 3</div>
+      <input type="text" name="test-11"/>
+      <div class="error error-test-11"></div>
+    </div>
+    <div class="field">
+      <div class="label">email</div>
+      <input type="text" name="test-12"/>
+      <div class="error error-test-12"></div>
+    </div>
+    <div class="field">
+      <div class="label">url</div>
+      <input type="text" name="test-13"/>
+      <div class="error error-test-13"></div>
+    </div>
+    <div class="field">
+      <div class="label">compare test-13</div>
+      <input type="text" name="test-14"/>
+      <div class="error error-test-14"></div>
+    </div>
+    <div class="field">
+      <div class="label">1 Alphabet and 1 Number</div>
+      <input type="text" name="test-15"/>
+      <div class="error error-test-15"></div>
+    </div>
+    <div class="field">
+      <div class="label">1 Alphabet, 1 Number and 1 Special Character</div>
+      <input type="text" name="test-16"/>
+      <div class="error error-test-16"></div>
+    </div>
+    <div class="field">
+      <div class="label1">Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number</div>
+      <input type="text" name="test-17"/>
+      <div class="error error-test-17"></div>
+    </div>
+    <div class="field">
+      <div class="label">1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character</div>
+      <input type="text" name="test-18"/>
+      <div class="error error-test-18"></div>
+    </div>
+    <div class="field">
+      <div class="submit"><a href="#"><span>Отправить</span></a></div>
+      <div class="preloader">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</body>

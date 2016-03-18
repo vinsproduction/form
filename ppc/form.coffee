@@ -88,8 +88,6 @@ class Form
 
 		self = @
 
-		@validation.init(self)
-
 		$ ->
 
 			if !self.formEl and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not set"
@@ -121,12 +119,11 @@ class Form
 		self = @
 
 		# Reset data!
-
 		@resetData()
-		@resetErorrs()
-
-		# Clear errors!
+		
+		# Reset errors!
 		@clearErrors()
+		@resetErorrs()
 
 		# Remove Events!
 
@@ -260,6 +257,9 @@ class Form
 		$.each @fields, (name) ->
 			self.fields[name].el.eq(0).trigger('style') if self.fields[name].style
 
+		# Init validation
+		@validation.init(@)
+
 		return
 
 	initField: (name) ->
@@ -345,7 +345,6 @@ class Form
 
 		return
 
-	
 	Submit: ->
 
 		self = @
@@ -793,6 +792,8 @@ class Form
 		@fields[name] = opt
 		@initField(name,true)
 
+		@validation.init(@)
+
 		@fields[name].new = true
 
 		opt.onInit() if opt.onInit
@@ -909,8 +910,38 @@ class Form
 			preloader.hide()
 		return
 
-	
-	###  Validation ###
+	### Helpers ###
+
+	h:
+
+		trim: (text="") ->
+			return text if !@isString(text)
+			text.replace(/^\s+|\s+$/g, '')
+		stripHTML: (text="") ->
+			return text if !@isString(text)
+			text.replace(/<(?:.|\s)*?>/g, '')
+		escapeText: (text="") ->
+			return text if !@isString(text)
+			text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+		isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
+		isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
+		isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
+		isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
+		isEmpty: (o) ->
+			if @isString(o)
+				return if @trim(o) is "" then true else false
+			if @isArray(o)
+				return if o.length is 0 then true else false
+			if @isObject(o)
+				for i of o
+					if o.hasOwnProperty(i)
+						return false
+				return true
+		declOfNum: (number, titles) ->
+			cases = [2, 0, 1, 1, 1, 2]
+			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
+
+		###  Validation ###
 
 	validation:
 
@@ -993,7 +1024,7 @@ class Form
 
 			return valid()
 
-		numericDash : (val,rule={}) ->
+		numericDash : (val,rule) ->
 
 			self = @form
 
@@ -1061,6 +1092,40 @@ class Form
 
 			return valid()
 
+		engDash : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы и подчеркивания"
+
+			valid = ->
+
+				if /^[a-z_\-]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		engNumeric : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы и цифры"
+
+			valid = ->
+
+				if /^[a-z0-9]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
 		alphaDash : (val,rule) ->
 
 			self = @form
@@ -1071,7 +1136,7 @@ class Form
 
 			valid = ->
 
-				if /^[a-z0-9_\-]+$/i.test(val)
+				if /^[a-zа-я_\-]+$/i.test(val)
 					obj.state = true
 
 				return obj
@@ -1088,7 +1153,7 @@ class Form
 
 			valid = ->
 
-				if /^[a-z0-9]+$/i.test(val)
+				if /^[a-zа-я0-9]+$/i.test(val)
 					obj.state = true
 
 				return obj
@@ -1190,9 +1255,11 @@ class Form
 					else
 						obj.reason = "Поле не совпадает с #{rule.field}"
 
+					console.log '_____', self.fields
+
 					if val is self.fields[rule.field].val()
-						obj.state = true
-					return obj
+							obj.state = true
+						return obj
 
 				if rule.val
 					if self.h.isFunction(rule.val)
@@ -1206,40 +1273,96 @@ class Form
 
 			return valid()
 
+		
+		### 1 Alphabet and 1 Number ###	
+		pass1: (val,rule) ->
 
-	### Helpers ###
+			self = @form
 
-	h:
+			obj =
+				state: false
+				reason: rule.reason  || '1 Alphabet and 1 Number'
 
-		trim: (text="") ->
-			return text if !@isString(text)
-			text.replace(/^\s+|\s+$/g, '')
-		stripHTML: (text="") ->
-			return text if !@isString(text)
-			text.replace(/<(?:.|\s)*?>/g, '')
-		escapeText: (text="") ->
-			return text if !@isString(text)
-			text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-		isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
-		isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
-		isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
-		isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
-		isEmpty: (o) ->
-			if @isString(o)
-				return if @trim(o) is "" then true else false
-			if @isArray(o)
-				return if o.length is 0 then true else false
-			if @isObject(o)
-				for i of o
-					if o.hasOwnProperty(i)
-						return false
-				return true
-		declOfNum: (number, titles) ->
-			cases = [2, 0, 1, 1, 1, 2]
-			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
+			valid = ->
 
+				if /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]/.test(val)
+					obj.state = true
 
+				return obj
 
+			return valid()
+
+		### 1 Alphabet, 1 Number and 1 Special Character ###	
+		pass2: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || '1 Alphabet, 1 Number and 1 Special Character'
+
+			valid = ->
+
+				if /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		### 1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number ###	
+		pass3: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number'
+
+			valid = ->
+
+				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		### 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character ###	
+		pass4: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+
+			valid = ->
+
+				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		### 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character ###	
+		pass5: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+
+			valid = ->
+
+				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
 
 
 
