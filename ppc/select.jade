@@ -1,6 +1,6 @@
 
 head
-	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=no")
+	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0")
 
 	script
 		:coffee-script
@@ -62,11 +62,11 @@ head
 
 						self = @
 
-						self.fields['dropdown'].el.on 'style', (e,sel) ->
-							scroll(sel)
+						self.fields['dropdown'].el.on 'Style', (e,field) ->
+							scroll(field.sel)
 
-						self.fields['dropdown'].el.on 'change', (e,data) ->
-							forms['form-2'].fields['dropdown-2'].val(data.val)
+						self.fields['dropdown'].el.on 'Change', (e,field) ->
+							forms['form-2'].fields['dropdown-2'].val(field.val)
 
 					onSubmit: (data) ->
 
@@ -81,11 +81,6 @@ head
 						@submit(false)
 						@preloader(true)
 
-						# API.success ->
-						# self.submit(true)
-						# self.preloader(false)
-
-
 					onFail: (errors) ->
 
 						self = @
@@ -94,7 +89,7 @@ head
 
 					onReset: ->
 
-						@submit(false)
+						@submit(true)
 						@preloader(false)
 
 				window.forms['form-2'] = new Form
@@ -105,19 +100,23 @@ head
 					formEl: '.form-2'
 					submitEl: '.submit a'
 					fieldsOptions:
-						defaultStyle: 'Выбрать'
+						placeholder: 'Выбрать'
 
 
 					onInit: ->
 
 						self =  @
 
-						self.fields['dropdown-2'].el.on 'style', (e,sel) ->
-							scroll(sel)
+						self.fields['dropdown-2'].el.on 'Style', (e,field) ->
+							scroll(field.sel)
+
+					onSuccess: (data) ->
+						@submit(false)
+						@preloader(true)
 
 					onReset: ->
 
-						@submit(false)
+						@submit(true)
 						@preloader(false)
 
 

@@ -14,7 +14,7 @@ if !window.console.groupCollapsed
 
 if !window.console.groupEnd
 	window.console.groupEnd = ->
-		
+
 class Form
 
 	constructor: (@params={}) ->
@@ -82,34 +82,27 @@ class Form
 		@onReset = ->
 		@onInit = ->
 
+		@mobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 		$.extend(true, @, @params)
 
-		do @validation
-
 		self = @
+
+		@validation.init(self)
 
 		$ ->
 
 			if !self.formEl and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not set"
 			if !self.submitEl and self.logs then return console.log "[Form: #{self.formName}] Warning! submitEl not set"
 
-			self.form 		= if self.isObject(self.formEl) then self.formEl else $(self.formEl)
-			self.submitBtn 	= if self.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
+			self.form 		= if self.h.isObject(self.formEl) then self.formEl else $(self.formEl)
+			self.submitBtn 	= if self.h.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
 
 			if !self.form.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not found in DOM"
 			if !self.submitBtn.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! submitEl not found in DOM"
 
 			self.form.attr('data-form', self.formName)
 			self.submitBtn.attr('data-submit','data-submit')
-
-			self.form.mouseover -> self.form.inFocus = true
-			self.form.mouseout  -> self.form.inFocus = false
-
-			if self.enter
-
-				$(window).keydown (event) ->
-					if self.form.inFocus and event.keyCode is 13
-						self.Submit() if !self._disableSubmit
 
 			if self.autoFields
 				self.form.find('[name]').each ->
@@ -127,46 +120,42 @@ class Form
 
 		self = @
 
+		# Reset data!
+
+		@resetData()
+		@resetErorrs()
+
+		# Clear errors!
+		@clearErrors()
+
 		# Remove Events!
 
-		@form.find('[data-field]')
-			.off('change')
-			.off('style')
-			.off('error')
-			.off('reset')
-			.off('click')
-
-		@form
-			.off('Style')
-			.off('Change')
-			.off('Error')
-			.off('Reset')
-			.off('click')
-
-		@submitBtn
-			.off('click')
+		@form.find('[data-field]').off()
+		@form.off()
+		@submitBtn.off()
 
 		# Add Events!
 
 		@form.on 'click', '[data-field]', ->
 
-			name = $(@).attr('data-name') || $(@).attr('name')
+			el = $(@)
+			name = el.attr('data-name') || el.attr('name')
 
 			return if !self.fields[name]
 
 			if self.fields[name].clearErrorsInFocus
 				self.errorField(name,false)
 
+			el.trigger('Click',{name:name})
+
 			return true
 
-		@form.on 'Style', '[data-field]', ->
+		@form.on 'style', '[data-field]', ->
 
 			el = $(@)
 			name = el.attr('name')
 
 			return if !self.fields[name]
-
-			self.errorField(name,false)
 
 			if el.is("select")
 				self.createSelect(name)
@@ -177,11 +166,12 @@ class Form
 			else if el.attr('type') is 'checkbox'
 				self.createCheckbox(name)
 
-			el.trigger('style', [self.fields[name].sel])
+			if self.fields[name].sel.size()
+				el.trigger('Style', {name:name,sel:self.fields[name].sel})
 
 			return true
-		
-		@form.on 'Change', '[data-field]', (e,data,trigger) ->
+
+		@form.on 'change', '[data-field]', (e,data,withoutTrigger) ->
 
 			el = $(@)
 			name = el.attr('name')
@@ -197,24 +187,30 @@ class Form
 			else if el.attr('type') is 'checkbox'
 				self.createCheckbox(name,true)
 
-			if trigger
-				el.trigger('change',data)
+			if !withoutTrigger
+				el.trigger('Change',{name:name,val:el.val()})
 
 			return true
 
-		@form.on 'Error', '[data-field]', (e,errors) ->
+		@form.on 'error', '[data-field]', (e,errors) ->
 
 			el = $(@)
 			name = el.attr('name')
-			el.trigger('error', [errors,name])
+
+			return if !self.fields[name]
+
+			el.trigger('Error', {name:name,errors})
 
 			return true
 
-		@form.on 'Reset', '[data-field]', ->
+		@form.on 'reset', '[data-field]', ->
 
 			el = $(@)
 			name = el.attr('name')
-			el.trigger('reset', [name])
+
+			return if !self.fields[name]
+
+			el.trigger('Reset', {name:name})
 
 			return true
 
@@ -226,6 +222,14 @@ class Form
 			@submit(false)
 		else
 			@submit(true)
+
+		@form.mouseover -> self.form.inFocus = true
+		@form.mouseout  -> self.form.inFocus = false
+
+		if @enter
+			$(window).keydown (event) ->
+				if self.form.inFocus and event.keyCode is 13
+					self.Submit() if !self._disableSubmit
 
 		@submitBtn.click ->
 			self.Submit() if !self._disableSubmit
@@ -252,9 +256,9 @@ class Form
 
 		do @onInit
 
-		# Run Style trigger
+		# Run triggers
 		$.each @fields, (name) ->
-			self.fields[name].el.eq(0).trigger('Style') if self.fields[name].style
+			self.fields[name].el.eq(0).trigger('style') if self.fields[name].style
 
 		return
 
@@ -286,12 +290,20 @@ class Form
 		@fields[name].el.attr('data-type',@fields[name].type)
 
 		@fields[name].originalVal = self.getVal(name)
+		if @fields[name].type is 'select'
+			@fields[name].mobileKeyboard = true
 
 		if @fields[name].placeholder and (@fields[name].type in ['text','textarea','password'])
 			@placeholder(name)
 
 		if @fields[name].rules.required
 			@fields[name]._required = @fields[name].rules.required
+
+		# Добавление кастомного правила, если его нет в библиотеке
+
+		$.each @fields[name].rules, (ruleName,rule) ->
+			if !self.validation[ruleName]
+				self.addFieldRule(name,ruleName,rule)
 
 		# Field functions
 
@@ -311,7 +323,7 @@ class Form
 			return @
 
 		@fields[name].stylize = ->
-			self.fields[name].el.eq(0).trigger('Style')
+			self.fields[name].el.eq(0).trigger('style')
 			return @
 
 		@fields[name].reset = ->
@@ -323,13 +335,13 @@ class Form
 			return @
 
 		@fields[name].validate = (ruleName,opt={}) ->
-			return if !self.validate[ruleName]
-			valid = self.validate[ruleName](self.getVal(name),opt)
+			return if !self.validation[ruleName]
+			valid = self.validation[ruleName](self.getVal(name),opt)
 			return valid.state
 
 		@fields[name].addRule = (ruleName,rule) ->
 			self.addFieldRule(name,ruleName,rule)
-			return
+			return @
 
 		return
 
@@ -350,9 +362,9 @@ class Form
 			val = self.getVal(name)
 
 			if opt.name
-				data[opt.name] = if opt.escape then self.escapeText(val) else val
+				data[opt.name] = if opt.escape then self.h.escapeText(val) else val
 			else
-				data[name] = if opt.escape then self.escapeText(val) else val
+				data[name] = if opt.escape then self.h.escapeText(val) else val
 
 			if !opt.active
 
@@ -366,15 +378,14 @@ class Form
 
 				self.errorField(name,false)
 
-				if opt.rules and !self.isEmpty(opt.rules)
+				if opt.rules and !self.h.isEmpty(opt.rules)
 
 					$.each opt.rules, (ruleName,rule) ->
-						if rule and self.validate[ruleName]
-							if !self.isEmpty(val) or ruleName is 'required'
-								valid = self.validate[ruleName](val, rule)
+						if rule and self.validation[ruleName]
+							if !self.h.isEmpty(val) or ruleName is 'required'
+								valid = self.validation[ruleName](val, rule)
 								if !valid.state
 									self.setError(name,valid.reason)
-
 
 		console.log("data",data) if @logs
 
@@ -382,7 +393,7 @@ class Form
 
 		@onSubmit(data)
 
-		if @isEmpty(@errors)
+		if @h.isEmpty(@errors)
 			do @Success
 		else
 			do @Fail
@@ -398,20 +409,20 @@ class Form
 		$.each @fields, (name, opt) ->
 
 			if self.errors[name]
-
 				console.log(name + ': ', self.errors[name]) if self.logs
-
 				if self.fields[name].autoErrors
 					if self.fields[name].autoErrors is 'all'
 						self.errorField(name,self.errors[name])
 					else if self.errors[name][0]
 						self.errorField(name,self.errors[name][0])
 
-				self.fields[name].el.trigger('Error',[self.errors[name]])
-
 		console.log("data",@errors) if @logs
 
 		console.groupEnd() if @logs
+
+		$.each @fields, (name, opt) ->
+			if self.errors[name]
+				self.fields[name].el.eq(0).trigger('error',[self.errors[name]])
 
 		@onFail(@errors)
 
@@ -589,7 +600,7 @@ class Form
 			$hiddenWrap.attr('data-wrap',name)
 			@fields[name].el.wrap($hiddenWrap)
 
-			if @fields[name].native
+			if @fields[name].mobileKeyboard and @mobileBrowser
 				$select.on 'click', ->
 					self.fields[name].el.focus()
 				@fields[name].el.on 'blur', ->
@@ -615,7 +626,7 @@ class Form
 
 			@fields[name].el.find('option').each ->
 
-				if !$(@).attr('value') || self.isEmpty($(@).attr('value'))
+				if !$(@).attr('value') || self.h.isEmpty($(@).attr('value'))
 					$(@).attr('value', $(@).text())
 
 				val = $(@).attr('value')
@@ -639,7 +650,7 @@ class Form
 
 		return
 
-	setVal: (name,val,trigger=true) ->
+	setVal: (name,val,withoutTrigger=false) ->
 
 		return if !@fields[name]
 
@@ -653,7 +664,7 @@ class Form
 			opt.el.prop("checked", val)
 
 		else if opt.type in ['text','password','textarea']
-			opt.el.val(@trim(val))
+			opt.el.val(@h.trim(val))
 
 			if opt.placeholder
 				opt.el.trigger('blur')
@@ -661,7 +672,7 @@ class Form
 		else
 			opt.el.val(val)
 
-		opt.el.trigger('Change',[{name,val},trigger])
+		opt.el.eq(0).trigger('change',[{name,val},withoutTrigger])
 
 		return
 
@@ -675,20 +686,12 @@ class Form
 			val = opt.el.filter(":checked").val() || false
 
 		else if opt.type in ['text','password','textarea']
-			val = if opt.el.hasClass(@classes.input.placeholder) then "" else @trim(opt.el.val())
+			val = if opt.el.hasClass(@classes.input.placeholder) then "" else @h.trim(opt.el.val())
 
 		else
 			val = opt.el.val()
 
 		return val
-
-	activate: (name,flag) ->
-
-		return if !@fields[name]
-
-		@fields[name].active = flag
-
-		return
 
 	reset: ->
 
@@ -756,7 +759,7 @@ class Form
 			if @fields[name].autoErrors
 				$error = @form.find('.' + @classes.error + '-' + name)
 
-				if @isArray(errors)
+				if @h.isArray(errors)
 					$error.empty()
 					$.each errors, (k,v) ->
 						error  = self.templates.error.replace('{error}',v)
@@ -779,9 +782,9 @@ class Form
 
 		return if !@fields[name]
 
-		@setVal(name,@fields[name].originalVal,false)
+		@setVal(name,@fields[name].originalVal,true)
 		@errorField(name,false)
-		@fields[name].el.trigger('Reset')
+		@fields[name].el.eq(0).trigger('reset')
 
 		return
 
@@ -796,7 +799,7 @@ class Form
 
 		console.log("[Form: #{@formName}] add field", name) if @logs
 
-		@fields[name].el.trigger('Style') if @fields[name].style
+		@fields[name].el.trigger('style') if @fields[name].style
 		
 		return
 
@@ -814,6 +817,57 @@ class Form
 
 		return
 
+	require: (name,opt) ->
+
+		return if !@fields[name]
+
+		if opt and @fields[name]._required
+			@fields[name].rules.required = @fields[name]._required
+		else
+			@fields[name].rules.required = opt
+
+		return
+
+	newRule: (name,rule) ->
+
+		@validation[name] = (val) ->
+
+			obj =
+				state: false
+				reason: rule.reason || 'unknown reason'
+
+			valid = ->
+
+				if rule.condition(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		return
+
+	addFieldRule: (name,ruleName,rule={}) ->
+
+		return if !@fields[name] or !ruleName
+
+		if !@validation[ruleName] and rule.condition
+			@newRule(ruleName, rule)
+
+		@fields[name].rules[ruleName] = rule
+
+		console.log("[Form: #{@formName}] add rule '#{ruleName}'") if @logs
+
+		return 
+
+	activate: (name,flag) ->
+
+		return if !@fields[name]
+
+		@fields[name].active = flag
+
+		return
+
 	placeholder: (name) ->
 
 		return if !@fields[name]
@@ -825,7 +879,7 @@ class Form
 				if $(@).hasClass(self.classes.input.placeholder)
 					$(@).val("").removeClass(self.classes.input.placeholder)
 			.blur ->
-				if self.isEmpty($(@).val())
+				if self.h.isEmpty($(@).val())
 					$(@).val(self.fields[name].placeholder).addClass(self.classes.input.placeholder)
 				else
 					$(@).removeClass(self.classes.input.placeholder)
@@ -855,370 +909,337 @@ class Form
 			preloader.hide()
 		return
 
-	validation: ->
+	
+	###  Validation ###
 
-		@validate =
+	validation:
 
-			form: @
+		init: (form) ->
 
-			required: (val,rule) ->
+			@form = $.extend(true, {}, @, form)
 
-				self = @form
+		required: (val,rule) ->
 
-				obj =
-					state: false
-					reason: rule.reason || "Обязательное поле для заполнения"
-
-				valid = ->
-
-					if rule.not
-						if self.isArray(rule.not)
-							if val? and !self.isEmpty(val) and (val not in rule.not)
-								obj.state = true
-						else
-							if val? and !self.isEmpty(val) and (val isnt rule.not)
-								obj.state = true
-
-					else
-						if val? and !self.isEmpty(val)
-							obj.state = true
-
-					return obj
-
-				return valid()
-
-			not: (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Недопустимое значение"
-
-				valid = ->
-
-					if rule.val?
-
-						if self.isArray(rule.val)
-							if val not in rule.val
-								obj.state = true
-							else
-								if val isnt rule.val
-									obj.state = true
-
-					else
-
-						if self.isArray(rule)
-							if val not in rule
-								obj.state = true
-						else
-							if val isnt rule
-								obj.state = true
-
-					return obj
-
-				return valid()
-
-			numeric : (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только цифры"
-
-				valid = ->
-
-					if /^[0-9]+$/.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			numericDash : (val,rule={}) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только цифры и подчеркивания"
-
-				valid = ->
-
-					if /^[\d\-\s]+$/.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			alpha : (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только буквы"
-
-				valid = ->
-
-					if /^[a-zа-я]+$/i.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			eng : (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только английские буквы"
-
-				valid = ->
-
-					if /^[a-z]+$/i.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			cyrillic: (val, rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только русские буквы"
-
-				valid = ->
-
-					if /^[а-я]+$/i.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			alphaDash : (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только буквы и подчеркивания"
-
-				valid = ->
-
-					if /^[a-z0-9_\-]+$/i.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			alphaNumeric : (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Допустимы только буквы и цифры"
-
-				valid = ->
-
-					if /^[a-z0-9]+$/i.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			max: (val,rule) ->
-
-				self = @form
-
-				obj = {state: false}
-
-				count = rule.count || rule
-
-				if rule.reason
-					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
-				else
-					obj.reason = "Максимум #{count} #{self.declOfNum(count, ['символ', 'символа', 'символов'])}"
-
-				valid = ->
-
-					if val.length <= count
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			min : (val,rule) ->
-
-				self = @form
-
-				obj = {state: false}
-
-				count = rule.count || rule
-
-				if rule.reason
-					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
-				else
-					obj.reason = "Минимум #{count} #{self.declOfNum(count, ['символ', 'символа', 'символов'])}"
-
-				valid = ->
-
-					if val.length >= count
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			email: (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason  || 'Неправильно заполненный E-mail'
-
-				valid = ->
-
-					if /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			url: (val,rule) ->
-
-				self = @form
-
-				obj =
-					state: false
-					reason: rule.reason  || 'Неправильно заполненный url'
-
-				valid = ->
-
-					if /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)
-						obj.state = true
-
-					return obj
-
-				return valid()
-
-			compare: (val,rule) ->
-
-				self = @form
-				rule.form = @form
-
-				obj =
-					state: false
-					reason: rule.reason || "Поля не совпадают"
-
-				valid = ->
-
-					if rule.field and self.fields[rule.field]
-
-						if rule.reason
-							obj.reason = rule.reason.replace(/\{rule.field\}/g, rule.field)
-						else
-							obj.reason = "Поле не совпадает с #{rule.field}"
-
-						if val is self.fields[rule.field].val()
-							obj.state = true
-						return obj
-
-					if rule.val
-						if self.isFunction(rule.val)
-							if val is rule.val()
-								obj.state = true
-						else
-							if val is rule.val
-								obj.state = true
-
-						return obj
-
-				return valid()
-
-	require: (name,opt) ->
-
-		return if !@fields[name]
-
-		if opt and @fields[name]._required
-			@fields[name].rules.required = @fields[name]._required
-		else
-			@fields[name].rules.required = opt
-
-		return
-
-	newRule: (name,rule) ->
-
-		@validate[name] = (val) ->
+			self = @form
 
 			obj =
 				state: false
-				reason: rule.reason || 'unknown reason'
+				reason: rule.reason || "Обязательное поле для заполнения"
 
 			valid = ->
 
-				if rule.condition(val)
+				if rule.not
+					if self.h.isArray(rule.not)
+						if val? and !self.h.isEmpty(val) and (val not in rule.not)
+							obj.state = true
+					else
+						if val? and !self.h.isEmpty(val) and (val isnt rule.not)
+							obj.state = true
+
+				else
+					if val? and !self.h.isEmpty(val)
+						obj.state = true
+
+				return obj
+
+			return valid()
+
+		not: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Недопустимое значение"
+
+			valid = ->
+
+				if rule.val?
+
+					if self.h.isArray(rule.val)
+						if val not in rule.val
+							obj.state = true
+						else
+							if val isnt rule.val
+								obj.state = true
+
+				else
+
+					if self.h.isArray(rule)
+						if val not in rule
+							obj.state = true
+					else
+						if val isnt rule
+							obj.state = true
+
+				return obj
+
+			return valid()
+
+		numeric : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только цифры"
+
+			valid = ->
+
+				if /^[0-9]+$/.test(val)
 					obj.state = true
 
 				return obj
 
 			return valid()
 
-		return
+		numericDash : (val,rule={}) ->
 
-	addFieldRule: (name,ruleName,rule={}) ->
+			self = @form
 
-		return if !@fields[name] or !ruleName or !rule.condition
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только цифры и подчеркивания"
 
-		if !@validate[ruleName]
-			@newRule(ruleName, rule)
-		
-		@fields[name].rules[ruleName] = rule
+			valid = ->
 
-		console.log("[Form: #{@formName}] add rule", ruleName) if @logs
+				if /^[\d\-\s]+$/.test(val)
+					obj.state = true
 
-		return 
+				return obj
 
-	# HELPERS
+			return valid()
 
-	trim: (text="") ->
-		return text if !@isString(text)
-		text.replace(/^\s+|\s+$/g, '')
-	stripHTML: (text="") ->
-		return text if !@isString(text)
-		text.replace(/<(?:.|\s)*?>/g, '')
-	escapeText: (text="") ->
-		return text if !@isString(text)
-		text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-	isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
-	isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
-	isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
-	isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
-	isEmpty: (o) ->
-		if @isString(o)
-			return if @trim(o) is "" then true else false
-		if @isArray(o)
-			return if o.length is 0 then true else false
-		if @isObject(o)
-			for i of o
-				if o.hasOwnProperty(i)
-					return false
-			return true
-	declOfNum: (number, titles) ->
-		cases = [2, 0, 1, 1, 1, 2]
-		titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
+		alpha : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы"
+
+			valid = ->
+
+				if /^[a-zа-я]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		eng : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только английские буквы"
+
+			valid = ->
+
+				if /^[a-z]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		cyrillic: (val, rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только русские буквы"
+
+			valid = ->
+
+				if /^[а-я]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		alphaDash : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы и подчеркивания"
+
+			valid = ->
+
+				if /^[a-z0-9_\-]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		alphaNumeric : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы и цифры"
+
+			valid = ->
+
+				if /^[a-z0-9]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		max: (val,rule) ->
+
+			self = @form
+
+			obj = {state: false}
+
+			count = rule.count || rule
+
+			if rule.reason
+				obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+			else
+				obj.reason = "Максимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
+
+			valid = ->
+
+				if val.length <= count
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		min : (val,rule) ->
+
+			self = @form
+
+			obj = {state: false}
+
+			count = rule.count || rule
+
+			if rule.reason
+				obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+			else
+				obj.reason = "Минимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
+
+			valid = ->
+
+				if val.length >= count
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		email: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || 'Неправильно заполненный E-mail'
+
+			valid = ->
+
+				if /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		url: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason  || 'Неправильно заполненный url'
+
+			valid = ->
+
+				if /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		compare: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Поля не совпадают"
+
+			valid = ->
+
+				if rule.field and self.fields[rule.field]
+
+					if rule.reason
+						obj.reason = rule.reason.replace(/\{rule.field\}/g, rule.field)
+					else
+						obj.reason = "Поле не совпадает с #{rule.field}"
+
+					if val is self.fields[rule.field].val()
+						obj.state = true
+					return obj
+
+				if rule.val
+					if self.h.isFunction(rule.val)
+						if val is rule.val()
+							obj.state = true
+					else
+						if val is rule.val
+							obj.state = true
+
+					return obj
+
+			return valid()
+
+
+	### Helpers ###
+
+	h:
+
+		trim: (text="") ->
+			return text if !@isString(text)
+			text.replace(/^\s+|\s+$/g, '')
+		stripHTML: (text="") ->
+			return text if !@isString(text)
+			text.replace(/<(?:.|\s)*?>/g, '')
+		escapeText: (text="") ->
+			return text if !@isString(text)
+			text.replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+		isFunction: (obj) -> Object.prototype.toString.call(obj) is '[object Function]'
+		isString: (obj) -> Object.prototype.toString.call(obj) is '[object String]'
+		isArray: (obj) -> Object.prototype.toString.call(obj) is '[object Array]'
+		isObject: (obj) -> Object.prototype.toString.call(obj) is '[object Object]'
+		isEmpty: (o) ->
+			if @isString(o)
+				return if @trim(o) is "" then true else false
+			if @isArray(o)
+				return if o.length is 0 then true else false
+			if @isObject(o)
+				for i of o
+					if o.hasOwnProperty(i)
+						return false
+				return true
+		declOfNum: (number, titles) ->
+			cases = [2, 0, 1, 1, 1, 2]
+			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
+
+
+
+
+
 

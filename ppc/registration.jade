@@ -1,6 +1,6 @@
 
 head
-	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0")
+	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0")
 	
 	script
 		:coffee-script
@@ -50,7 +50,10 @@ head
 					'password':
 						rules:
 							required: true
-							min: 3
+							'myRule':
+								condition: (val) ->  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(val)
+								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
+
 
 					'password-confirmation':
 						rules:
@@ -101,24 +104,24 @@ head
 
 						self = @
 
-						self.form.on 'error', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,errors,field) ->
-							self.form.find(".error-birthday").html(errors[0])
+						self.form.on 'Error', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
+							self.form.find(".error-birthday").html(field.errors[0])
 							return
 
-						self.form.on 'reset', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
+						self.form.on 'Reset', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
 							self.form.find(".error-birthday").empty()
 							return
 
-						self.form.on 'click', '[data-name="day"],[data-name="month"],[data-name="year"]', ->
+						self.form.on 'Click', '[data-name="day"],[data-name="month"],[data-name="year"]', ->
 							self.form.find(".error-birthday").empty()
 							return
 
-						self.form.on 'style', '[data-field][data-type="select"]', (e,sel) ->
-							scroll(sel)
+						self.form.on 'Style', '[data-field][data-type="select"]', (e,field) ->
+							scroll(field.sel)
 							return
 
-						self.form.on 'change', '[data-field]', (e,data) ->
-							console.log 'change',data
+						self.form.on 'Change', '[data-field]', (e,field) ->
+							console.log 'change', field
 							return
 
 					onSubmit: (data) ->

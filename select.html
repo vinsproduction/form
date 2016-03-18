@@ -1,6 +1,6 @@
 
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=no"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0"/>
   <script>(function() {
   var port, url;
 
@@ -58,11 +58,11 @@
       onInit: function() {
         var self;
         self = this;
-        self.fields['dropdown'].el.on('style', function(e, sel) {
-          return scroll(sel);
+        self.fields['dropdown'].el.on('Style', function(e, field) {
+          return scroll(field.sel);
         });
-        return self.fields['dropdown'].el.on('change', function(e, data) {
-          return forms['form-2'].fields['dropdown-2'].val(data.val);
+        return self.fields['dropdown'].el.on('Change', function(e, field) {
+          return forms['form-2'].fields['dropdown-2'].val(field.val);
         });
       },
       onSubmit: function(data) {
@@ -82,7 +82,7 @@
         return self.form.find('.errors').html("Исправьте ошибки в форме");
       },
       onReset: function() {
-        this.submit(false);
+        this.submit(true);
         return this.preloader(false);
       }
     });
@@ -92,17 +92,21 @@
       formEl: '.form-2',
       submitEl: '.submit a',
       fieldsOptions: {
-        defaultStyle: 'Выбрать'
+        placeholder: 'Выбрать'
       },
       onInit: function() {
         var self;
         self = this;
-        return self.fields['dropdown-2'].el.on('style', function(e, sel) {
-          return scroll(sel);
+        return self.fields['dropdown-2'].el.on('Style', function(e, field) {
+          return scroll(field.sel);
         });
       },
-      onReset: function() {
+      onSuccess: function(data) {
         this.submit(false);
+        return this.preloader(true);
+      },
+      onReset: function() {
+        this.submit(true);
         return this.preloader(false);
       }
     });

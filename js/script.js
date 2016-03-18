@@ -63,6 +63,7 @@ $(function() {
     },
     'dropdown': {
       placeholder: 'Выбрать',
+      style: true,
       rules: {
         required: {
           not: 'Выбрать'
@@ -94,12 +95,23 @@ $(function() {
       this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.form.on('reset', '[data-field]', function(e, field) {});
-      this.form.on('error', '[data-field]', function(e, errors) {});
-      this.form.on('change', '[data-field][data-name="dropdown"]', function(e, data) {});
-      this.form.on('style', '[data-field][data-name="dropdown"]', function(e, sel) {});
-      return this.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
-        scroll(sel);
+      this.form.on('Click', '[data-field]', function(e, field) {
+        return console.log('click', field);
+      });
+      this.form.on('Reset', '[data-field]', function(e, field) {
+        return console.log('reset', field);
+      });
+      this.form.on('Error', '[data-field]', function(e, field) {
+        return console.log('error', field);
+      });
+      this.form.on('Change', '[data-field]', function(e, field) {
+        return console.log(' change', field);
+      });
+      this.form.on('Style', '[data-field]', function(e, field) {
+        return console.log('style', field);
+      });
+      return this.form.on('Style', '[data-field][data-type="select"]', function(e, field) {
+        scroll(field.sel);
       });
     },
     onSubmit: function(data) {
@@ -142,11 +154,11 @@ $(function() {
         }
       },
       onInit: function() {
-        forms['form-1'].fields[fieldName].el.on('change', function(e, v) {
-          return console.log('change new', v.val);
+        forms['form-1'].fields[fieldName].el.on('Change', function(e, field) {
+          return console.log('change new', field.val);
         });
-        return forms['form-1'].fields[fieldName].el.on('style', function(e, sel) {
-          return console.log('style new');
+        return forms['form-1'].fields[fieldName].el.on('Style', function(e, field) {
+          return console.log('style new', field.name);
         });
       }
     });

@@ -50,7 +50,6 @@ $ ->
 
 	$form = $('.form')
 
-
 	fields = 
 
 		'id': false
@@ -108,6 +107,7 @@ $ ->
 
 		'dropdown':
 			placeholder: 'Выбрать'
+			style:true
 			rules:
 				required:
 					not: 'Выбрать'
@@ -144,7 +144,7 @@ $ ->
 
 			@fields['test'].activate(false)
 
-
+			
 			# @fields['login'].addRule
 			# 	name: 'test'
 			# 	condition: (val) ->
@@ -161,20 +161,23 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-			@form.on 'reset', '[data-field]', (e,field) ->
-				# console.log 'reset',field
+			@form.on 'Click', '[data-field]', (e,field) ->
+				console.log 'click', field
 
-			@form.on 'error', '[data-field]', (e,errors) ->
-				# console.log 'errors',errors
+			@form.on 'Reset', '[data-field]', (e,field) ->
+				console.log 'reset',field
 
-			@form.on 'change', '[data-field][data-name="dropdown"]', (e,data) ->
-				# console.log 'dropdown change', data
+			@form.on 'Error', '[data-field]', (e,field) ->
+				console.log 'error',field
 
-			@form.on 'style', '[data-field][data-name="dropdown"]', (e,sel) ->
-				# console.log 'dropdown style',sel
+			@form.on 'Change', '[data-field]', (e,field) ->
+				console.log ' change', field
 
-			@form.on 'style', '[data-field][data-type="select"]', (e,sel) ->
-				scroll(sel)
+			@form.on 'Style', '[data-field]', (e,field) ->
+				console.log 'style',field
+
+			@form.on 'Style', '[data-field][data-type="select"]', (e,field) ->
+				scroll(field.sel)
 				return
 
 
@@ -231,11 +234,11 @@ $ ->
 					reason: 'Своя ошибка'
 
 			onInit: ->
-				forms['form-1'].fields[fieldName].el.on 'change', (e,v) ->
-					console.log 'change new',v.val
+				forms['form-1'].fields[fieldName].el.on 'Change', (e,field) ->
+					console.log 'change new',field.val
 
-				forms['form-1'].fields[fieldName].el.on 'style', (e,sel) ->
-					console.log 'style new'
+				forms['form-1'].fields[fieldName].el.on 'Style', (e,field) ->
+					console.log 'style new', field.name
 
 	window.reset = ->
 		forms['form-1'].reset()

@@ -1,6 +1,6 @@
 
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0"/>
   <script>(function() {
   var port, url;
 
@@ -48,7 +48,12 @@
       'password': {
         rules: {
           required: true,
-          min: 3
+          'myRule': {
+            condition: function(val) {
+              return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(val);
+            },
+            reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
+          }
         }
       },
       'password-confirmation': {
@@ -107,20 +112,20 @@
       onInit: function() {
         var self;
         self = this;
-        self.form.on('error', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, errors, field) {
-          self.form.find(".error-birthday").html(errors[0]);
+        self.form.on('Error', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
+          self.form.find(".error-birthday").html(field.errors[0]);
         });
-        self.form.on('reset', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
+        self.form.on('Reset', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
           self.form.find(".error-birthday").empty();
         });
-        self.form.on('click', '[data-name="day"],[data-name="month"],[data-name="year"]', function() {
+        self.form.on('Click', '[data-name="day"],[data-name="month"],[data-name="year"]', function() {
           self.form.find(".error-birthday").empty();
         });
-        self.form.on('style', '[data-field][data-type="select"]', function(e, sel) {
-          scroll(sel);
+        self.form.on('Style', '[data-field][data-type="select"]', function(e, field) {
+          scroll(field.sel);
         });
-        return self.form.on('change', '[data-field]', function(e, data) {
-          console.log('change', data);
+        return self.form.on('Change', '[data-field]', function(e, field) {
+          console.log('change', field);
         });
       },
       onSubmit: function(data) {
