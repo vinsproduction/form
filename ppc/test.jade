@@ -24,60 +24,85 @@ head
 
 				fields = 
 
-					'test-1':
+					'required':
 						rules: required: true
 
-					'test-2':
+					'not':
 						rules: not: ['test']
 
-					'test-3':
+					'numeric':
 						rules: numeric: true
 
-					'test-4':
-						rules: numericDash: true
-
-					'test-5':
+					'alpha':
 						rules: alpha: true
 
-					'test-6':
+					'eng':
 						rules: eng: true
 
-					'test-7':
-						rules: cyrillic: true
+					'rus':
+						rules: rus: true
 
-					'test-8':
+
+					'alphaSpace':
+						rules: alphaSpace: true
+
+					'engSpace':
+						rules: engSpace: true
+
+					'rusSpace':
+						rules: rusSpace: true
+
+					'engDash':
 						rules: engDash: true
 
-					'test-9':
+					'engNumeric':
 						rules: engNumeric: true
 
-					'test-10':
+					'engDashNumeric':
+						rules: engDashNumeric: true
+
+					'max':
 						rules: max: 3
 
-					'test-11':
+					'min':
 						rules: min: 3
 
-					'test-12':
+					'email':
 						rules: email: true
 
-					'test-13':
+					'url':
 						rules: url: true
 
-					'test-14':
-						rules: compare: field: 'test-13'
+					'compare':
+						rules: compare: field: 'url'
 
-
-					'test-15':
+					'pass1':
 						rules: pass1: true
 
-					'test-16':
+					'pass2':
 						rules: pass2: true
 
-					'test-17':
+					'pass3':
 						rules: pass3: true
 
-					'test-18':
+					'pass4':
 						rules: pass4: true
+
+
+				for name of fields
+
+					$('.form .fields').append """
+
+						<div class='field'>
+							<div class='label'>#{name}</div>
+							<input type='text' name='#{name}'>
+							<div class='error error-#{name}'></div>
+						</div>
+
+					"""
+
+
+
 
 
 				window.forms['test'] = new Form
@@ -94,126 +119,18 @@ head
 						autoErrors: true
 						clearErrorsInFocus: true
 
-					onInit: ->
 
-						self = @
-
-					onSubmit: (data) ->
-
-						self = @
-
-					onSuccess: (data) ->
-
-						self = @
-
-					onFail: (errors) ->
-
-						self = @
-
-					onReset: ->
-
-						self = @
 
 				return
+
+
+
 
 body
 
 	.form
-
 		.field
-			.label required
-			input(type='text', name='test-1')
-			.error.error-test-1
-
-		.field
-			.label not test
-			input(type='text', name='test-2')
-			.error.error-test-2
-		
-		.field
-			.label numeric
-			input(type='text', name='test-3')
-			.error.error-test-3
-
-		.field
-			.label numericDash
-			input(type='text', name='test-4')
-			.error.error-test-4
-
-		.field
-			.label alpha
-			input(type='text', name='test-5')
-			.error.error-test-5
-
-		.field
-			.label eng
-			input(type='text', name='test-6')
-			.error.error-test-6
-
-		.field
-			.label cyrillic
-			input(type='text', name='test-7')
-			.error.error-test-7
-
-		.field
-			.label engDash
-			input(type='text', name='test-8')
-			.error.error-test-8
-
-		.field
-			.label engNumeric
-			input(type='text', name='test-9')
-			.error.error-test-9
-
-		.field
-			.label max 3
-			input(type='text', name='test-10')
-			.error.error-test-10
-
-		.field
-			.label min 3
-			input(type='text', name='test-11')
-			.error.error-test-11
-
-		.field
-			.label email
-			input(type='text', name='test-12')
-			.error.error-test-12
-
-		.field
-			.label url
-			input(type='text', name='test-13')
-			.error.error-test-13
-
-		.field
-			.label compare test-13
-			input(type='text', name='test-14')
-			.error.error-test-14
-
-
-		.field
-			.label 1 Alphabet and 1 Number
-			input(type='text', name='test-15')
-			.error.error-test-15
-
-		.field
-			.label 1 Alphabet, 1 Number and 1 Special Character
-			input(type='text', name='test-16')
-			.error.error-test-16
-
-		.field
-			.label1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number
-			input(type='text', name='test-17')
-			.error.error-test-17
-
-		.field
-			.label 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character
-			input(type='text', name='test-18')
-			.error.error-test-18
-
-
-
-		.field
+			.fields
 			.submit
 				a(href="#"): span Отправить
 			.preloader

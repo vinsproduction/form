@@ -1063,21 +1063,6 @@ Form = (function() {
       };
       return valid();
     },
-    numericDash: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Допустимы только цифры и подчеркивания"
-      };
-      valid = function() {
-        if (/^[\d\-\s]+$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
     alpha: function(val, rule) {
       var obj, self, valid;
       self = this.form;
@@ -1108,7 +1093,7 @@ Form = (function() {
       };
       return valid();
     },
-    cyrillic: function(val, rule) {
+    rus: function(val, rule) {
       var obj, self, valid;
       self = this.form;
       obj = {
@@ -1123,15 +1108,60 @@ Form = (function() {
       };
       return valid();
     },
+    alphaSpace: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только буквы и пробелы"
+      };
+      valid = function() {
+        if (/^[a-zа-я\s]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
+    engSpace: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только английские буквы и пробелы"
+      };
+      valid = function() {
+        if (/^[a-z\s]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
+    rusSpace: function(val, rule) {
+      var obj, self, valid;
+      self = this.form;
+      obj = {
+        state: false,
+        reason: rule.reason || "Допустимы только русские буквы и пробелы"
+      };
+      valid = function() {
+        if (/^[а-я\s]+$/i.test(val)) {
+          obj.state = true;
+        }
+        return obj;
+      };
+      return valid();
+    },
     engDash: function(val, rule) {
       var obj, self, valid;
       self = this.form;
       obj = {
         state: false,
-        reason: rule.reason || "Допустимы только буквы и подчеркивания"
+        reason: rule.reason || "Допустимы только английские буквы и подчеркивания"
       };
       valid = function() {
-        if (/^[a-z_\-]+$/i.test(val)) {
+        if (/^[a-z_]+$/i.test(val)) {
           obj.state = true;
         }
         return obj;
@@ -1143,7 +1173,7 @@ Form = (function() {
       self = this.form;
       obj = {
         state: false,
-        reason: rule.reason || "Допустимы только буквы и цифры"
+        reason: rule.reason || "Допустимы только английские буквы и цифры"
       };
       valid = function() {
         if (/^[a-z0-9]+$/i.test(val)) {
@@ -1153,15 +1183,15 @@ Form = (function() {
       };
       return valid();
     },
-    alphaDash: function(val, rule) {
+    engDashNumeric: function(val, rule) {
       var obj, self, valid;
       self = this.form;
       obj = {
         state: false,
-        reason: rule.reason || "Допустимы только буквы и подчеркивания"
+        reason: rule.reason || "Допустимы только английские буквы, цифры и подчеркивания"
       };
       valid = function() {
-        if (/^[a-zа-я_\-]+$/i.test(val)) {
+        if (/^[a-z0-9_]+$/i.test(val)) {
           obj.state = true;
         }
         return obj;
@@ -1176,7 +1206,7 @@ Form = (function() {
         reason: rule.reason || "Допустимы только буквы и цифры"
       };
       valid = function() {
-        if (/^[a-zа-я0-9]+$/i.test(val)) {
+        if (/^[a-zа-я0-9\s]+$/i.test(val)) {
           obj.state = true;
         }
         return obj;

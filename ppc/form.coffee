@@ -1024,23 +1024,6 @@ class Form
 
 			return valid()
 
-		numericDash : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только цифры и подчеркивания"
-
-			valid = ->
-
-				if /^[\d\-\s]+$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
 		alpha : (val,rule) ->
 
 			self = @form
@@ -1075,7 +1058,7 @@ class Form
 
 			return valid()
 
-		cyrillic: (val, rule) ->
+		rus: (val, rule) ->
 
 			self = @form
 
@@ -1092,17 +1075,68 @@ class Form
 
 			return valid()
 
+		alphaSpace : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только буквы и пробелы"
+
+			valid = ->
+
+				if /^[a-zа-я\s]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		engSpace : (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только английские буквы и пробелы"
+
+			valid = ->
+
+				if /^[a-z\s]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
+		rusSpace: (val, rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Допустимы только русские буквы и пробелы"
+
+			valid = ->
+
+				if /^[а-я\s]+$/i.test(val)
+					obj.state = true
+
+				return obj
+
+			return valid()
+
 		engDash : (val,rule) ->
 
 			self = @form
 
 			obj =
 				state: false
-				reason: rule.reason || "Допустимы только буквы и подчеркивания"
+				reason: rule.reason || "Допустимы только английские буквы и подчеркивания"
 
 			valid = ->
 
-				if /^[a-z_\-]+$/i.test(val)
+				if /^[a-z_]+$/i.test(val)
 					obj.state = true
 
 				return obj
@@ -1115,7 +1149,7 @@ class Form
 
 			obj =
 				state: false
-				reason: rule.reason || "Допустимы только буквы и цифры"
+				reason: rule.reason || "Допустимы только английские буквы и цифры"
 
 			valid = ->
 
@@ -1126,17 +1160,17 @@ class Form
 
 			return valid()
 
-		alphaDash : (val,rule) ->
+		engDashNumeric : (val,rule) ->
 
 			self = @form
 
 			obj =
 				state: false
-				reason: rule.reason || "Допустимы только буквы и подчеркивания"
+				reason: rule.reason || "Допустимы только английские буквы, цифры и подчеркивания"
 
 			valid = ->
 
-				if /^[a-zа-я_\-]+$/i.test(val)
+				if /^[a-z0-9_]+$/i.test(val)
 					obj.state = true
 
 				return obj
@@ -1153,7 +1187,7 @@ class Form
 
 			valid = ->
 
-				if /^[a-zа-я0-9]+$/i.test(val)
+				if /^[a-zа-я0-9\s]+$/i.test(val)
 					obj.state = true
 
 				return obj
