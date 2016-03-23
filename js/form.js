@@ -33,6 +33,17 @@ Form = (function() {
     this.autoFields = true;
     this.enter = true;
     this.disableSubmit = false;
+    this.fieldsOptions = {
+      active: true,
+      style: true,
+      autoErrors: true,
+      escape: true,
+      clearErrorsOnClick: false,
+      validateOnKeyup: false,
+      errorFieldName: false,
+      attrs: {},
+      rules: {}
+    };
     this.classes = {
       input: {
         placeholder: "placeholder"
@@ -68,17 +79,6 @@ Form = (function() {
       error: "<div>{error}</div>"
     };
     this.fields = {};
-    this.fieldsOptions = {
-      active: true,
-      style: true,
-      autoErrors: true,
-      escape: true,
-      clearErrorsOnClick: false,
-      validateOnKeyup: false,
-      errorFieldName: false,
-      attrs: {},
-      rules: {}
-    };
     this.data = {};
     this.errors = {};
     this.onFail = function(errors) {};

@@ -21,9 +21,9 @@ class Form
 
 		@logs = false # Логи отключены
 
-		@formName = 'form'
-		@formEl = false
-		@submitEl = false
+		@formName = 'form' # Имя формы
+		@formEl = false # Элемент формы или класс
+		@submitEl = false # Элемент кнопки отправки или класс
 
 		# autoFields
 		# Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
@@ -33,6 +33,17 @@ class Form
 		@enter = true  # Отправка на Enter
 
 		@disableSubmit = false # Заблокировать сабмит
+
+		@fieldsOptions =
+			active: true # Активное поле
+			style: true # Cтилизовать поле
+			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
+			escape: true # Очищать инпут от тегов в отправке
+			clearErrorsOnClick: false # Удалять ошибки по клику на поле
+			validateOnKeyup: false # Валидировать на keyup
+			errorFieldName: false # Кастомный класс для вывода ошибки
+			attrs: {} # Атрибуты поля
+			rules: {} # Правила поля
 
 		@classes =
 			input:
@@ -65,17 +76,6 @@ class Form
 			error: """<div>{error}</div>"""
 
 		@fields = {}
-
-		@fieldsOptions =
-			active: true # Активное поле
-			style: true # Cтилизовать поле
-			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
-			escape: true # Очищать инпут от тегов в отправке
-			clearErrorsOnClick: false # Удалять ошибки в фокусе
-			validateOnKeyup: false # Валидировать на keyup
-			errorFieldName: false # Кастомный класс для вывода ошибки
-			attrs: {} # Атрибуты поля
-			rules: {} # Правила поля
 
 		@data = {}
 		@errors = {}
