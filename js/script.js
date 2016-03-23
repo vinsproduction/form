@@ -42,7 +42,7 @@ scroll = function(el) {
 };
 
 $(function() {
-  var $form, fields, fieldsOptions;
+  var $form, fields;
   window.forms = {};
   $form = $('.form');
   fields = {
@@ -81,7 +81,6 @@ $(function() {
     },
     'dropdown': {
       placeholder: 'Выбрать',
-      style: true,
       rules: {
         required: {
           not: 'Выбрать'
@@ -89,20 +88,16 @@ $(function() {
       }
     }
   };
-  fieldsOptions = {
-    rules: {
-      required: true
-    }
-  };
   window.forms['form-1'] = new Form({
-    logs: true,
-    autoFields: true,
-    disableSubmit: false,
     formName: 'test form',
     formEl: $form,
     submitEl: $form.find('.submit a'),
     fields: fields,
-    fieldsOptions: fieldsOptions,
+    fieldsOptions: {
+      rules: {
+        required: true
+      }
+    },
     onInit: function() {
       var self;
       self = this;

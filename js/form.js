@@ -26,7 +26,7 @@ Form = (function() {
   function Form(params) {
     var self;
     this.params = params != null ? params : {};
-    this.logs = false;
+    this.logs = true;
     this.formName = 'form';
     this.formEl = false;
     this.submitEl = false;

@@ -34,9 +34,10 @@
       },
       'only': {
         rules: {
+          required: true,
           only: {
             exp: {
-              range: [2, 10],
+              range: [4, 10],
               alpha: [1],
               numeric: [0, 1]
             }
@@ -112,15 +113,12 @@
       $('.form .fields').append("\n<div class='field'>\n	<div class='label'>" + name + "</div>\n	<input type='text' name='" + name + "'>\n	<div class='error error-" + name + "'></div>\n</div>\n");
     }
     window.forms['test'] = new Form({
-      logs: true,
       formName: 'test',
       formEl: '.form',
       submitEl: '.submit a',
-      autoFields: true,
       fields: fields,
       fieldsOptions: {
-        autoErrors: 'all',
-        validateOnKeyup: true
+        autoErrors: 'all'
       }
     });
   });

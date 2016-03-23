@@ -108,36 +108,29 @@ $ ->
 
 		'dropdown':
 			placeholder: 'Выбрать'
-			style:true
 			rules:
 				required:
 					not: 'Выбрать'
 
 
-	fieldsOptions = 
-		# style: true
-		# clearErrorsOnClick: true
-		# validateOnKeyup: true
-		# autoErrors: true
-		# escape: true
-		rules:
-			required: true
-		# 		# reason: 'ошибка'
+
 
 
 	window.forms['form-1'] = new Form
-
-		logs: true
-
-		autoFields: true
-
-		disableSubmit: false
 
 		formName: 'test form'
 		formEl: $form
 		submitEl: $form.find('.submit a')
 		fields: fields
-		fieldsOptions: fieldsOptions
+		fieldsOptions:
+			# style: true
+			# clearErrorsOnClick: true
+			# validateOnKeyup: true
+			# autoErrors: true
+			# escape: true
+			rules:
+				required: true
+			# 		# reason: 'ошибка'
 
 		onInit: ->
 

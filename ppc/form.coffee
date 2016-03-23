@@ -19,7 +19,7 @@ class Form
 
 	constructor: (@params={}) ->
 
-		@logs = false # Логи отключены
+		@logs = true # Логи отключены
 
 		@formName = 'form' # Имя формы
 		@formEl = false # Элемент формы или класс
