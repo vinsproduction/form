@@ -29,11 +29,7 @@
           email: true
         }
       },
-      'password': {
-        rules: {
-          min: 3
-        }
-      }
+      'password': true
     };
     window.forms['login'] = new Form({
       logs: true,
@@ -43,10 +39,6 @@
       autoFields: true,
       fields: fields,
       fieldsOptions: {
-        escape: true,
-        autoErrors: true,
-        clearErrorsOnClick: true,
-        validateOnKeyup: true,
         rules: {
           required: true
         }

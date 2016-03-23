@@ -26,11 +26,10 @@
     fields = {
       'required': {
         attrs: {
-          maxlength: 8
+          maxlength: 10
         },
         rules: {
-          required: true,
-          alpha: true
+          required: true
         }
       },
       'only': {
@@ -39,7 +38,7 @@
             exp: {
               range: [2, 10],
               alpha: [1],
-              numeric: true
+              numeric: [0, 1]
             }
           }
         }
@@ -52,8 +51,7 @@
               numeric: [1],
               engLowercase: [1],
               engUppercase: [1]
-            },
-            reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
+            }
           }
         }
       },
@@ -121,10 +119,7 @@
       autoFields: true,
       fields: fields,
       fieldsOptions: {
-        escape: true,
-        autoErrors: 'all',
-        clearErrorsOnClick: true,
-        validateOnKeyup: true
+        autoErrors: 'all'
       }
     });
   });

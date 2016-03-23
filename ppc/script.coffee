@@ -89,9 +89,10 @@ $ ->
 			rules:
 				email: true
 		
-		# 'text':
-		# 	rules:
-		# 		required: true
+		'text':
+			rules:
+				required: true
+				min: 2
 
 		# 'checkbox_1':
 			# name: 'checkbox new'
@@ -114,11 +115,11 @@ $ ->
 
 
 	fieldsOptions = 
-		style: true
-		clearErrorsOnClick: true
-		validateOnKeyup: true
-		autoErrors: true
-		escape: true
+		# style: true
+		# clearErrorsOnClick: true
+		# validateOnKeyup: true
+		# autoErrors: true
+		# escape: true
 		rules:
 			required: true
 		# 		# reason: 'ошибка'
@@ -166,19 +167,19 @@ $ ->
 			# 	console.log 'click', field
 
 			@form.on 'Reset', '[data-field]', (e,field) ->
-				console.log 'reset',field
+				# console.log 'reset',field
 
 			# @form.on 'Keyup', '[data-field]', (e,field) ->
 			# 	console.log 'keyup',field
 
 			@form.on 'Error', '[data-field]', (e,field) ->
-				console.log 'error',field
+				# console.log 'error',field
 
 			@form.on 'Change', '[data-field]', (e,field) ->
 				console.log 'change', field
 
 			@form.on 'Style', '[data-field]', (e,field) ->
-				console.log 'style',field
+				# console.log 'style',field
 
 			@form.on 'Style', '[data-field][data-type="select"]', (e,field) ->
 				scroll(field.sel)

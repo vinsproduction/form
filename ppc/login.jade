@@ -28,9 +28,7 @@ head
 						rules:
 							email: true
 
-					'password':
-						rules:
-							min: 3
+					'password': true
 
 
 				window.forms['login'] = new Form
@@ -43,10 +41,6 @@ head
 					autoFields: true
 					fields: fields
 					fieldsOptions:
-						escape: true
-						autoErrors: true
-						clearErrorsOnClick: true
-						validateOnKeyup: true
 						rules:
 							required: true
 

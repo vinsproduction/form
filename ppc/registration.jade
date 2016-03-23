@@ -48,6 +48,7 @@ head
 				fields = 
 
 					'password':
+						validateOnKeyup: true
 						rules:
 							required: true
 							'myRule':
@@ -56,6 +57,7 @@ head
 
 
 					'password-confirmation':
+						validateOnKeyup: true
 						rules:
 							required: true
 							compare:
@@ -96,10 +98,6 @@ head
 					autoFields: true
 					fields: fields
 					fieldsOptions:
-						escape: true
-						autoErrors: true
-						clearErrorsOnClick: true
-						validateOnKeyup: true
 						rules:
 							required: true
 

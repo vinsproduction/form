@@ -46,6 +46,7 @@
     window.forms = {};
     fields = {
       'password': {
+        validateOnKeyup: true,
         rules: {
           required: true,
           'myRule': {
@@ -57,6 +58,7 @@
         }
       },
       'password-confirmation': {
+        validateOnKeyup: true,
         rules: {
           required: true,
           compare: {
@@ -105,10 +107,6 @@
       autoFields: true,
       fields: fields,
       fieldsOptions: {
-        escape: true,
-        autoErrors: true,
-        clearErrorsOnClick: true,
-        validateOnKeyup: true,
         rules: {
           required: true
         }

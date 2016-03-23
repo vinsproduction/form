@@ -69,9 +69,9 @@ class Form
 		@fieldsOptions =
 			active: true # Активное поле
 			style: true # Cтилизовать поле
-			clearErrorsOnClick: true # Удалять ошибки в фокусе
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
-			escape: false # Очищать инпут от тегов в отправке
+			escape: true # Очищать инпут от тегов в отправке
+			clearErrorsOnClick: false # Удалять ошибки в фокусе
 			validateOnKeyup: false # Валидировать на keyup
 			errorFieldName: false # Кастомный класс для вывода ошибки
 			attrs: {} # Атрибуты поля
@@ -164,7 +164,7 @@ class Form
 			val  = self.getVal(name)
 
 			if self.fields[name].validateOnKeyup
-				self.validateField(name)
+				self.validateField(name,'keyup')
 
 			el.trigger('Keyup',{name:name, val:val, errors: self.errors[name] || []})
 
@@ -200,7 +200,7 @@ class Form
 
 			val = self.getVal(name)
 
-			self.validateField(name)
+			self.validateField(name,'change')
 
 			self.setData(name,val)
 
@@ -658,9 +658,10 @@ class Form
 
 		return
 
-	validateField: (name) ->
+	validateField: (name,event) ->
 
-		return if !@fields[name]
+		if !@fields[name] or !@fields[name].rules or @h.isEmpty(@fields[name].rules)
+			return
 
 		self = @
 
@@ -669,29 +670,54 @@ class Form
 		self.deleteError(name)
 		self.errorField(name,false)
 
-		opt = self.fields[name]
+		self.fields[name].el.removeClass(self.classes.validation)
+		self.fields[name].sel.removeClass(self.classes.validation)
 
-		if opt.rules and !self.h.isEmpty(opt.rules)
+		showErrors = true
 
-			$.each opt.rules, (ruleName,rule) ->
-				if rule and self.validation[ruleName]
-					if opt.rules.required or !self.h.isEmpty(val)
-						valid = self.validation[ruleName](val, rule)
-						if !valid.state
-							self.setError(name,{ruleName,reason:valid.reason})
-							if self.fields[name].autoErrors
-								if self.fields[name].autoErrors is 'all'
-									self.errorField(name,self.errors[name])
-								else if self.errors[name][0]
-									self.errorField(name,self.errors[name][0])
+		if !self.fields[name].rules.required and self.h.isEmpty(val)
+			return
 
-		if opt.rules and !self.h.isEmpty(opt.rules)
-			if !self.h.isEmpty(val) and (!self.errors[name] or self.h.isEmpty(self.errors[name]))
+		if event is 'keyup' or event is 'change'
+			
+			if self.fields[name].type in ['checkbox','radio']
+				if !val then showErrors = false
+	
+			else if self.fields[name].type is 'select'
+				if self.fields[name].rules.required.not
+					if self.h.isArray(self.fields[name].rules.required.not)
+						if val in self.fields[name].rules.required.not
+							showErrors = false
+					else
+						if val is self.fields[name].rules.required.not
+							showErrors = false
+
+			else if self.h.isEmpty(val)
+				showErrors = false
+				
+
+		$.each self.fields[name].rules, (ruleName,rule) ->
+
+			if rule and self.validation[ruleName]
+
+				valid = self.validation[ruleName](val, rule)
+				if !valid.state
+					self.setError(name,{ruleName,reason:valid.reason})
+
+					if showErrors
+
+						if self.fields[name].autoErrors
+							if self.fields[name].autoErrors is 'all'
+								self.errorField(name,self.errors[name])
+							else if self.errors[name][0]
+								self.errorField(name,self.errors[name][0])
+
+		if showErrors
+
+			if !self.errors[name] or self.h.isEmpty(self.errors[name])
 				self.fields[name].el.addClass(self.classes.validation)
 				self.fields[name].sel.addClass(self.classes.validation)
-			else
-				self.fields[name].el.removeClass(self.classes.validation)
-				self.fields[name].sel.removeClass(self.classes.validation)
+
 
 	setVal: (name,val,withoutTrigger=false) ->
 
@@ -1079,17 +1105,19 @@ class Form
 
 			valid = ->
 
-				if rule.not
-					if self.h.isArray(rule.not)
-						if val? and !self.h.isEmpty(val) and (val not in rule.not)
-							obj.state = true
-					else
-						if val? and !self.h.isEmpty(val) and (val isnt rule.not)
-							obj.state = true
+				if val isnt false
 
-				else
-					if val? and !self.h.isEmpty(val)
-						obj.state = true
+					if rule.not
+						if self.h.isArray(rule.not)
+							if val? and !self.h.isEmpty(val) and (val not in rule.not)
+								obj.state = true
+						else
+							if val? and !self.h.isEmpty(val) and (val isnt rule.not)
+								obj.state = true
+
+					else
+						if val? and !self.h.isEmpty(val)
+							obj.state = true
 
 				return obj
 

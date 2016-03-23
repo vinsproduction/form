@@ -73,6 +73,12 @@ $(function() {
         email: true
       }
     },
+    'text': {
+      rules: {
+        required: true,
+        min: 2
+      }
+    },
     'dropdown': {
       placeholder: 'Выбрать',
       style: true,
@@ -84,11 +90,6 @@ $(function() {
     }
   };
   fieldsOptions = {
-    style: true,
-    clearErrorsOnClick: true,
-    validateOnKeyup: true,
-    autoErrors: true,
-    escape: true,
     rules: {
       required: true
     }
@@ -108,18 +109,12 @@ $(function() {
       this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.form.on('Reset', '[data-field]', function(e, field) {
-        return console.log('reset', field);
-      });
-      this.form.on('Error', '[data-field]', function(e, field) {
-        return console.log('error', field);
-      });
+      this.form.on('Reset', '[data-field]', function(e, field) {});
+      this.form.on('Error', '[data-field]', function(e, field) {});
       this.form.on('Change', '[data-field]', function(e, field) {
         return console.log('change', field);
       });
-      this.form.on('Style', '[data-field]', function(e, field) {
-        return console.log('style', field);
-      });
+      this.form.on('Style', '[data-field]', function(e, field) {});
       return this.form.on('Style', '[data-field][data-type="select"]', function(e, field) {
         scroll(field.sel);
       });

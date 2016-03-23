@@ -26,11 +26,9 @@ head
 
 					'required':
 						attrs:
-							maxlength: 8
-
+							maxlength: 10
 						rules:
 							required: true
-							alpha: true
 
 					'only':
 						rules:
@@ -38,9 +36,8 @@ head
 								exp:
 									range: [2,10]
 									alpha: [1]
-									numeric: true
+									numeric: [0,1]
 
-									
 
 					'strict':
 						rules:
@@ -50,8 +47,6 @@ head
 									numeric: [1]
 									engLowercase: [1]
 									engUppercase: [1]
-								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
-
 
 					'not':
 						rules: not: ['test']
@@ -111,11 +106,7 @@ head
 					autoFields: true
 					fields: fields
 					fieldsOptions:
-						escape: true
 						autoErrors: 'all'
-						clearErrorsOnClick: true
-						validateOnKeyup: true
-
 
 
 				return

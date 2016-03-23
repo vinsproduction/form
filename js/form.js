@@ -71,9 +71,9 @@ Form = (function() {
     this.fieldsOptions = {
       active: true,
       style: true,
-      clearErrorsOnClick: true,
       autoErrors: true,
-      escape: false,
+      escape: true,
+      clearErrorsOnClick: false,
       validateOnKeyup: false,
       errorFieldName: false,
       attrs: {},
@@ -158,7 +158,7 @@ Form = (function() {
       }
       val = self.getVal(name);
       if (self.fields[name].validateOnKeyup) {
-        self.validateField(name);
+        self.validateField(name, 'keyup');
       }
       el.trigger('Keyup', {
         name: name,
@@ -197,7 +197,7 @@ Form = (function() {
         return;
       }
       val = self.getVal(name);
-      self.validateField(name);
+      self.validateField(name, 'change');
       self.setData(name, val);
       if (el.is("select")) {
         self.createSelect(name, true);
@@ -638,46 +638,67 @@ Form = (function() {
     }
   };
 
-  Form.prototype.validateField = function(name) {
-    var opt, self, val;
-    if (!this.fields[name]) {
+  Form.prototype.validateField = function(name, event) {
+    var ref, self, showErrors, val;
+    if (!this.fields[name] || !this.fields[name].rules || this.h.isEmpty(this.fields[name].rules)) {
       return;
     }
     self = this;
     val = self.getVal(name);
     self.deleteError(name);
     self.errorField(name, false);
-    opt = self.fields[name];
-    if (opt.rules && !self.h.isEmpty(opt.rules)) {
-      $.each(opt.rules, function(ruleName, rule) {
-        var valid;
-        if (rule && self.validation[ruleName]) {
-          if (opt.rules.required || !self.h.isEmpty(val)) {
-            valid = self.validation[ruleName](val, rule);
-            if (!valid.state) {
-              self.setError(name, {
-                ruleName: ruleName,
-                reason: valid.reason
-              });
-              if (self.fields[name].autoErrors) {
-                if (self.fields[name].autoErrors === 'all') {
-                  return self.errorField(name, self.errors[name]);
-                } else if (self.errors[name][0]) {
-                  return self.errorField(name, self.errors[name][0]);
-                }
+    self.fields[name].el.removeClass(self.classes.validation);
+    self.fields[name].sel.removeClass(self.classes.validation);
+    showErrors = true;
+    if (!self.fields[name].rules.required && self.h.isEmpty(val)) {
+      return;
+    }
+    if (event === 'keyup' || event === 'change') {
+      if ((ref = self.fields[name].type) === 'checkbox' || ref === 'radio') {
+        if (!val) {
+          showErrors = false;
+        }
+      } else if (self.fields[name].type === 'select') {
+        if (self.fields[name].rules.required.not) {
+          if (self.h.isArray(self.fields[name].rules.required.not)) {
+            if (indexOf.call(self.fields[name].rules.required.not, val) >= 0) {
+              showErrors = false;
+            }
+          } else {
+            if (val === self.fields[name].rules.required.not) {
+              showErrors = false;
+            }
+          }
+        }
+      } else if (self.h.isEmpty(val)) {
+        showErrors = false;
+      }
+    }
+    $.each(self.fields[name].rules, function(ruleName, rule) {
+      var valid;
+      if (rule && self.validation[ruleName]) {
+        valid = self.validation[ruleName](val, rule);
+        if (!valid.state) {
+          self.setError(name, {
+            ruleName: ruleName,
+            reason: valid.reason
+          });
+          if (showErrors) {
+            if (self.fields[name].autoErrors) {
+              if (self.fields[name].autoErrors === 'all') {
+                return self.errorField(name, self.errors[name]);
+              } else if (self.errors[name][0]) {
+                return self.errorField(name, self.errors[name][0]);
               }
             }
           }
         }
-      });
-    }
-    if (opt.rules && !self.h.isEmpty(opt.rules)) {
-      if (!self.h.isEmpty(val) && (!self.errors[name] || self.h.isEmpty(self.errors[name]))) {
+      }
+    });
+    if (showErrors) {
+      if (!self.errors[name] || self.h.isEmpty(self.errors[name])) {
         self.fields[name].el.addClass(self.classes.validation);
         return self.fields[name].sel.addClass(self.classes.validation);
-      } else {
-        self.fields[name].el.removeClass(self.classes.validation);
-        return self.fields[name].sel.removeClass(self.classes.validation);
       }
     }
   };
@@ -1136,19 +1157,21 @@ Form = (function() {
         reason: rule.reason || "Обязательное поле для заполнения"
       };
       valid = function() {
-        if (rule.not) {
-          if (self.h.isArray(rule.not)) {
-            if ((val != null) && !self.h.isEmpty(val) && (indexOf.call(rule.not, val) < 0)) {
-              obj.state = true;
+        if (val !== false) {
+          if (rule.not) {
+            if (self.h.isArray(rule.not)) {
+              if ((val != null) && !self.h.isEmpty(val) && (indexOf.call(rule.not, val) < 0)) {
+                obj.state = true;
+              }
+            } else {
+              if ((val != null) && !self.h.isEmpty(val) && (val !== rule.not)) {
+                obj.state = true;
+              }
             }
           } else {
-            if ((val != null) && !self.h.isEmpty(val) && (val !== rule.not)) {
+            if ((val != null) && !self.h.isEmpty(val)) {
               obj.state = true;
             }
-          }
-        } else {
-          if ((val != null) && !self.h.isEmpty(val)) {
-            obj.state = true;
           }
         }
         return obj;

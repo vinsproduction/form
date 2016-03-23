@@ -105,7 +105,6 @@ body {
 }
 .form input.valid,
 .form textarea.valid {
-  border: 1px solid #008000;
   background: url("../img/valid.png") #fff right 10px top 14px no-repeat;
 }
 .form input:focus,
@@ -117,6 +116,9 @@ body {
 .form input:-webkit-autofill,
 .form textarea:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 50px #fff inset;
+}
+.form .valid {
+  border: 1px solid #008000 !important;
 }
 .form [data-submit].disabled {
   background: #a8abad !important;
