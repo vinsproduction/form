@@ -58,21 +58,22 @@ $ ->
 			placeholder: 'login'
 			rules:
 				required: true
-				# alpha: true
+				alpha: true
+				max: 2
 				# max:
 				# 	count: 4
 				# min:
 				# 	count: 2
 
 
-		# 'password':
-		# 	rules:
-		# 		required: true
+		'password':
+			rules:
+				required: true
 
 		'password-confirmation':
 			rules:
 				compare:
-					field: 'login'
+					field: 'password'
 					# val: -> $form.find('input[name="password"]').val()
 					reason: 'Не совпадает с полем {field}'
 
@@ -84,10 +85,9 @@ $ ->
 		# 	rules:
 		# 		required: true
 
-		# 'email':
-		# 	rules:
-		# 		required: true
-		# 		email: true
+		'email':
+			rules:
+				email: true
 		
 		# 'text':
 		# 	rules:
@@ -115,12 +115,13 @@ $ ->
 
 	fieldsOptions = 
 		style: true
-		clearErrorsInFocus: true
+		clearErrorsOnClick: true
+		validateOnKeyup: true
 		autoErrors: true
 		escape: true
 		rules:
 			required: true
-				# reason: 'ошибка'
+		# 		# reason: 'ошибка'
 
 
 	window.forms['form-1'] = new Form
@@ -161,17 +162,20 @@ $ ->
 
 			@fields['phone'].el.mask("+7 (999) 999-99-99")
 
-			@form.on 'Click', '[data-field]', (e,field) ->
-				console.log 'click', field
+			# @form.on 'Click', '[data-field]', (e,field) ->
+			# 	console.log 'click', field
 
 			@form.on 'Reset', '[data-field]', (e,field) ->
 				console.log 'reset',field
+
+			# @form.on 'Keyup', '[data-field]', (e,field) ->
+			# 	console.log 'keyup',field
 
 			@form.on 'Error', '[data-field]', (e,field) ->
 				console.log 'error',field
 
 			@form.on 'Change', '[data-field]', (e,field) ->
-				console.log ' change', field
+				console.log 'change', field
 
 			@form.on 'Style', '[data-field]', (e,field) ->
 				console.log 'style',field

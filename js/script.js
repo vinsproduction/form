@@ -50,15 +50,27 @@ $(function() {
     'login': {
       placeholder: 'login',
       rules: {
+        required: true,
+        alpha: true,
+        max: 2
+      }
+    },
+    'password': {
+      rules: {
         required: true
       }
     },
     'password-confirmation': {
       rules: {
         compare: {
-          field: 'login',
+          field: 'password',
           reason: 'Не совпадает с полем {field}'
         }
+      }
+    },
+    'email': {
+      rules: {
+        email: true
       }
     },
     'dropdown': {
@@ -73,7 +85,8 @@ $(function() {
   };
   fieldsOptions = {
     style: true,
-    clearErrorsInFocus: true,
+    clearErrorsOnClick: true,
+    validateOnKeyup: true,
     autoErrors: true,
     escape: true,
     rules: {
@@ -95,9 +108,6 @@ $(function() {
       this.fields['test'].activate(false);
       this.fields['date'].el.datepicker();
       this.fields['phone'].el.mask("+7 (999) 999-99-99");
-      this.form.on('Click', '[data-field]', function(e, field) {
-        return console.log('click', field);
-      });
       this.form.on('Reset', '[data-field]', function(e, field) {
         return console.log('reset', field);
       });
@@ -105,7 +115,7 @@ $(function() {
         return console.log('error', field);
       });
       this.form.on('Change', '[data-field]', function(e, field) {
-        return console.log(' change', field);
+        return console.log('change', field);
       });
       this.form.on('Style', '[data-field]', function(e, field) {
         return console.log('style', field);

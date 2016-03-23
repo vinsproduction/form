@@ -67,18 +67,21 @@ head
 
 					'day':
 						placeholder: 'Выбрать'
+						errorFieldName: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
 
 					'month':
 						placeholder: 'Выбрать'
+						errorFieldName: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
 
 					'year':
 						placeholder: 'Выбрать'
+						errorFieldName: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
@@ -95,26 +98,14 @@ head
 					fieldsOptions:
 						escape: true
 						autoErrors: true
-						clearErrorsInFocus: true
-
+						clearErrorsOnClick: true
+						validateOnKeyup: true
 						rules:
 							required: true
 
 					onInit: ->
 
 						self = @
-
-						self.form.on 'Error', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
-							self.form.find(".error-birthday").html(field.errors[0])
-							return
-
-						self.form.on 'Reset', '[data-name="day"],[data-name="month"],[data-name="year"]', (e,field) ->
-							self.form.find(".error-birthday").empty()
-							return
-
-						self.form.on 'Click', '[data-name="day"],[data-name="month"],[data-name="year"]', ->
-							self.form.find(".error-birthday").empty()
-							return
 
 						self.form.on 'Style', '[data-field][data-type="select"]', (e,field) ->
 							scroll(field.sel)

@@ -51,6 +51,7 @@ class Form
 			errorField: "error-field" # Класс ошибки поля
 			error: "error" # Класс элемента вывода ошибки поля
 			preloader: "preloader" # Класс прелоадера формы
+			validation: "valid" # Класс успешного поля
 
 		@templates =
 			hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
@@ -68,10 +69,13 @@ class Form
 		@fieldsOptions =
 			active: true # Активное поле
 			style: true # Cтилизовать поле
-			clearErrorsInFocus: true # Удалять ошибки в фокусе
+			clearErrorsOnClick: true # Удалять ошибки в фокусе
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
 			escape: false # Очищать инпут от тегов в отправке
-			rules: {}
+			validateOnKeyup: false # Валидировать на keyup
+			errorFieldName: false # Кастомный класс для вывода ошибки
+			attrs: {} # Атрибуты поля
+			rules: {} # Правила поля
 
 		@data = {}
 		@errors = {}
@@ -140,10 +144,29 @@ class Form
 
 			return if !self.fields[name]
 
-			if self.fields[name].clearErrorsInFocus
+			val  = self.getVal(name)
+
+			if self.fields[name].clearErrorsOnClick
+				self.deleteError(name)
 				self.errorField(name,false)
 
-			el.trigger('Click',{name:name})
+			el.trigger('Click',{name:name,val:val,errors:self.errors[name] || []})
+
+			return true
+
+		@form.on 'keyup', '[data-field]', ->
+
+			el = $(@)
+			name = el.attr('data-name') || el.attr('name')
+
+			return if !self.fields[name]
+
+			val  = self.getVal(name)
+
+			if self.fields[name].validateOnKeyup
+				self.validateField(name)
+
+			el.trigger('Keyup',{name:name, val:val, errors: self.errors[name] || []})
 
 			return true
 
@@ -175,6 +198,12 @@ class Form
 
 			return if !self.fields[name]
 
+			val = self.getVal(name)
+
+			self.validateField(name)
+
+			self.setData(name,val)
+
 			if el.is("select")
 				self.createSelect(name,true)
 
@@ -185,7 +214,7 @@ class Form
 				self.createCheckbox(name,true)
 
 			if !withoutTrigger
-				el.trigger('Change',{name:name,val:el.val()})
+				el.trigger('Change',{name:name,val:val,errors: self.errors[name] || []})
 
 			return true
 
@@ -196,7 +225,9 @@ class Form
 
 			return if !self.fields[name]
 
-			el.trigger('Error', {name:name,errors})
+			val  = self.getVal(name)
+
+			el.trigger('Error', {name:name,val:val,errors: errors || []})
 
 			return true
 
@@ -290,14 +321,20 @@ class Form
 		@fields[name].el.attr('data-type',@fields[name].type)
 
 		@fields[name].originalVal = self.getVal(name)
+
 		if @fields[name].type is 'select'
 			@fields[name].mobileKeyboard = true
 
-		if @fields[name].placeholder and (@fields[name].type in ['text','textarea','password'])
-			@placeholder(name)
+		if @fields[name].type in ['text','textarea','password']
+
+			if @fields[name].placeholder
+				@placeholder(name)
 
 		if @fields[name].rules.required
 			@fields[name]._required = @fields[name].rules.required
+
+		$.each @fields[name].attrs, (name,val) ->
+			el.attr(name,val)
 
 		# Добавление кастомного правила, если его нет в библиотеке
 
@@ -337,7 +374,7 @@ class Form
 		@fields[name].validate = (ruleName,opt={}) ->
 			return if !self.validation[ruleName]
 			valid = self.validation[ruleName](self.getVal(name),opt)
-			return valid.state
+			return valid
 
 		@fields[name].addRule = (ruleName,rule) ->
 			self.addFieldRule(name,ruleName,rule)
@@ -350,9 +387,6 @@ class Form
 		self = @
 
 		do @resetData
-		do @resetErorrs
-
-		data = {} # для отправки данных
 
 		console.groupCollapsed("[Form: #{@formName}] submit") if @logs
 
@@ -360,37 +394,26 @@ class Form
 
 			val = self.getVal(name)
 
+			self.setData(name,val)
+
 			if opt.name
-				data[opt.name] = if opt.escape then self.h.escapeText(val) else val
+				self.data[opt.name] = if opt.escape then self.h.escapeText(val) else val
 			else
-				data[name] = if opt.escape then self.h.escapeText(val) else val
+				self.data[name] = if opt.escape then self.h.escapeText(val) else val
 
 			if !opt.active
+				delete self.data[name]
 
-				delete data[name]
+			console.log(name + ': ',val) if self.logs
 
-			else
-
-				self.setData(name,val)
-
-				console.log(name + ': ' + val) if self.logs
-
-				self.errorField(name,false)
-
-				if opt.rules and !self.h.isEmpty(opt.rules)
-
-					$.each opt.rules, (ruleName,rule) ->
-						if rule and self.validation[ruleName]
-							if !self.h.isEmpty(val) or ruleName is 'required'
-								valid = self.validation[ruleName](val, rule)
-								if !valid.state
-									self.setError(name,valid.reason)
-
-		console.log("data",data) if @logs
+		console.log("data",@data) if @logs
 
 		console.groupEnd() if @logs
 
-		@onSubmit(data)
+		$.each @fields, (name) ->
+			self.validateField(name)
+
+		@onSubmit(@data)
 
 		if @h.isEmpty(@errors)
 			do @Success
@@ -405,23 +428,10 @@ class Form
 
 		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
 
-		$.each @fields, (name, opt) ->
-
-			if self.errors[name]
-				console.log(name + ': ', self.errors[name]) if self.logs
-				if self.fields[name].autoErrors
-					if self.fields[name].autoErrors is 'all'
-						self.errorField(name,self.errors[name])
-					else if self.errors[name][0]
-						self.errorField(name,self.errors[name][0])
-
-		console.log("data",@errors) if @logs
+		$.each @errors, (name, data) ->
+			console.log(name,data) if self.logs
 
 		console.groupEnd() if @logs
-
-		$.each @fields, (name, opt) ->
-			if self.errors[name]
-				self.fields[name].el.eq(0).trigger('error',[self.errors[name]])
 
 		@onFail(@errors)
 
@@ -441,7 +451,6 @@ class Form
 		@onSuccess(@data)
 
 		return
-
 
 	createCheckbox: (name,change) ->
 
@@ -649,6 +658,41 @@ class Form
 
 		return
 
+	validateField: (name) ->
+
+		return if !@fields[name]
+
+		self = @
+
+		val = self.getVal(name)
+
+		self.deleteError(name)
+		self.errorField(name,false)
+
+		opt = self.fields[name]
+
+		if opt.rules and !self.h.isEmpty(opt.rules)
+
+			$.each opt.rules, (ruleName,rule) ->
+				if rule and self.validation[ruleName]
+					if opt.rules.required or !self.h.isEmpty(val)
+						valid = self.validation[ruleName](val, rule)
+						if !valid.state
+							self.setError(name,{ruleName,reason:valid.reason})
+							if self.fields[name].autoErrors
+								if self.fields[name].autoErrors is 'all'
+									self.errorField(name,self.errors[name])
+								else if self.errors[name][0]
+									self.errorField(name,self.errors[name][0])
+
+		if opt.rules and !self.h.isEmpty(opt.rules)
+			if !self.h.isEmpty(val) and (!self.errors[name] or self.h.isEmpty(self.errors[name]))
+				self.fields[name].el.addClass(self.classes.validation)
+				self.fields[name].sel.addClass(self.classes.validation)
+			else
+				self.fields[name].el.removeClass(self.classes.validation)
+				self.fields[name].sel.removeClass(self.classes.validation)
+
 	setVal: (name,val,withoutTrigger=false) ->
 
 		return if !@fields[name]
@@ -724,12 +768,20 @@ class Form
 
 	getData: -> @data
 
-	setError: (name,val) ->
+	setError: (name,opt) ->
 
 		if !@errors[name]
 			@errors[name] = []
 
-		@errors[name].push val
+		@errors[name].push opt
+
+		return
+
+	deleteError: (name) ->
+
+		return if !@errors[name]
+
+		delete @errors[name]
 
 		return
 
@@ -744,7 +796,7 @@ class Form
 
 		return
 
-	errorField: (name,errors) ->
+	errorField: (name,errors,withoutTrigger) ->
 
 		return if !@fields[name]
 
@@ -756,16 +808,33 @@ class Form
 			@fields[name].sel.addClass(@classes.errorField) if @fields[name].sel
 
 			if @fields[name].autoErrors
-				$error = @form.find('.' + @classes.error + '-' + name)
+				if @fields[name].errorFieldName
+					$error = @form.find('.' + @classes.error + '-' + @fields[name].errorFieldName)
+				else
+					$error = @form.find('.' + @classes.error + '-' + name)
 
 				if @h.isArray(errors)
 					$error.empty()
+
 					$.each errors, (k,v) ->
-						error  = self.templates.error.replace('{error}',v)
+
+						if !self.h.isObject(v)
+							v = {reason:v}
+
+						error  = self.templates.error.replace('{error}',v.reason)
 						$error.append(error)
+
 				else
-					error = self.templates.error.replace('{error}',errors)
+
+					if !self.h.isObject(errors)
+						errors = {reason:errors}
+
+					error = self.templates.error.replace('{error}',errors.reason)
 					$error.html(error)
+
+			
+			if !withoutTrigger
+				self.fields[name].el.eq(0).trigger('error',[errors])
 
 		else
 
@@ -773,7 +842,11 @@ class Form
 			@fields[name].sel.removeClass(@classes.errorField) if @fields[name].sel
 
 			if @fields[name].autoErrors
-				@form.find('.' + @classes.error + '-' + name).empty()
+				if @fields[name].errorFieldName
+					@form.find('.' + @classes.error + '-' + @fields[name].errorFieldName).empty()
+				else
+					@form.find('.' + @classes.error + '-' + name).empty()
+
 
 		return
 
@@ -948,6 +1021,53 @@ class Form
 		init: (form) ->
 
 			@form = $.extend(true, {}, @, form)
+	
+		patterns: 
+			numeric :
+				exp: '0-9'
+				type: ['цифра','цифры','цифр','цифры']
+			alpha 	:
+				exp: 'а-яёА-ЯЁa-zA-Z'
+				type: ['буква','буквы','букв','буквы']
+			rus 		:
+				exp: 'а-яёА-ЯЁ'
+				type: ['русская буква','русские буквы','русских букв','русские буквы']
+			rusLowercase:
+				exp: 'а-яё'
+				type: ['русская маленькая буква','русские маленькой буквы','русских маленьких букв','русские маленькой буквы']
+			rusUppercase:
+				exp: 'А-ЯЁ'
+				type: ['русская большая буква','русские большие буквы','русских больших букв','русские большие буквы']
+			eng 		:
+				exp: 'a-zA-Z'
+				type: ['английская буква','английские буквы','английских букв','английские буквы']
+			engLowercase:
+				exp: 'a-z'
+				type: ['английская маленькая буква','английские маленькие буквы','английских маленьких букв','английские маленькие буквы']
+			engUppercase:
+				exp: 'A-Z'
+				type: ['английская большая буква','английские большие буквы','английских больших букв','английские большие буквы']
+			dot 		:
+				exp: '.'
+				type: ['точка','точки','точек','точки']
+			hyphen 	:
+				exp: '-'
+				type: ['дефис','дефиса','дефисов','дефисы']
+			dash 		:
+				exp: '_'
+				type: ['подчеркивание','подчеркивания','подчеркиваний','подчеркивания']
+			space 	:
+				exp: '\\s'
+				type: ['пробел','пробела','пробелов','пробелы']
+			slash 	:
+				exp: '\\/'
+				type: ['слэш','слэша','слэшей','слэшы']
+			comma 	:
+				exp: ','
+				type: ['запятая','запятой','запятых','запятые']
+			special :
+				exp: '$@$!%*#?&'
+				type: ['специальный символ','специальных символа','специальных символов','специальныe символы']
 
 		required: (val,rule) ->
 
@@ -970,38 +1090,6 @@ class Form
 				else
 					if val? and !self.h.isEmpty(val)
 						obj.state = true
-
-				return obj
-
-			return valid()
-
-		not: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Недопустимое значение"
-
-			valid = ->
-
-				if rule.val?
-
-					if self.h.isArray(rule.val)
-						if val not in rule.val
-							obj.state = true
-						else
-							if val isnt rule.val
-								obj.state = true
-
-				else
-
-					if self.h.isArray(rule)
-						if val not in rule
-							obj.state = true
-					else
-						if val isnt rule
-							obj.state = true
 
 				return obj
 
@@ -1034,7 +1122,7 @@ class Form
 
 			valid = ->
 
-				if /^[a-zа-я]+$/i.test(val)
+				if /^[a-zA-Zа-яёА-ЯЁ]+$/.test(val)
 					obj.state = true
 
 				return obj
@@ -1051,7 +1139,7 @@ class Form
 
 			valid = ->
 
-				if /^[a-z]+$/i.test(val)
+				if /^[a-zA-Z]+$/.test(val)
 					obj.state = true
 
 				return obj
@@ -1068,143 +1156,7 @@ class Form
 
 			valid = ->
 
-				if /^[а-я]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		alphaSpace : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только буквы и пробелы"
-
-			valid = ->
-
-				if /^[a-zа-я\s]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		alphaNumericSpace : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только буквы, цифры и пробелы"
-
-			valid = ->
-
-				if /^[a-zа-я0-9\s]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-		
-		engSpace : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только английские буквы и пробелы"
-
-			valid = ->
-
-				if /^[a-z\s]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		rusSpace: (val, rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только русские буквы и пробелы"
-
-			valid = ->
-
-				if /^[а-я\s]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		engDash : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только английские буквы и подчеркивания"
-
-			valid = ->
-
-				if /^[a-z_]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		engNumeric : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только английские буквы и цифры"
-
-			valid = ->
-
-				if /^[a-z0-9]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		engDashNumeric : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только английские буквы, цифры и подчеркивания"
-
-			valid = ->
-
-				if /^[a-z0-9_]+$/i.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		alphaNumeric : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только буквы и цифры"
-
-			valid = ->
-
-				if /^[a-zа-я0-9\s]+$/i.test(val)
+				if /^[а-яёА-ЯЁ]+$/.test(val)
 					obj.state = true
 
 				return obj
@@ -1289,6 +1241,38 @@ class Form
 
 			return valid()
 
+		not: (val,rule) ->
+
+			self = @form
+
+			obj =
+				state: false
+				reason: rule.reason || "Недопустимое значение"
+
+			valid = ->
+
+				if rule.val?
+
+					if self.h.isArray(rule.val)
+						if val not in rule.val
+							obj.state = true
+						else
+							if val isnt rule.val
+								obj.state = true
+
+				else
+
+					if self.h.isArray(rule)
+						if val not in rule
+							obj.state = true
+					else
+						if val isnt rule
+							obj.state = true
+
+				return obj
+
+			return valid()
+	
 		compare: (val,rule) ->
 
 			self = @form
@@ -1302,11 +1286,9 @@ class Form
 				if rule.field and self.fields[rule.field]
 
 					if rule.reason
-						obj.reason = rule.reason.replace(/\{rule.field\}/g, rule.field)
+						obj.reason = rule.reason.replace(/\{field\}/g, rule.field)
 					else
 						obj.reason = "Поле не совпадает с #{rule.field}"
-
-					console.log '_____', self.fields
 
 					if val is self.fields[rule.field].val()
 							obj.state = true
@@ -1324,92 +1306,224 @@ class Form
 
 			return valid()
 
+		only: (val,rule) ->
+
+			self = @form
+			patterns = @patterns
+
+			obj = state: true
+
+			if rule.reason
+				obj.reason = rule.reason
+	
+			valid = ->
+
+				# MAIN PATTERN
+
+				_patterns = []
+				_reasons = []
 		
-		### 1 Alphabet and 1 Number ###	
-		pass1: (val,rule) ->
+				$.each rule.exp, (k,v) ->
 
-			self = @form
+					if patterns[k]
+						_reasons.push patterns[k].type[3]
+						_patterns.push patterns[k].exp
 
-			obj =
-				state: false
-				reason: rule.reason  || '1 Alphabet and 1 Number'
+				reason  = _reasons.join(', ')
+				pattern = _patterns.join('')
+				pattern = "^[" + pattern + "]+$"
 
-			valid = ->
+				if !rule.reason
+					obj.reason = 'Допустимы только ' + reason
 
-				if /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]/.test(val)
-					obj.state = true
+				if !new RegExp(pattern).test(val)
+					obj.state = false
+					return obj
+
+				# RANGE
+
+				_reasons = []
+				range = true
+
+				$.each rule.exp, (k,v) ->
+
+					if k is 'range' and self.h.isArray(v)
+
+						if v[0]
+							if val.length < v[0]
+								_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
+								range = false
+								return false
+
+						if v[1]
+							if val.length > v[1]
+								_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
+								range = false
+								return false
+
+				if !range
+
+					reason  = _reasons.join(', ')
+										
+					if !rule.reason
+						obj.reason = 'Допустимы ' + reason
+
+					obj.state = false
+					
+					return obj
+
+				# MAX - MIN
+
+				_reasons = []
+				maxmin = true
+
+				$.each rule.exp, (k,v) ->
+
+					if patterns[k]
+
+						if self.h.isArray(v)
+
+							reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
+							match =  val.match(reg)
+
+							if v[0]
+
+								if match and match.length < v[0]
+									_reasons.push 'Допустимы минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+									
+									maxmin = false
+									return false
+
+								else if !match
+									_reasons.push 'Требуется минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+									
+									maxmin = false
+									return false
+
+
+
+							if v[1]
+								if match and match.length > v[1]
+									_reasons.push 'Допустимы максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
+									maxmin = false
+									return false
+
+				if !maxmin
+
+					reason  = _reasons.join(', ')
+										
+					if !rule.reason
+						obj.reason = reason
+
+					obj.state = false
+					
+					return obj
 
 				return obj
 
 			return valid()
 
-		### 1 Alphabet, 1 Number and 1 Special Character ###	
-		pass2: (val,rule) ->
+		strict: (val,rule) ->
 
 			self = @form
+			patterns = @patterns
 
-			obj =
-				state: false
-				reason: rule.reason  || '1 Alphabet, 1 Number and 1 Special Character'
+			obj = state: true
 
+			if rule.reason
+				obj.reason = rule.reason
+	
 			valid = ->
 
-				if /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]/.test(val)
-					obj.state = true
+				# MAIN PATTERN
 
-				return obj
+				_patterns = []
+				_reasons = []
+		
+				$.each rule.exp, (k,v) ->
 
-			return valid()
+					if patterns[k]
+						_reasons.push patterns[k].type[3]
+						_patterns.push "(?=.*[" + patterns[k].exp + "])"
 
-		### 1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number ###	
-		pass3: (val,rule) ->
+				reason  = _reasons.join(', ')
+				pattern = _patterns.join('')
 
-			self = @form
+				if !rule.reason
+					obj.reason = 'Требуется ' + reason
 
-			obj =
-				state: false
-				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet and 1 Number'
+				if !new RegExp(pattern).test(val)
+					obj.state = false
+					return obj
 
-			valid = ->
+				# RANGE
 
-				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]/.test(val)
-					obj.state = true
+				_reasons = []
+				range = true
 
-				return obj
+				$.each rule.exp, (k,v) ->
 
-			return valid()
+					if k is 'range' and self.h.isArray(v)
 
-		### 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character ###	
-		pass4: (val,rule) ->
+						if v[0]
+							if val.length < v[0]
+								_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
+								range = false
+								return false
 
-			self = @form
+						if v[1]
+							if val.length > v[1]
+								_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
+								range = false
+								return false
 
-			obj =
-				state: false
-				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+				if !range
 
-			valid = ->
+					reason  = _reasons.join(', ')
+										
+					if !rule.reason
+						obj.reason = 'Требуется ' + reason
 
-				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)
-					obj.state = true
+					obj.state = false
+					
+					return obj
 
-				return obj
+				# MAX - MIN
 
-			return valid()
+				_reasons = []
+				maxmin = true
 
-		### 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character ###	
-		pass5: (val,rule) ->
+				$.each rule.exp, (k,v) ->
 
-			self = @form
+					if patterns[k]
 
-			obj =
-				state: false
-				reason: rule.reason  || '1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character'
+						if self.h.isArray(v)
 
-			valid = ->
+							reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
+							match =  val.match(reg)
 
-				if /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]/.test(val)
-					obj.state = true
+							if v[0]
+								if match and match.length < v[0]
+									_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+									maxmin = false
+									return false
+
+							if v[1]
+								if match and match.length > v[1]
+									_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
+									maxmin = false
+									return false
+
+				if !maxmin
+
+					reason  = _reasons.join(', ')
+										
+					if !rule.reason
+						obj.reason = 'Требуется ' + reason
+
+					obj.state = false
+					
+					return obj
 
 				return obj
 

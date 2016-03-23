@@ -99,8 +99,14 @@ body {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   border: 1px solid #ccc;
-  padding: 10px 15px;
+  padding: 10px 35px 10px 15px;
   font-size: 14px;
+  background: #fff;
+}
+.form input.valid,
+.form textarea.valid {
+  border: 1px solid #008000;
+  background: url("../img/valid.png") #fff right 10px top 14px no-repeat;
 }
 .form input:focus,
 .form textarea:focus,
@@ -110,7 +116,7 @@ body {
 }
 .form input:-webkit-autofill,
 .form textarea:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 50px #ededed inset;
+  -webkit-box-shadow: 0 0 0px 50px #fff inset;
 }
 .form [data-submit].disabled {
   background: #a8abad !important;

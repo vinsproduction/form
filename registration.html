@@ -71,6 +71,7 @@
       },
       'day': {
         placeholder: 'Выбрать',
+        errorFieldName: 'birthday',
         rules: {
           required: {
             not: 'Выбрать'
@@ -79,6 +80,7 @@
       },
       'month': {
         placeholder: 'Выбрать',
+        errorFieldName: 'birthday',
         rules: {
           required: {
             not: 'Выбрать'
@@ -87,6 +89,7 @@
       },
       'year': {
         placeholder: 'Выбрать',
+        errorFieldName: 'birthday',
         rules: {
           required: {
             not: 'Выбрать'
@@ -104,7 +107,8 @@
       fieldsOptions: {
         escape: true,
         autoErrors: true,
-        clearErrorsInFocus: true,
+        clearErrorsOnClick: true,
+        validateOnKeyup: true,
         rules: {
           required: true
         }
@@ -112,15 +116,6 @@
       onInit: function() {
         var self;
         self = this;
-        self.form.on('Error', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
-          self.form.find(".error-birthday").html(field.errors[0]);
-        });
-        self.form.on('Reset', '[data-name="day"],[data-name="month"],[data-name="year"]', function(e, field) {
-          self.form.find(".error-birthday").empty();
-        });
-        self.form.on('Click', '[data-name="day"],[data-name="month"],[data-name="year"]', function() {
-          self.form.find(".error-birthday").empty();
-        });
         self.form.on('Style', '[data-field][data-type="select"]', function(e, field) {
           scroll(field.sel);
         });

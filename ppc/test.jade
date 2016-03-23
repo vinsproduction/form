@@ -25,13 +25,40 @@ head
 				fields = 
 
 					'required':
-						rules: required: true
+						attrs:
+							maxlength: 8
+
+						rules:
+							required: true
+							alpha: true
+
+					'only':
+						rules:
+							only:
+								exp:
+									range: [2,10]
+									alpha: [1]
+									numeric: true
+
+									
+
+					'strict':
+						rules:
+							strict:
+								exp:
+									range: [10,20]
+									numeric: [1]
+									engLowercase: [1]
+									engUppercase: [1]
+								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
+
 
 					'not':
 						rules: not: ['test']
 
 					'numeric':
-						rules: numeric: true
+						rules:
+							numeric: true
 
 					'alpha':
 						rules: alpha: true
@@ -41,27 +68,6 @@ head
 
 					'rus':
 						rules: rus: true
-
-					'alphaSpace':
-						rules: alphaSpace: true
-
-					'alphaNumericSpace':
-						rules: alphaNumericSpace: true
-
-					'engSpace':
-						rules: engSpace: true
-
-					'rusSpace':
-						rules: rusSpace: true
-
-					'engDash':
-						rules: engDash: true
-
-					'engNumeric':
-						rules: engNumeric: true
-
-					'engDashNumeric':
-						rules: engDashNumeric: true
 
 					'max':
 						rules: max: 3
@@ -77,18 +83,6 @@ head
 
 					'compare':
 						rules: compare: field: 'url'
-
-					'pass1':
-						rules: pass1: true
-
-					'pass2':
-						rules: pass2: true
-
-					'pass3':
-						rules: pass3: true
-
-					'pass4':
-						rules: pass4: true
 
 
 				for name of fields
@@ -118,8 +112,9 @@ head
 					fields: fields
 					fieldsOptions:
 						escape: true
-						autoErrors: true
-						clearErrorsInFocus: true
+						autoErrors: 'all'
+						clearErrorsOnClick: true
+						validateOnKeyup: true
 
 
 

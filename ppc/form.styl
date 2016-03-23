@@ -102,15 +102,19 @@ body
 		borderbox()
 		
 		border 1px solid #CCC
-		padding 10px 15px
-		
+		padding 10px 35px 10px 15px
 		font-size 14px
+		background #FFF
+		
+		&.valid
+			border 1px solid green
+			bg 'valid.png', #FFF right 10px top 14px no-repeat
 
 	input:focus, textarea:focus, select:focus, button:focus
 		outline 0
 
 	input:-webkit-autofill,textarea:-webkit-autofill
-		-webkit-box-shadow: 0 0 0px 50px #ededed inset
+		-webkit-box-shadow 0 0 0px 50px #FFF inset
 		
 
 	[data-submit].disabled

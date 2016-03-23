@@ -51,6 +51,8 @@
       submitEl: '.submit a',
       fieldsOptions: {
         placeholder: 'Выбрать',
+        clearErrorsOnClick: true,
+        validateOnKeyup: true,
         rules: {
           required: true
         }
@@ -92,7 +94,8 @@
       formEl: '.form-2',
       submitEl: '.submit a',
       fieldsOptions: {
-        placeholder: 'Выбрать'
+        placeholder: 'Выбрать',
+        checkValidation: true
       },
       onInit: function() {
         var self;
