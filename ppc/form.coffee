@@ -39,7 +39,7 @@ class Form
 			style: true # Cтилизовать поле
 			autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
 			escape: true # Очищать инпут от тегов в отправке
-			clearErrorsOnClick: false # Удалять ошибки по клику на поле
+			clearErrorsOnClick: true # Удалять ошибки по клику на поле
 			validateOnKeyup: false # Валидировать на keyup
 			errorFieldName: false # Кастомный класс для вывода ошибки
 			attrs: {} # Атрибуты поля

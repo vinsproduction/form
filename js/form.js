@@ -38,7 +38,7 @@ Form = (function() {
       style: true,
       autoErrors: true,
       escape: true,
-      clearErrorsOnClick: false,
+      clearErrorsOnClick: true,
       validateOnKeyup: false,
       errorFieldName: false,
       attrs: {},
