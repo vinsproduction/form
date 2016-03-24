@@ -47,21 +47,6 @@ head
 
 				fields = 
 
-					'password':
-						validateOnKeyup: true
-						rules:
-							required: true
-							'myRule':
-								condition: (val) ->  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(val)
-								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
-
-
-					'password-confirmation':
-						validateOnKeyup: true
-						rules:
-							required: true
-							compare:
-								field: 'password'
 
 					'email':
 						rules:
@@ -69,24 +54,47 @@ head
 
 					'day':
 						placeholder: 'Выбрать'
-						errorFieldName: 'birthday'
+						fieldGroup: 'birthday'
+						errorGroup: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
 
 					'month':
 						placeholder: 'Выбрать'
-						errorFieldName: 'birthday'
+						fieldGroup: 'birthday'
+						errorGroup: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
 
 					'year':
 						placeholder: 'Выбрать'
-						errorFieldName: 'birthday'
+						fieldGroup: 'birthday'
+						errorGroup: 'birthday'
 						rules:
 							required:
 								not: 'Выбрать'
+
+					'password':
+						errorGroup: 'password-group'
+						validateOnKeyup: true
+						rules:
+							strict:
+								exp:
+									range: [8]
+									numeric: [1]
+									engLowercase: [1]
+									engUppercase: [1]
+								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
+
+
+					'password-confirmation':
+						errorGroup: 'password-group'
+						validateOnKeyup: true
+						rules:
+							compare:
+								field: 'password'
 
 				window.forms['registration'] = new Form
 
@@ -94,9 +102,10 @@ head
 					formEl: '.form'
 					submitEl: '.submit a'
 					fields: fields
+					noSubmitEmpty: false
 					fieldsOptions:
 						rules:
-							required: true
+							required: false
 
 					onInit: ->
 
@@ -156,25 +165,27 @@ body
 
 		.field.birthday
 			.label Дата рождения
+			.field-group
+				select(name='day')
+					option(selected=true) Выбрать
+					- for (var i = 1; i <= 31; ++i) {
+					option(value="#{(i < 10) ? '0' + i : i}") #{i}
+					- }
 
-			select(name='day')
-				option(selected=true) Выбрать
-				- for (var i = 1; i <= 31; ++i) {
-				option(value="#{(i < 10) ? '0' + i : i}") #{i}
-				- }
+			.field-group
+				select(name='month')
+					option(selected=true) Выбрать
+					- months = [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ]
+					- for (var i = 1; i <= months.length; ++i) {
+					option(value="#{(i < 10) ? '0' + i : i}") #{months[i-1]}
+					- }
 
-			select(name='month')
-				option(selected=true) Выбрать
-				- months = [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ]
-				- for (var i = 1; i <= months.length; ++i) {
-				option(value="#{(i < 10) ? '0' + i : i}") #{months[i-1]}
-				- }
-
-			select(name='year')
-				option(selected=true) Выбрать
-				- for (var i = 1905; i < 2017; ++i) {
-				option(value="#{i}") #{i}
-				- }
+			.field-group
+				select(name='year')
+					option(selected=true) Выбрать
+					- for (var i = 1905; i < 2017; ++i) {
+					option(value="#{i}") #{i}
+					- }
 
 			.error.error-birthday
 
@@ -183,22 +194,25 @@ body
 			input(type='text', name='email')
 			.error.error-email
 
-
 		.field
-			.label Пароль
-			input(type='password', name='password')
-			.error.error-password
 
-		.field
-			.label Повторение пароля
-			input(type='password', name='password-confirmation')
-			.error.error-password-confirmation
+			.field-group
+				.label Пароль
+				input(type='password', name='password')
+				//- .error.error-password
+
+			.field-group
+				.label Повторение пароля
+				input(type='password', name='password-confirmation')
+				//- .error.error-password-confirmation
+
+			.error.error-password-group
 
 
 		.field
 			.field-group
-				span Я согласен
 				input(type="checkbox", name="agree", value="1", checked=true)
+				p Я согласен
 			.error.error-agree
 
 		.field

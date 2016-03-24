@@ -13,8 +13,8 @@ $mainFont = Arial
 
 bg(filename, arguments=false)
 	if !arguments
-		arguments = no-repeat center center
-	background url($root + 'img/' + filename) arguments
+		arguments = center center
+	background url($root + 'img/' + filename) no-repeat arguments
 
 
 body
@@ -95,101 +95,59 @@ body
 // Form gloabal
 
 .form
-		
+	
 	input,textarea
 		// -webkit-appearance none
 		// -webkit-border-radius 0
-		borderbox()
-		border 1px solid #CCC
-		padding 10px 35px 10px 15px
-		font-size 14px
-		background #FFF
-		
-		&.valid
-			bg 'valid.png', #FFF right 10px top 14px no-repeat
-
+	
 	input:focus, textarea:focus, select:focus, button:focus
 		outline 0
 
 	input:-webkit-autofill,textarea:-webkit-autofill
 		-webkit-box-shadow 0 0 0px 50px #FFF inset
-	
-	.valid
-		border 1px solid green !important
-
-	[data-submit].disabled
-		background #A8ABAD !important
-		cursor wait !important
-		&:hover
-			background #A8ABAD !important
-			
-// Form
-
-.form
-	
-	max-width 800px
-	margin 50px auto 0 auto
-	padding 0 10px
-
-	.field
-		clear both
-		padding 10px 0
 		
-
-	.field-group
-
-		block-left()
-		margin 0 20px 0 0
-
-		span
-			margin 0 0 0 20px
-			position relative
-			top 1px
-
-		.checkbox
-			block-left(15,15)
-			border 1px solid rgb(214,214,214)
-			background #FFF
-			cursor pointer
-			&[data-checked]
-				bg 'checked.png'
-			&.error-field
-				border 1px solid red
+	[data-type='text'],[data-type='password']
 		
-		.radio
-			block-left(15,15)
-			border 1px solid rgb(214,214,214)
-			background #FFF
-			cursor pointer
-			&[data-checked]
-				bg 'checked.png'
-			&.error-field
-				border 1px solid red
+		height 50px
 
-	.label
-		padding 0 0 10px 0
-	
-	.error
-		clear both
-		color red
-		font-size 12px
-		height 24px
+		borderbox()
+		border 1px solid #CCC
+		padding 10px 35px 10px 15px
+		background #FFF
+		width 100%
 		
+		&.error-field
+			border 1px solid red
+		
+		&.valid
+			bg 'valid.png', #FFF right 10px top 14px no-repeat
+			border 1px solid green !important
 
-	.errors
-		height 30px
-	
-	.placeholder
-		color #CCC
+	[data-type='textarea']
+
+		height 150px
 		
-	.select
+		borderbox()
+		border 1px solid #CCC
+		padding 10px 35px 10px 15px
+		background #FFF
+		width 100%
+		
+		&.error-field
+			border 1px solid red
+		
+		&.valid
+			bg 'valid.png', #FFF right 10px top 14px no-repeat
+			border 1px solid green !important
+
+	[data-type='select']
+
 		width 100%
 		position relative
 		user-select none
 		background #FFF
 
 		.selected
-			block()
 			overflow hidden
 			height 50px
 			z-index 998
@@ -199,7 +157,6 @@ body
 			background #FFF
 			border 1px solid rgb(214,214,214)
 			cursor pointer
-			
 
 			&:after
 				content ''
@@ -213,6 +170,10 @@ body
 
 			&.default
 				color #8f8f8f
+		
+		&.valid
+			.selected
+				border 1px solid green
 		
 		&.error-field
 			.selected
@@ -268,8 +229,6 @@ body
 					span:after
 						display none
 						
-
-
 		.scrollbar
 			// background: transparent url('../img/bg-scrollbar.png') no-repeat 0 0
 			position: relative
@@ -309,25 +268,108 @@ body
 			.overview
 				width 100%
 				position absolute
-
-
-	input[type='text'],input[type='password']
-		width 100%
-		height 50px
+				
+	[data-type='checkbox']
+		block(15,15)
+		border 1px solid rgb(214,214,214)
+		background #FFF
+		cursor pointer
+		&[data-checked]
+			bg 'checked.png'
+		&.error-field
+			border 1px solid red
+		
+	[data-type='radio']
+		block(15,15)
+		border 1px solid rgb(214,214,214)
+		background #FFF
+		cursor pointer
+		&[data-checked]
+			bg 'checked.png'
 		&.error-field
 			border 1px solid red
 
-	textarea
-		width 100%
-		height 150px
-		&.error-field
-			border 1px solid red
+	[data-submit]
+
+		block-inline(200)
+		padding 10px 20px 
+		text-align center
+		text-decoration none
+		color #000
+		background #DDD
+
+		&.disabled
+			background #A8ABAD !important
+			cursor wait !important
+			&:hover
+				background #A8ABAD !important
+			
+	.label
+		padding 0 0 10px 0
+	
+	.error
+		clear both
+		color red
+		height 24px
+		font-size 12px
+
+	.errors
+		height 30px
+	
+	.placeholder
+		color #CCC
+			
+// Form
+
+.form
+	
+	max-width 800px
+	margin 50px auto 0 auto
+	padding 0 10px
+
+	.field
+		clear both
+		padding 10px 0
+		
+
+	.field-group
+
+		block-left()
+		margin 0 20px 0 0
+		min-width 150px
+
+		p
+			margin 0 0 0 20px
+			position relative
+			top 1px
+			block-left()
+
+		[data-type='checkbox']
+			float left
+		[data-type='radio']
+			float left
+	
+
+	[data-type='select']
+		// width 200px
+		.selected
+			// height 50px
+		.viewport
+			// height 150px
+
+	[data-type='text'],[data-type='password']
+		// width 100%
+		// height 50px
+		
+	[data-type='textarea']
+		// width 100%
+		// height 150px
 
 
 	.submit,.reset,.add-field
 		padding 10px 20px 50px 0
 		block-left()
-		[data-submit],a
+		a
 			block-inline(200)
 			padding 10px 20px 
 			text-align center

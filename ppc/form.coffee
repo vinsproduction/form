@@ -32,6 +32,8 @@ class Form
 
 		@enter = true  # Отправка на Enter
 
+		@noSubmitEmpty = false # Не отправлять пустые значение и false
+
 		@disableSubmit = false # Заблокировать сабмит
 
 		@fieldsOptions =
@@ -41,7 +43,8 @@ class Form
 			escape: true # Очищать инпут от тегов в отправке
 			clearErrorsOnClick: true # Удалять ошибки по клику на поле
 			validateOnKeyup: false # Валидировать на keyup
-			errorFieldName: false # Кастомный класс для вывода ошибки
+			errorGroup: false # Имя группы полей errors
+			fieldGroup: false # Имя группы полей data
 			attrs: {} # Атрибуты поля
 			rules: {} # Правила поля
 
@@ -388,32 +391,54 @@ class Form
 
 		do @resetData
 
+		list = {}
+
 		console.groupCollapsed("[Form: #{@formName}] submit") if @logs
 
 		$.each @fields, (name, opt) ->
 
+			return if !opt.active
+
 			val = self.getVal(name)
-
 			self.setData(name,val)
-
-			if opt.name
-				self.data[opt.name] = if opt.escape then self.h.escapeText(val) else val
-			else
-				self.data[name] = if opt.escape then self.h.escapeText(val) else val
-
-			if !opt.active
-				delete self.data[name]
+			list[name] = val
 
 			console.log(name + ': ',val) if self.logs
+
+			self.data[name] = if opt.escape then self.h.escapeText(val) else val
+
+			if self.noSubmitEmpty
+
+				if opt.type is 'select'
+					if opt.rules.required.not
+						if self.h.isArray(opt.rules.required.not)
+							if val in opt.rules.required.not
+								self.deleteData(name)
+						else
+							if val is opt.rules.required.not
+								self.deleteData(name)
+
+				if opt.type in ['text','password', 'textarea']
+					if self.h.isEmpty(val)
+						self.deleteData(name)
+
+			if opt.fieldGroup
+				if self.data.hasOwnProperty(name)
+					if !self.data[opt.fieldGroup]
+						self.data[opt.fieldGroup] = {}
+					self.data[opt.fieldGroup][name] = self.data[name]
+					self.deleteData(name)
+
 
 		console.log("data",@data) if @logs
 
 		console.groupEnd() if @logs
 
-		$.each @fields, (name) ->
-			self.validateField(name)
+		$.each @fields, (name, opt) ->
+			if opt.active
+				self.validateField(name)
 
-		@onSubmit(@data)
+		@onSubmit(@data,list)
 
 		if @h.isEmpty(@errors)
 			do @Success
@@ -426,14 +451,37 @@ class Form
 
 		self = @
 
+		list = []
+
+		errorGroup = {}
+
 		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
 
-		$.each @errors, (name, data) ->
-			console.log(name,data) if self.logs
+		$.each @fields, (name, opt) ->
+
+			errors = self.errors[name]
+
+			if errors
+				console.log(name + ': ' + errors[0].reason) if self.logs
+
+				if opt.errorGroup
+
+					delete self.errors[name]
+
+					if !self.errors[opt.errorGroup]
+						self.errors[opt.errorGroup] = {}
+
+					$.each self.fields, (fieldName) ->
+
+						if self.fields[fieldName].errorGroup is opt.errorGroup
+							self.errors[opt.errorGroup][name] = errors
+							return
+
+		console.log("errors",@errors) if @logs
 
 		console.groupEnd() if @logs
 
-		@onFail(@errors)
+		@onFail(@errors, list)
 
 		return
 
@@ -681,10 +729,10 @@ class Form
 		if event is 'keyup' or event is 'change'
 			
 			if self.fields[name].type in ['checkbox','radio']
-				if !val then showErrors = false
+				if val is false then showErrors = false
 	
 			else if self.fields[name].type is 'select'
-				if self.fields[name].rules.required.not
+				if self.fields[name].rules.required and self.fields[name].rules.required.not
 					if self.h.isArray(self.fields[name].rules.required.not)
 						if val in self.fields[name].rules.required.not
 							showErrors = false
@@ -717,7 +765,6 @@ class Form
 			if !self.errors[name] or self.h.isEmpty(self.errors[name])
 				self.fields[name].el.addClass(self.classes.validation)
 				self.fields[name].sel.addClass(self.classes.validation)
-
 
 	setVal: (name,val,withoutTrigger=false) ->
 
@@ -788,7 +835,13 @@ class Form
 
 	setData: (name,val) ->
 
-		if !@data[name] then @data[name] = val
+		@data[name] = val
+
+		return
+
+	deleteData: (name) ->
+
+		delete @data[name]
 
 		return
 
@@ -804,8 +857,6 @@ class Form
 		return
 
 	deleteError: (name) ->
-
-		return if !@errors[name]
 
 		delete @errors[name]
 
@@ -830,12 +881,22 @@ class Form
 
 		if errors
 
-			@fields[name].el.addClass(@classes.errorField)
-			@fields[name].sel.addClass(@classes.errorField) if @fields[name].sel
+			if @fields[name].errorGroup
+
+				$.each @fields, (fieldName) ->
+
+					if self.fields[fieldName].errorGroup is self.fields[name].errorGroup
+						self.fields[fieldName].el.addClass(self.classes.errorField)
+						self.fields[fieldName].sel.addClass(self.classes.errorField)
+			else
+
+				@fields[name].el.addClass(@classes.errorField)
+				@fields[name].sel.addClass(@classes.errorField)
 
 			if @fields[name].autoErrors
-				if @fields[name].errorFieldName
-					$error = @form.find('.' + @classes.error + '-' + @fields[name].errorFieldName)
+
+				if @fields[name].errorGroup
+					$error = @form.find('.' + @classes.error + '-' + @fields[name].errorGroup)
 				else
 					$error = @form.find('.' + @classes.error + '-' + name)
 
@@ -864,14 +925,28 @@ class Form
 
 		else
 
-			@fields[name].el.removeClass(@classes.errorField)
-			@fields[name].sel.removeClass(@classes.errorField) if @fields[name].sel
+			if @fields[name].errorGroup
+
+				$.each @fields, (fieldName) ->
+
+					if self.fields[fieldName].errorGroup is self.fields[name].errorGroup
+						self.fields[fieldName].el.removeClass(self.classes.errorField)
+						self.fields[fieldName].sel.removeClass(self.classes.errorField)
+
+			else
+
+				@fields[name].el.removeClass(@classes.errorField)
+				@fields[name].sel.removeClass(@classes.errorField)
 
 			if @fields[name].autoErrors
-				if @fields[name].errorFieldName
-					@form.find('.' + @classes.error + '-' + @fields[name].errorFieldName).empty()
+
+				if @fields[name].errorGroup
+					@form.find('.' + @classes.error + '-' + @fields[name].errorGroup).empty()
+
 				else
 					@form.find('.' + @classes.error + '-' + name).empty()
+
+
 
 
 		return
