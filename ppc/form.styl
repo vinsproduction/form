@@ -106,10 +106,8 @@ body
 	input:-webkit-autofill,textarea:-webkit-autofill
 		-webkit-box-shadow 0 0 0px 50px #FFF inset
 		
-	[data-type='text'],[data-type='password']
+	[data-type='text'],[data-type='password'],[data-type='textarea']
 		
-		height 50px
-
 		borderbox()
 		border 1px solid #CCC
 		padding 10px 35px 10px 15px
@@ -120,26 +118,18 @@ body
 			border 1px solid red
 		
 		&.valid
-			bg 'valid.png', #FFF right 10px top 14px no-repeat
+			bg 'valid.png', #FFF right 10px top 14px
 			border 1px solid green !important
+
+	[data-type='text'],[data-type='password']
+
+		height 50px
+
 
 	[data-type='textarea']
 
 		height 150px
 		
-		borderbox()
-		border 1px solid #CCC
-		padding 10px 35px 10px 15px
-		background #FFF
-		width 100%
-		
-		&.error-field
-			border 1px solid red
-		
-		&.valid
-			bg 'valid.png', #FFF right 10px top 14px no-repeat
-			border 1px solid green !important
-
 	[data-type='select']
 
 		width 100%

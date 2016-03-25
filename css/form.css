@@ -105,8 +105,8 @@ body {
   -webkit-box-shadow: 0 0 0px 50px #fff inset;
 }
 .form [data-type='text'],
-.form [data-type='password'] {
-  height: 50px;
+.form [data-type='password'],
+.form [data-type='textarea'] {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -115,29 +115,22 @@ body {
   width: 100%;
 }
 .form [data-type='text'].error-field,
-.form [data-type='password'].error-field {
-  border: 1px solid #f00;
-}
-.form [data-type='text'].valid,
-.form [data-type='password'].valid {
-  background: url("../img/valid.png") no-repeat #fff right 10px top 14px no-repeat;
-  border: 1px solid #008000 !important;
-}
-.form [data-type='textarea'] {
-  height: 150px;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  padding: 10px 35px 10px 15px;
-  background: #fff;
-  width: 100%;
-}
+.form [data-type='password'].error-field,
 .form [data-type='textarea'].error-field {
   border: 1px solid #f00;
 }
+.form [data-type='text'].valid,
+.form [data-type='password'].valid,
 .form [data-type='textarea'].valid {
-  background: url("../img/valid.png") no-repeat #fff right 10px top 14px no-repeat;
+  background: url("../img/valid.png") no-repeat #fff right 10px top 14px;
   border: 1px solid #008000 !important;
+}
+.form [data-type='text'],
+.form [data-type='password'] {
+  height: 50px;
+}
+.form [data-type='textarea'] {
+  height: 150px;
 }
 .form [data-type='select'] {
   width: 100%;

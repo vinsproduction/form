@@ -47,6 +47,13 @@ head
 
 				fields = 
 
+					'firstname':
+						rules:
+							alpha: true
+
+					'lastname':
+						rules:
+							alpha: true
 
 					'email':
 						rules:
@@ -102,10 +109,9 @@ head
 					formEl: '.form'
 					submitEl: '.submit a'
 					fields: fields
-					noSubmitEmpty: false
 					fieldsOptions:
 						rules:
-							required: false
+							required: true
 
 					onInit: ->
 

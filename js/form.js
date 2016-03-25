@@ -128,7 +128,7 @@ Form = (function() {
     self = this;
     this.resetData();
     this.clearErrors();
-    this.resetErorrs();
+    this.resetErrors();
     this.form.find('[data-field]').off();
     this.form.off();
     this.submitBtn.off();
@@ -395,6 +395,7 @@ Form = (function() {
     var list, self;
     self = this;
     this.resetData();
+    this.resetErrors();
     list = {};
     if (this.logs) {
       console.groupCollapsed("[Form: " + this.formName + "] submit");
@@ -408,7 +409,7 @@ Form = (function() {
       self.setData(name, val);
       list[name] = val;
       if (self.logs) {
-        console.log(name + ': ', val);
+        console.log(name + ': ' + (val || '""'));
       }
       self.data[name] = opt.escape ? self.h.escapeText(val) : val;
       if (self.noSubmitEmpty) {
@@ -442,7 +443,7 @@ Form = (function() {
       }
     });
     if (this.logs) {
-      console.log("data", this.data);
+      console.log(this.data);
     }
     if (this.logs) {
       console.groupEnd();
@@ -454,17 +455,15 @@ Form = (function() {
     });
     this.onSubmit(this.data, list);
     if (this.h.isEmpty(this.errors)) {
-      this.Success();
+      this.Success(list);
     } else {
       this.Fail();
     }
   };
 
   Form.prototype.Fail = function() {
-    var errorGroup, list, self;
+    var self;
     self = this;
-    list = [];
-    errorGroup = {};
     if (this.logs) {
       console.groupCollapsed("[Form: " + this.formName + "] fail");
     }
@@ -476,46 +475,41 @@ Form = (function() {
           console.log(name + ': ' + errors[0].reason);
         }
         if (opt.errorGroup) {
-          delete self.errors[name];
-          if (!self.errors[opt.errorGroup]) {
-            self.errors[opt.errorGroup] = {};
-          }
-          return $.each(self.fields, function(fieldName) {
-            if (self.fields[fieldName].errorGroup === opt.errorGroup) {
-              self.errors[opt.errorGroup][name] = errors;
+          if (self.errors.hasOwnProperty(name)) {
+            if (!self.errors[opt.errorGroup]) {
+              self.errors[opt.errorGroup] = {};
             }
-          });
+            self.errors[opt.errorGroup][name] = errors;
+            return self.deleteError(name);
+          }
         }
       }
     });
     if (this.logs) {
-      console.log("errors", this.errors);
+      console.log(this.errors);
     }
     if (this.logs) {
       console.groupEnd();
     }
-    this.onFail(this.errors, list);
+    this.onFail(this.errors);
   };
 
-  Form.prototype.Success = function() {
-    var name, ref, val;
+  Form.prototype.Success = function(list) {
     if (this.logs) {
       console.groupCollapsed("[Form: " + this.formName + "] success");
     }
-    ref = this.data;
-    for (name in ref) {
-      val = ref[name];
-      if (this.logs) {
-        console.log(name, val);
+    $.each(this.data, function(name, val) {
+      if (self.logs) {
+        return console.log(name + ': ' + (val || '""'));
       }
-    }
+    });
     if (this.logs) {
-      console.log("data", this.data);
+      console.log(this.data);
     }
     if (this.logs) {
       console.groupEnd();
     }
-    this.onSuccess(this.data);
+    this.onSuccess(this.data, list);
   };
 
   Form.prototype.createCheckbox = function(name, change) {
@@ -804,7 +798,7 @@ Form = (function() {
     var self;
     self = this;
     this.resetData();
-    this.resetErorrs();
+    this.resetErrors();
     $.each(this.fields, function(name, opt) {
       if (self.fields[name]["new"]) {
         return self.removeField(name);
@@ -818,7 +812,7 @@ Form = (function() {
     this.onReset();
   };
 
-  Form.prototype.resetErorrs = function() {
+  Form.prototype.resetErrors = function() {
     return this.errors = {};
   };
 

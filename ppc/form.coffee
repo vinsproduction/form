@@ -130,7 +130,7 @@ class Form
 		
 		# Reset errors!
 		@clearErrors()
-		@resetErorrs()
+		@resetErrors()
 
 		# Remove Events!
 
@@ -390,6 +390,7 @@ class Form
 		self = @
 
 		do @resetData
+		do @resetErrors
 
 		list = {}
 
@@ -403,7 +404,7 @@ class Form
 			self.setData(name,val)
 			list[name] = val
 
-			console.log(name + ': ',val) if self.logs
+			console.log(name + ': ' + (val || '""')) if self.logs
 
 			self.data[name] = if opt.escape then self.h.escapeText(val) else val
 
@@ -430,7 +431,7 @@ class Form
 					self.deleteData(name)
 
 
-		console.log("data",@data) if @logs
+		console.log(@data) if @logs
 
 		console.groupEnd() if @logs
 
@@ -441,19 +442,15 @@ class Form
 		@onSubmit(@data,list)
 
 		if @h.isEmpty(@errors)
-			do @Success
+			@Success(list)
 		else
-			do @Fail
+			@Fail()
 
 		return
 
 	Fail: ->
 
 		self = @
-
-		list = []
-
-		errorGroup = {}
 
 		console.groupCollapsed("[Form: #{@formName}] fail") if @logs
 
@@ -462,41 +459,36 @@ class Form
 			errors = self.errors[name]
 
 			if errors
+
 				console.log(name + ': ' + errors[0].reason) if self.logs
 
 				if opt.errorGroup
+					if self.errors.hasOwnProperty(name)
+						if !self.errors[opt.errorGroup]
+							self.errors[opt.errorGroup] = {}
+						self.errors[opt.errorGroup][name] = errors
+						self.deleteError(name)
 
-					delete self.errors[name]
-
-					if !self.errors[opt.errorGroup]
-						self.errors[opt.errorGroup] = {}
-
-					$.each self.fields, (fieldName) ->
-
-						if self.fields[fieldName].errorGroup is opt.errorGroup
-							self.errors[opt.errorGroup][name] = errors
-							return
-
-		console.log("errors",@errors) if @logs
+		console.log(@errors) if @logs
 
 		console.groupEnd() if @logs
 
-		@onFail(@errors, list)
+		@onFail(@errors)
 
 		return
 
-	Success: ->
+	Success: (list) ->
 
 		console.groupCollapsed("[Form: #{@formName}] success") if @logs
 
-		for name,val of @data
-			console.log(name, val) if @logs
+		$.each @data, (name,val) ->
+			console.log(name + ': ' + (val || '""')) if self.logs
 
-		console.log("data",@data) if @logs
+		console.log(@data) if @logs
 
 		console.groupEnd() if @logs
 
-		@onSuccess(@data)
+		@onSuccess(@data,list)
 
 		return
 
@@ -814,7 +806,7 @@ class Form
 		self = @
 
 		do @resetData
-		do @resetErorrs
+		do @resetErrors
 
 		$.each @fields, (name, opt) ->
 
@@ -829,7 +821,7 @@ class Form
 
 		return
 
-	resetErorrs: -> @errors = {}
+	resetErrors: -> @errors = {}
 
 	resetData: -> @data = {}
 

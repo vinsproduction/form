@@ -45,6 +45,16 @@
     };
     window.forms = {};
     fields = {
+      'firstname': {
+        rules: {
+          alpha: true
+        }
+      },
+      'lastname': {
+        rules: {
+          alpha: true
+        }
+      },
       'email': {
         rules: {
           email: true
@@ -110,10 +120,9 @@
       formEl: '.form',
       submitEl: '.submit a',
       fields: fields,
-      noSubmitEmpty: false,
       fieldsOptions: {
         rules: {
-          required: false
+          required: true
         }
       },
       onInit: function() {
