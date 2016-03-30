@@ -1386,10 +1386,10 @@ class Form
 						obj.reason = "Поле не совпадает с #{rule.field}"
 
 					if val is self.fields[rule.field].val()
-							obj.state = true
+						obj.state = true
 						return obj
 
-				if rule.val
+				if rule.val?
 					if self.h.isFunction(rule.val)
 						if val is rule.val()
 							obj.state = true
@@ -1398,6 +1398,8 @@ class Form
 							obj.state = true
 
 					return obj
+
+				return obj
 
 			return valid()
 

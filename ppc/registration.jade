@@ -83,10 +83,22 @@ head
 							required:
 								not: 'Выбрать'
 
+					'password-confirmation':
+						errorGroup: 'password-group'
+						validateOnKeyup: true
+						rules:
+							required:
+								reason: 'Повторите пароль'
+							compare:
+								field: 'password'
+								reason: 'Пароли не совпадают'
+
 					'password':
 						errorGroup: 'password-group'
 						validateOnKeyup: true
 						rules:
+							required:
+								reason: 'Введите пароль'
 							strict:
 								exp:
 									range: [8]
@@ -96,12 +108,7 @@ head
 								reason: 'Пароль должен содержать цифры, прописные и строчные буквы латиницы, не менее 8 символов'
 
 
-					'password-confirmation':
-						errorGroup: 'password-group'
-						validateOnKeyup: true
-						rules:
-							compare:
-								field: 'password'
+
 
 				window.forms['registration'] = new Form
 

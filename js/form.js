@@ -1415,10 +1415,10 @@ Form = (function() {
           }
           if (val === self.fields[rule.field].val()) {
             obj.state = true;
+            return obj;
           }
-          return obj;
         }
-        if (rule.val) {
+        if (rule.val != null) {
           if (self.h.isFunction(rule.val)) {
             if (val === rule.val()) {
               obj.state = true;
@@ -1430,6 +1430,7 @@ Form = (function() {
           }
           return obj;
         }
+        return obj;
       };
       return valid();
     },
