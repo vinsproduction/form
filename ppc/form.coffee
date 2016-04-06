@@ -316,10 +316,17 @@ class Form
 		@fields[name].el.attr('data-name',name)
 		@fields[name].el.attr('data-field','original')
 
-		if !@fields[name].el.attr('type')
+		if !@fields[name].el.attr('type') and !@fields[name].el.is('select') and !@fields[name].el.is('textarea')
 			@fields[name].el.attr('type','text')
 
-		@fields[name].type = if @fields[name].el.is('select') then 'select' else @fields[name].el.attr('type')
+		if @fields[name].el.is('select')
+			@fields[name].type = 'select'
+
+		else if @fields[name].el.is('textarea')
+			@fields[name].type = 'textarea'
+
+		else
+			@fields[name].type = @fields[name].el.attr('type')
 
 		@fields[name].el.attr('data-type',@fields[name].type)
 

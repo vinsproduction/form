@@ -312,10 +312,16 @@ Form = (function() {
     this.fields[name].sel = $([]);
     this.fields[name].el.attr('data-name', name);
     this.fields[name].el.attr('data-field', 'original');
-    if (!this.fields[name].el.attr('type')) {
+    if (!this.fields[name].el.attr('type') && !this.fields[name].el.is('select') && !this.fields[name].el.is('textarea')) {
       this.fields[name].el.attr('type', 'text');
     }
-    this.fields[name].type = this.fields[name].el.is('select') ? 'select' : this.fields[name].el.attr('type');
+    if (this.fields[name].el.is('select')) {
+      this.fields[name].type = 'select';
+    } else if (this.fields[name].el.is('textarea')) {
+      this.fields[name].type = 'textarea';
+    } else {
+      this.fields[name].type = this.fields[name].el.attr('type');
+    }
     this.fields[name].el.attr('data-type', this.fields[name].type);
     this.fields[name].originalVal = self.getVal(name);
     if (this.fields[name].type === 'select') {
