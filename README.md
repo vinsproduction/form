@@ -114,7 +114,7 @@ fieldsOptions:
 	validateOnKeyup: false # Валидировать на keyup
 	errorGroup: false # Имя группы полей errors
 	fieldGroup: false # Имя группы полей data
-	attrs: {} # Атрибуты поля
+	attrs: {} # Атрибуты поля. Например maxlength: 10
 	rules: {} # Правила поля
 
 ```
@@ -236,6 +236,29 @@ not | Исключение (значение или массив)
 only | Обьект условий. Разрешены любые указанные значения (см. patterns)
 sctict | Обьект условий. Обязательны все указанные условия! (см. patterns)
 
+Пример Only и Strict
+```
+fields: 
+	'name-1':
+		rules:
+			required: true
+			only:
+				exp:
+					range: [4,10]
+					alpha: [1]
+					numeric: [0,1]
+	
+	
+	'name-2':
+		rules:
+			strict:
+				exp:
+					range: [10,20]
+					numeric: [1]
+					engLowercase: [1]
+					engUppercase: [1]
+
+```
 
 ### Patterns (only,sctict)
 #####
