@@ -12,45 +12,30 @@
 
 ``` 
 
-$form = $('.form')
+new Form
 
-fields = 
-	'email':
-		rules:
-			required: true
-			email: true
-
-	'password':
-		rules:
-			required: true
-
-formValidator = new Form
-
-	logs: true
 	formName: 'login'
-	formEl: $form
-	submitEl: $form.find('.submit a')
-	fields: fields
+	formEl: $('.form')
+	submitEl: $('.form').find('.submit a')
+	fields:
+		'email':
+			rules:
+				email: true
 	fieldsOptions:
-		escape: true
+		rules:
+			required: true
 	
-	onInit: ->
-	
-	onSubmit: (data) ->
-		$form.find('.errors').empty()
-		
 	onSuccess: (data) ->
-		@lockSubmit()
-		@showPreloader()
+		@submit(false)
+		@preloader(true)
 
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-				@unlockSubmit()
-				@hidePreloader()
+				@submit(true)
+				@preloader(false)
 	
-	onFail: (errors) ->
-		$form.find('.errors').html "Исправьте ошибки в форме"
+
 
 ```
 
@@ -62,16 +47,13 @@ formValidator = new Form
 
 	.field
 		.label Email
-		input(type='text', name='email')
+		input(type='text' name='email')
 		.error.error-email
 
 	.field
 		.label Пароль
-		input(type='password', name='password')
+		input(type='password' name='password')
 		.error.error-password
-
-	.field
-		.errors
 
 
 	.field
@@ -104,28 +86,45 @@ fields =
 	###
 
 	'dropdown'
-		defaultStyle: 'Выбрать'
+		placeholder: 'Выбрать'
 		rules:
 			required:
 				not: 'Выбрать'
+				
+```
 
-# fieldsOptions - настройки для всех полей. Опционально
-# Такие же настройки внутри самого поля приоритетней! Как например escape выше
+### fieldsOptions - общие настройки для всех полей. (Опционально)
+# Настройки самого поля приоритетней!
+# Ниже приведены настройки по-умолчанию 
+
+```
 
 fieldsOptions:
-	style: false # Cтилизовать поле. По умолчанию true
-	focus: false # Поставить фокус на поле. . По умолчанию false
-	clearErrorsInFocus: false # Удалять ошибки в фокусе. По умолчанию true
-	autoErrors: false # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля. По умолчанию true
-	escape: false # Очищать инпут от тегов в отправке. По умолчанию false
-	onError: (fieldName, errors) -> # Опционально
+	
+	active: true # Активное поле
+	style: true # Cтилизовать поле
+	autoErrors: true # Автоматически показывать ошибку валидации конкретного поля, если 'all' - то все ошибки поля
+	escape: true # Очищать инпут от тегов в отправке
+	clearErrorsOnClick: true # Удалять ошибки по клику на поле
+	validateOnKeyup: false # Валидировать на keyup
+	errorGroup: false # Имя группы полей errors
+	fieldGroup: false # Имя группы полей data
+	attrs: {} # Атрибуты поля
+	rules: {} # Правила поля
 
-formValidator = new Form
+```
+
+### Настройки формы
+# Ниже приведены настройки по-умолчанию 
+```
+Form
 	
 	# Обязательные атрибуты
 
-	formEl: '.form' # Элемент формы (Класс или элемент DOM)
-	submitEl: '.submit' # Элемент отправки формы (Класс или элемент DOM)
+	formEl = false # Элемент формы или класс
+	submitEl = false # Элемент кнопки отправки или класс
+	
+	# Опционально
 
 	###
 	autoFields
@@ -133,26 +132,49 @@ formValidator = new Form
 	Если false - обрабатываться будут только указанные поля!
 	По умолчанию - true
 	###
-
+	
 	@autoFields = true
 	
-	fields: fields # Проверяемые поля
-	fieldsOptions: fieldsOptions # Настройки полей
+	fields: {} # Проверяемые поля
+	fieldsOptions: {} # Настройки полей
 
- 	# Опционально
 
  	logs: true # Логи. По умолчанию false
 	formName: 'nice form' Имя формы (опционально)
 
-	enter: true  # Отправка на Enter (В фокусе формы). По умолчанию true
-	disableSubmit: false # Заблокировать сабмит. По умолчанию false
+	enter: true  # Отправка на Enter (В фокусе формы)
+	noSubmitEmpty: false # Не отправлять пустые значение и false
+	disableSubmit: false # Заблокировать сабмит
 
 	classes:
-		disableSubmitClass: 'disabled' # Класс заблокированного сабмита
-		placeholderClass: "placeholder" # Класс плейсхолдера
-		errorFieldClass: "error-field" # Стиль ошибки поля
-		errorClass: "error" # Класс элемента вывода ошибки поля
-		preloaderClass: "preloader" # Класс прелоадера формы
+		input:
+			placeholder: "placeholder" # Класс плейсхолдера
+		checkbox: 'checkbox'
+		radio: 'radio'			
+		select:
+			select: 'select'
+			selected: 'selected'
+			options: 'options'
+			option: 'option'
+			open: 'open' # Класс открытого селекта
+			placeholder: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'		
+		submit:
+			disable: 'disabled' # Класс заблокированного сабмита
+		errorField: "error-field" # Класс ошибки поля
+		error: "error" # Класс элемента вывода ошибки поля
+		preloader: "preloader" # Класс прелоадера формы
+		validation: "valid" # Класс успешного поля
+	
+	templates:
+		hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
+		checkbox: """<div></div>"""
+		radio: """<div></div>"""
+		select:
+			select: """<div></div>"""
+			selected: """<div><span>{selected}</span></div>"""
+			options: """<div></div>"""
+			option: """<div><span>{text}</span></div>"""
+		error: """<div>{error}</div>"""
 
 ```
 ## Вариант настройки обработки полей
@@ -164,7 +186,6 @@ formValidator = new Form
 fields = 
 
 	'login':
-		escape: true
 		placeholder: "login"
 		rules:
 			required:
@@ -173,14 +194,11 @@ fields =
 				reason: 'Своя причина'
 			max:
 				count: 4
-				reason: 'Максимум {count} символа'
+				reason: 'Максимум {count}'
 			min:
 				count: 2
-				reason: 'Минимум {count} символа'
+				reason: 'Минимум {count}'
 
-		onError: (fieldName,errors) ->
-			for i of errors
-				$form.find(".error-#{fieldName}").append(errors[i] + "<br/>")
 
 ```
 				
@@ -190,12 +208,9 @@ fields =
 required — Обязательное поле
 	not: Значение кроме
 numeric — Разрешены только цифры
-numericDash — Разрешены только цифры и подчеркивания
 alpha — Разрешены только буквы
-alphaDash — Разрешены только буквы и подчеркивания
-alphaNumeric — Разрешены только буквы и цифры
 eng — Разрешены только английские буквы
-cyrillic — Разрешены только кириллические буквы
+rus — Разрешены только русские буквы
 max — Максимум символов
 	count - кол-во символов
 min — Минимум символов
@@ -204,6 +219,36 @@ email — Email
 url — Url
 compare - Сравнение
 	val: значение или функция
+	field: или имя поля для сравнения
+not - занчение или массив значений исключения
+
+only - Обьект условий. Разрешены любые указанные значения (см. patterns)
+sctict - Обьект условий. Обязательны все указанные условия! (см. patterns)
+
+
+```
+
+### Patterns (only,sctict)
+# Каждому значению можно выставить или true или массив.
+Например [0,2] ,где первое значние Минимум символов данного типа, а второе, если передано - Максимум
+
+```
+numeric 	- цифры
+alpha  		- буквы
+rus 		- русские буквы
+rusLowercase 	- русские маленькой буквы
+rusUppercase 	- русские большие буквы
+eng 		- английские буквы
+engLowercase 	- английские маленькие буквы
+engUppercase 	- английские большие буквы
+dot 		- точки
+hyphen 		- дефисы
+dash 		- подчеркивания
+space 		- пробелы
+slash 		- слэшы
+comma 		- запятые
+special		- специальныe символы
+
 ```
 	
 	
@@ -211,12 +256,7 @@ compare - Сравнение
 
 ```
 
-formValidator.addRule 
-	field: 'password-confirmation'
-	rule: 'password confirmation rule'
-	reason: 'Пароли не совпадают'
-	condition: (val) ->
-		return $form.find('input[name="password"]').val() is val
+formValidator.addFieldRule(name,ruleName,rule={})
 
 ```
 	
@@ -257,46 +297,35 @@ formValidator.reset()
 
 Добавление поля
 ```
-formValidator.addField
-	name: 'название поля'
-	options:
-		rules:
-			required: true
-	onInit: -> 
+formValidator.addField('название поля', options={},onInit: -> )
 
 ```
 
 Удаление поля
 ```
-formValidator.removeField 'название поля'
+formValidator.removeField('название поля')
 
 ```
 
-Стилизация поля
+Сброс поля
 ```
-formValidator.fields['название поля'].stylize()
-```
-
-Следить за изменениями поля
-```
-formValidator.fields['название поля'].on 'change', (e,data) ->
-
-Или
-formValidator.on 'change', '[data-field][data-name="название поля"]', (e,data) ->
+formValidator.fields['название поля'].reset()
 ```
 
-Следить за стилизацией поля
+Сделать обязательным
 ```
-formValidator.fields['название поля'].on 'style', (e,sel) ->
-
-(Пример слежения за всеми полями одного типа)
-formValidator.on 'style', '[data-field][data-type="тип поля"]', (e,sel) ->
-	# sel - стилизованный селектор dom
+formValidator.fields['название поля'].require(opt={})
 ```
 
-Клик по полю
+Сделать активным или наооборот
 ```
-formValidator.on 'click', '[data-name="название поля"]', ->
+formValidator.fields['название поля'].activate(flag=true)
+```
+
+Вывести ошибку или удалить
+На вход или значение или массив или false (если очистить)
+```
+formValidator.fields['название поля'].error(errors=false)
 ```
 
 Установка значения поля
@@ -309,13 +338,66 @@ formValidator.fields['название поля'].val('значение')
 formValidator.fields['название поля'].val()
 ```
 
+Стилизация поля
+```
+formValidator.fields['название поля'].stylize()
+```
+
+Следить за ошибками поля
+```
+formValidator.fields['название поля'].on 'Error', (e,data) ->
+
+Или
+formValidator.on 'Error', '[data-field][data-name="название поля"]', (e,data) ->
+```
+
+Следить за сбросом поля
+```
+formValidator.fields['название поля'].on 'Reset', (e,data) ->
+
+Или
+formValidator.on 'Reset', '[data-field][data-name="название поля"]', (e,data) ->
+```
+
+Следить за изменениями поля
+```
+formValidator.fields['название поля'].on 'Change', (e,data) ->
+
+Или
+formValidator.on 'Change', '[data-field][data-name="название поля"]', (e,data) ->
+```
+
+Следить за стилизацией поля
+```
+formValidator.fields['название поля'].on 'Style', (e,sel) ->
+
+(Пример слежения за всеми полями одного типа)
+formValidator.on 'Style', '[data-field][data-type="тип поля"]', (e,sel) ->
+	# sel - стилизованный селектор dom
+```
+
+Следить за кликом по полю
+```
+formValidator.on 'Click', '[data-name="название поля"]', ->
+
+Или
+formValidator.on 'Click', '[data-field][data-name="название поля"]', (e,data) ->
+```
+
+Следить за нажатие на поле
+```
+formValidator.on 'Keyup', '[data-name="название поля"]', ->
+
+Или
+formValidator.on 'Keyup', '[data-field][data-name="название поля"]', (e,data) ->
+```
 
 ## Дополнения
 
 ```
-formValidator.lockSubmit() # Заблокировать кнопку отправки
-formValidator.unlockSubmit()  # Активировать кнопку отправки
+formValidator.submit(true) # Заблокировать кнопку отправки
+formValidator.submit(false)  # Активировать кнопку отправки
 
-formValidator.showPreloader() # Показать прелоадер формы
-formValidator.hidePreloader() # Скрыть прелоадер формы
+formValidator.preloader(true) # Показать прелоадер формы
+formValidator.preloader(false) # Скрыть прелоадер формы
 ```
