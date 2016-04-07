@@ -26,14 +26,17 @@ new Form
 			required: true
 	
 	onSuccess: (data) ->
-		@submit(false)
-		@preloader(true)
+		
+		self = @
+	
+		self.submit(false)
+		self.preloader(true)
 
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-				@submit(true)
-				@preloader(false)
+				self.submit(true)
+				self.preloader(false)
 	
 
 
@@ -180,9 +183,12 @@ Form
 		error: """<div>{error}</div>"""
 
 ```
-## Примерь настройки обработки полей
+
+
+## Валидация
 
 ##### 
+Примерь настройки обработки полей
 У каждого правила (rules) может быть указана причина (reason).
 По умолчанию reason устанавливается form.js
 ##### 
@@ -207,7 +213,7 @@ fields =
 
 ```
 				
-## Правила валидации
+### Правила валидации
 
 ```
 required — Обязательное поле
@@ -259,37 +265,46 @@ special		- специальныe символы
 
 ```
 
-## Добавление своего правила валидации
+Добавление правила валидации к полю
 
 ```
-
 form.addFieldRule(name,ruleName,rule={})
 
 ```
-	
-## Методы формы
 
-Событие - инициализация формы
+ Добавление Нового правила валидации
+```
+rule = 
+	condition: (val) -> return true //Условие
+	reason: 'Причина' 
+
+form.newRule(name,rule)
+
+```
+	
+## События формы
+
+Инициализация формы
 ```
 form.onInit ->
 ```
 
-Событие - нажатие кнопки Отправить
+Нажатие кнопки Отправить (data - данные для работы. list - данные исходные - не экранированные)
 ```
-form.onSubmit (data) ->
-```
-
-Событие - валидация пройдена 
-```
-form.onSuccess (data) -> # Отправка данных на серверх 
+form.onSubmit (data, list) -> 
 ```
 
-Событие - валидация НЕ пройдена 
+Валидация пройдена  (data - данные для работы. list - данные исходные - не экранированные)
+```
+form.onSuccess (data, list) -> # Отправка данных на серверх 
+```
+
+Валидация НЕ пройдена 
 ```
 form.onFail (errors) ->
 ```
 
-Событие - сброс формы
+Сброс формы
 ```
 form.onReset: ->
 ```
@@ -351,6 +366,12 @@ form.fields['название поля'].val()
 form.fields['название поля'].stylize()
 ```
 
+Проверить валидность поля
+```
+
+form.fields['название поля'].validate(ruleName,opt={})
+```
+
 ## Триггеры полей
 
 Следить за ошибками поля
@@ -358,6 +379,7 @@ form.fields['название поля'].stylize()
 form.fields['название поля'].on 'Error', (e,data) ->
 
 Или
+
 form.on 'Error', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
@@ -366,6 +388,7 @@ form.on 'Error', '[data-field][data-name="название поля"]', (e,data)
 form.fields['название поля'].on 'Reset', (e,data) ->
 
 Или
+
 form.on 'Reset', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
@@ -374,10 +397,11 @@ form.on 'Reset', '[data-field][data-name="название поля"]', (e,data)
 form.fields['название поля'].on 'Change', (e,data) ->
 
 Или
+
 form.on 'Change', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
-Следить за стилизацией поля
+Следить за стилизацией поля (Например для навешивания скролла)
 ```
 form.fields['название поля'].on 'Style', (e,sel) ->
 
@@ -390,6 +414,7 @@ form.on 'Style', '[data-field][data-type="тип поля"]', (e,data) -> # data
 form.on 'Click', '[data-name="название поля"]', ->
 
 Или
+
 form.on 'Click', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
@@ -398,6 +423,7 @@ form.on 'Click', '[data-field][data-name="название поля"]', (e,data)
 form.on 'Keyup', '[data-name="название поля"]', ->
 
 Или
+
 form.on 'Keyup', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
