@@ -289,13 +289,13 @@ Form = (function() {
     $.each(this.fields, function(name) {
       return self.initField(name);
     });
+    this.validation.init(this);
     this.onInit();
     $.each(this.fields, function(name) {
       if (self.fields[name].style) {
         return self.fields[name].el.eq(0).trigger('style');
       }
     });
-    this.validation.init(this);
   };
 
   Form.prototype.initField = function(name) {
@@ -1216,6 +1216,7 @@ Form = (function() {
     required: function(val, rule) {
       var obj, self, valid;
       self = this.form;
+      console.log(this);
       obj = {
         state: false,
         reason: rule.reason || "Обязательное поле для заполнения"

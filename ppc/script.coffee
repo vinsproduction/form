@@ -178,6 +178,8 @@ $ ->
 				scroll(field.sel)
 				return
 
+			# @fields['dropdown'].el.change()
+
 
 		onSubmit: (data) ->
 

@@ -285,14 +285,14 @@ class Form
 		$.each @fields, (name) ->
 			self.initField(name)
 
+		# Init validation
+		@validation.init(@)
+
 		do @onInit
 
 		# Run triggers
 		$.each @fields, (name) ->
 			self.fields[name].el.eq(0).trigger('style') if self.fields[name].style
-
-		# Init validation
-		@validation.init(@)
 
 		return
 
@@ -746,7 +746,6 @@ class Form
 		$.each self.fields[name].rules, (ruleName,rule) ->
 
 			if rule and self.validation[ruleName]
-
 				valid = self.validation[ruleName](val, rule)
 				if !valid.state
 					self.setError(name,{ruleName,reason:valid.reason})
@@ -1172,6 +1171,8 @@ class Form
 		required: (val,rule) ->
 
 			self = @form
+
+			console.log(@)
 
 			obj =
 				state: false
