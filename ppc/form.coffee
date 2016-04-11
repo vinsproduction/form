@@ -1172,8 +1172,6 @@ class Form
 
 			self = @form
 
-			console.log(@)
-
 			obj =
 				state: false
 				reason: rule.reason || "Обязательное поле для заполнения"

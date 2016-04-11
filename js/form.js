@@ -1166,7 +1166,7 @@ Form = (function() {
       },
       rusLowercase: {
         exp: 'а-яё',
-        type: ['русская маленькая буква', 'русские маленькой буквы', 'русских маленьких букв', 'русские маленькой буквы']
+        type: ['русская маленькая буква', 'русские маленькой буквы', 'русских маленьких букв', 'русские маленькие буквы']
       },
       rusUppercase: {
         exp: 'А-ЯЁ',
@@ -1216,7 +1216,6 @@ Form = (function() {
     required: function(val, rule) {
       var obj, self, valid;
       self = this.form;
-      console.log(this);
       obj = {
         state: false,
         reason: rule.reason || "Обязательное поле для заполнения"
