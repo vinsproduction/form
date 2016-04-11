@@ -26,14 +26,17 @@ new Form
 			required: true
 	
 	onSuccess: (data) ->
-		@submit(false)
-		@preloader(true)
+		
+		self = @
+	
+		self.submit(false)
+		self.preloader(true)
 
 		api({ method: 'POST', url:"login", data: data})
 			.error (res) -> console.error res
 			.success (res) ->
-				@submit(true)
-				@preloader(false)
+				self.submit(true)
+				self.preloader(false)
 	
 
 
@@ -96,7 +99,7 @@ fields =
 ### fieldsOptions - общие настройки для всех полей. (Опционально)
 #####
 Настройки самого поля приоритетней!
-Ниже приведены настройки по-умолчанию
+Ниже приведены настройки по умолчанию
 ##### 
 
 ```
@@ -111,14 +114,14 @@ fieldsOptions:
 	validateOnKeyup: false # Валидировать на keyup
 	errorGroup: false # Имя группы полей errors
 	fieldGroup: false # Имя группы полей data
-	attrs: {} # Атрибуты поля
+	attrs: {} # Атрибуты поля. Например maxlength: 10
 	rules: {} # Правила поля
 
 ```
 
 ### Настройки формы
 #####
-Ниже приведены настройки по-умолчанию
+Ниже приведены настройки по умолчанию
 #####
 ```
 Form
@@ -134,7 +137,6 @@ Form
 	autoFields
 	Автоматическая сборка полей для отправки. Элементы с атрибутом [name]
 	Если false - обрабатываться будут только указанные поля!
-	По умолчанию - true
 	###
 	
 	@autoFields = true
@@ -143,7 +145,7 @@ Form
 	fieldsOptions: {} # Настройки полей
 
 
- 	logs: true # Логи. По умолчанию false
+ 	logs: true # Логи
 	formName: 'nice form' Имя формы (опционально)
 
 	enter: true  # Отправка на Enter (В фокусе формы)
@@ -161,7 +163,7 @@ Form
 			options: 'options'
 			option: 'option'
 			open: 'open' # Класс открытого селекта
-			placeholder: 'default' # Класс селекта значения по-умолчанию, например 'Выбрать'		
+			placeholder: 'default' # Класс селекта значения по умолчанию, например 'Выбрать'		
 		submit:
 			disable: 'disabled' # Класс заблокированного сабмита
 		errorField: "error-field" # Класс ошибки поля
@@ -181,9 +183,12 @@ Form
 		error: """<div>{error}</div>"""
 
 ```
-## Вариант настройки обработки полей
+
+
+## Валидация
 
 ##### 
+Примерь настройки обработки полей
 У каждого правила (rules) может быть указана причина (reason).
 По умолчанию reason устанавливается form.js
 ##### 
@@ -208,202 +213,247 @@ fields =
 
 ```
 				
-## Правила валидации
+### Правила валидации
 
+Rule | Value | Пояснение
+------------ | ------------- | -------------
+required | true | Обязательное поле
+required.not | значение или массив | Обязательное поле + значение кроме 
+numeric | true | Разрешены только цифры
+alpha | true  | Разрешены только буквы
+eng | true  | Разрешены только английские буквы
+rus | true  | Разрешены только русские буквы
+max | число  | Максимум символов
+max.count | число | Кол-во символов (если указыается причина)
+min  | число  | Минимум символов
+min.count  | число | Кол-во символов (если указыается причина)
+email  | true | Email
+url  | true | Url
+compare  | объект | Сравнение
+compare.field  | строка | Имя поля для сравнения
+compare.val  | значение или функция |
+not | значение или массив | Исключение 
+only | объект | Условия. Разрешены любые из указанных условий (см. patterns)
+sctict | объект | Условие. Обязательны все указанные условия! (см. patterns)
+
+Пример Only и Strict
 ```
-required — Обязательное поле
-	not: Значение кроме
-numeric — Разрешены только цифры
-alpha — Разрешены только буквы
-eng — Разрешены только английские буквы
-rus — Разрешены только русские буквы
-max — Максимум символов
-	count - кол-во символов
-min — Минимум символов
-	count - кол-во символов
-email — Email
-url — Url
-compare - Сравнение
-	val: значение или функция
-	field: или имя поля для сравнения
-not - занчение или массив значений исключения
-
-only - Обьект условий. Разрешены любые указанные значения (см. patterns)
-sctict - Обьект условий. Обязательны все указанные условия! (см. patterns)
-
+fields: 
+	'name-1':
+		rules:
+			required: true
+			only:
+				exp:
+					range: [4,10]
+					alpha: [1]
+					numeric: [0,1]
+	
+	
+	'name-2':
+		rules:
+			strict:
+				exp:
+					range: [10,20]
+					numeric: [1]
+					engLowercase: [1]
+					engUppercase: [1]
 
 ```
 
 ### Patterns (only,sctict)
 #####
 Каждому значению можно выставить или true или массив.
-Например [0,2] ,где первое значние Минимум символов данного типа, а второе, если передано - Максимум
+Например: [0,2] ,где первое значение Минимум символов данного типа, а второе, если передано, Максимум
 ##### 
 
-```
-numeric 	- цифры
-alpha  		- буквы
-rus 		- русские буквы
-rusLowercase 	- русские маленькой буквы
-rusUppercase 	- русские большие буквы
-eng 		- английские буквы
-engLowercase 	- английские маленькие буквы
-engUppercase 	- английские большие буквы
-dot 		- точки
-hyphen 		- дефисы
-dash 		- подчеркивания
-space 		- пробелы
-slash 		- слэшы
-comma 		- запятые
-special		- специальныe символы
+Key | Пояснение
+------------ | -------------
+numeric | цифры
+alpha | буквы
+rus | русские буквы
+rusLowercase | русские маленькой буквы
+rusUppercase | русские большие буквы
+eng | английские буквы
+engLowercase | английские маленькие буквы
+engUppercase | английские большие буквы
+dot | точки
+hyphen | дефисы
+dash | подчеркивания
+space | пробелы
+slash | слэшы
+comma | запятые
+special	| специальныe символы
+------------ | -------------
+range: [min,max] | Кол-во символов. Например, от 1 до 5
+
+
+### Добавление правила валидации к полю
 
 ```
-
-## Добавление своего правила валидации
+form.addFieldRule(name,ruleName,rule={})
 
 ```
 
-formValidator.addFieldRule(name,ruleName,rule={})
+### Добавление Нового правила валидации
+```
+rule = 
+	condition: (val) -> return true //Условие
+	reason: 'Причина' 
+
+form.newRule(name,rule)
 
 ```
 	
-## Методы формы
+## События формы
 
-Событие - инициализация формы
+Инициализация формы
 ```
-formValidator.onInit ->
-```
-
-Событие - нажатие кнопки Отправить
-```
-formValidator.onSubmit (data) ->
+form.onInit ->
 ```
 
-Событие - валидация пройдена 
+Нажатие кнопки Отправить (data - данные для работы. list - данные исходные - не экранированные)
 ```
-formValidator.onSuccess (data) ->
- 	# Отправка данных на серверх 
-```
-
-Событие - валидация НЕ пройдена 
-```
-formValidator.onFail (errors) ->
+form.onSubmit (data, list) -> 
 ```
 
-Событие - сброс формы
+Валидация пройдена  (data - данные для работы. list - данные исходные - не экранированные)
 ```
-formValidator.onReset: ->
+form.onSuccess (data, list) -> # Отправка данных на серверх 
+```
+
+Валидация НЕ пройдена 
+```
+form.onFail (errors) ->
 ```
 
 Сброс формы
 ```
-formValidator.reset()
+form.onReset: ->
+```
+
+## Методы формы
+
+Сброс формы
+```
+form.reset()
 ```
 
 ## Методы полей формы
 
 Добавление поля
 ```
-formValidator.addField('название поля', options={},onInit: -> )
+form.addField('название поля', options={},onInit: -> )
 
 ```
 
 Удаление поля
 ```
-formValidator.removeField('название поля')
+form.removeField('название поля')
 
 ```
 
 Сброс поля
 ```
-formValidator.fields['название поля'].reset()
+form.fields['название поля'].reset()
 ```
 
-Сделать обязательным
+Сделать поле обязательным
 ```
-formValidator.fields['название поля'].require(opt={})
+form.fields['название поля'].require(opt={})
 ```
 
-Сделать активным или наооборот
+Сделать поле активным и наоборот
 ```
-formValidator.fields['название поля'].activate(flag=true)
+form.fields['название поля'].activate(flag=true)
 ```
 
 Вывести ошибку или удалить
-На вход или значение или массив или false (если очистить)
+На вход строка или массив или false (если удалить ошибку)
 ```
-formValidator.fields['название поля'].error(errors=false)
+form.fields['название поля'].error(errors=false)
 ```
 
 Установка значения поля
 ```
-formValidator.fields['название поля'].val('значение')
+form.fields['название поля'].val('значение')
 ```
 
 Получение значения поля
 ```
-formValidator.fields['название поля'].val()
+form.fields['название поля'].val()
 ```
 
-Стилизация поля
+Стилизация поля (Применяется, в основном, к select)
 ```
-formValidator.fields['название поля'].stylize()
+form.fields['название поля'].stylize()
 ```
+
+Проверить валидность поля
+```
+
+form.fields['название поля'].validate(ruleName,opt={})
+```
+
+## Триггеры полей
 
 Следить за ошибками поля
 ```
-formValidator.fields['название поля'].on 'Error', (e,data) ->
+form.fields['название поля'].on 'Error', (e,data) ->
 
 Или
-formValidator.on 'Error', '[data-field][data-name="название поля"]', (e,data) ->
+
+form.on 'Error', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
 Следить за сбросом поля
 ```
-formValidator.fields['название поля'].on 'Reset', (e,data) ->
+form.fields['название поля'].on 'Reset', (e,data) ->
 
 Или
-formValidator.on 'Reset', '[data-field][data-name="название поля"]', (e,data) ->
+
+form.on 'Reset', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
-Следить за изменениями поля
+Следить за изменениями значения поля
 ```
-formValidator.fields['название поля'].on 'Change', (e,data) ->
+form.fields['название поля'].on 'Change', (e,data) ->
 
 Или
-formValidator.on 'Change', '[data-field][data-name="название поля"]', (e,data) ->
+
+form.on 'Change', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
-Следить за стилизацией поля
+Следить за стилизацией поля (Например для навешивания скролла)
 ```
-formValidator.fields['название поля'].on 'Style', (e,sel) ->
+form.fields['название поля'].on 'Style', (e,sel) ->
 
 (Пример слежения за всеми полями одного типа)
-formValidator.on 'Style', '[data-field][data-type="тип поля"]', (e,sel) ->
-	# sel - стилизованный селектор dom
+form.on 'Style', '[data-field][data-type="тип поля"]', (e,data) -> # data.sel - стилизованный селектор dom
 ```
 
 Следить за кликом по полю
 ```
-formValidator.on 'Click', '[data-name="название поля"]', ->
+form.on 'Click', '[data-name="название поля"]', ->
 
 Или
-formValidator.on 'Click', '[data-field][data-name="название поля"]', (e,data) ->
+
+form.on 'Click', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
-Следить за нажатие на поле
+Следить за нажатием на поле
 ```
-formValidator.on 'Keyup', '[data-name="название поля"]', ->
+form.on 'Keyup', '[data-name="название поля"]', ->
 
 Или
-formValidator.on 'Keyup', '[data-field][data-name="название поля"]', (e,data) ->
+
+form.on 'Keyup', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
 ## Дополнения
 
 ```
-formValidator.submit(true) # Заблокировать кнопку отправки
-formValidator.submit(false)  # Активировать кнопку отправки
+formValidator.submit(true) # Активировать кнопку отправки
+formValidator.submit(false) # Заблокировать кнопку отправки 
 
 formValidator.preloader(true) # Показать прелоадер формы
 formValidator.preloader(false) # Скрыть прелоадер формы
