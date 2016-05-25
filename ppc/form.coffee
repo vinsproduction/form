@@ -280,13 +280,13 @@ class Form
 			console.groupCollapsed("[Form: #{@formName}] init")
 			console.log(opts)
 			console.groupEnd()
-		
+
+		# Init validation
+		do @initValidation
+
 		# Init Fields
 		$.each @fields, (name) ->
 			self.initField(name)
-
-		# Init validation
-		@validation.init(@)
 
 		do @onInit
 
@@ -391,6 +391,499 @@ class Form
 			return @
 
 		return
+
+	initValidation: ->
+
+		self = @
+
+		self.validation = 
+		
+			patterns: 
+				numeric :
+					exp: '0-9'
+					type: ['цифра','цифры','цифр','цифры']
+				alpha 	:
+					exp: 'а-яёА-ЯЁa-zA-Z'
+					type: ['буква','буквы','букв','буквы']
+				rus 		:
+					exp: 'а-яёА-ЯЁ'
+					type: ['русская буква','русские буквы','русских букв','русские буквы']
+				rusLowercase:
+					exp: 'а-яё'
+					type: ['русская маленькая буква','русские маленькой буквы','русских маленьких букв','русские маленькие буквы']
+				rusUppercase:
+					exp: 'А-ЯЁ'
+					type: ['русская большая буква','русские большие буквы','русских больших букв','русские большие буквы']
+				eng 		:
+					exp: 'a-zA-Z'
+					type: ['английская буква','английские буквы','английских букв','английские буквы']
+				engLowercase:
+					exp: 'a-z'
+					type: ['английская маленькая буква','английские маленькие буквы','английских маленьких букв','английские маленькие буквы']
+				engUppercase:
+					exp: 'A-Z'
+					type: ['английская большая буква','английские большие буквы','английских больших букв','английские большие буквы']
+				dot 		:
+					exp: '.'
+					type: ['точка','точки','точек','точки']
+				hyphen 	:
+					exp: '-'
+					type: ['дефис','дефиса','дефисов','дефисы']
+				dash 		:
+					exp: '_'
+					type: ['подчеркивание','подчеркивания','подчеркиваний','подчеркивания']
+				space 	:
+					exp: '\\s'
+					type: ['пробел','пробела','пробелов','пробелы']
+				slash 	:
+					exp: '\\/'
+					type: ['слэш','слэша','слэшей','слэшы']
+				comma 	:
+					exp: ','
+					type: ['запятая','запятой','запятых','запятые']
+				special :
+					exp: '$@$!%*#?&'
+					type: ['специальный символ','специальных символа','специальных символов','специальныe символы']
+
+			required: (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Обязательное поле для заполнения"
+
+				valid = ->
+
+					if val isnt false
+
+						if rule.not
+							if self.h.isArray(rule.not)
+								if val? and !self.h.isEmpty(val) and (val not in rule.not)
+									obj.state = true
+							else
+								if val? and !self.h.isEmpty(val) and (val isnt rule.not)
+									obj.state = true
+
+						else
+							if val? and !self.h.isEmpty(val)
+								obj.state = true
+
+					return obj
+
+				return valid()
+
+			numeric : (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Допустимы только цифры"
+
+				valid = ->
+
+					if /^[0-9]+$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			alpha : (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Допустимы только буквы"
+
+				valid = ->
+
+					if /^[a-zA-Zа-яёА-ЯЁ]+$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			eng : (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Допустимы только английские буквы"
+
+				valid = ->
+
+					if /^[a-zA-Z]+$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			rus: (val, rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Допустимы только русские буквы"
+
+				valid = ->
+
+					if /^[а-яёА-ЯЁ]+$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			max: (val,rule) ->
+
+				obj = {state: false}
+
+				count = rule.count || rule
+
+				if rule.reason
+					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+				else
+					obj.reason = "Максимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
+
+				valid = ->
+
+					if val.length <= count
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			min : (val,rule) ->
+
+				obj = {state: false}
+
+				count = rule.count || rule
+
+				if rule.reason
+					obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
+				else
+					obj.reason = "Минимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
+
+				valid = ->
+
+					if val.length >= count
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			email: (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason  || 'Неправильно заполненный E-mail'
+
+				valid = ->
+
+					if /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			url: (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason  || 'Неправильно заполненный url'
+
+				valid = ->
+
+					if /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)
+						obj.state = true
+
+					return obj
+
+				return valid()
+
+			not: (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Недопустимое значение"
+
+				valid = ->
+
+					if rule.val?
+
+						if self.h.isArray(rule.val)
+							if val not in rule.val
+								obj.state = true
+							else
+								if val isnt rule.val
+									obj.state = true
+
+					else
+
+						if self.h.isArray(rule)
+							if val not in rule
+								obj.state = true
+						else
+							if val isnt rule
+								obj.state = true
+
+					return obj
+
+				return valid()
+		
+			compare: (val,rule) ->
+
+				obj =
+					state: false
+					reason: rule.reason || "Поля не совпадают"
+
+				valid = ->
+
+					if rule.field and self.fields[rule.field]
+
+						if rule.reason
+							obj.reason = rule.reason.replace(/\{field\}/g, rule.field)
+						else
+							obj.reason = "Поле не совпадает с #{rule.field}"
+
+						if val is self.fields[rule.field].val()
+							obj.state = true
+							return obj
+
+					if rule.val?
+						if self.h.isFunction(rule.val)
+							if val is rule.val()
+								obj.state = true
+						else
+							if val is rule.val
+								obj.state = true
+
+						return obj
+
+					return obj
+
+				return valid()
+
+			only: (val,rule) ->
+
+				patterns = @patterns
+
+				obj = state: true
+
+				if rule.reason
+					obj.reason = rule.reason
+		
+				valid = ->
+
+					# MAIN PATTERN
+
+					_patterns = []
+					_reasons = []
+			
+					$.each rule.exp, (k,v) ->
+
+						if patterns[k]
+							_reasons.push patterns[k].type[3]
+							_patterns.push patterns[k].exp
+
+					reason  = _reasons.join(', ')
+					pattern = _patterns.join('')
+					pattern = "^[" + pattern + "]+$"
+
+					if !rule.reason
+						obj.reason = 'Допустимы только ' + reason
+
+					if !new RegExp(pattern).test(val)
+						obj.state = false
+						return obj
+
+					# RANGE
+
+					_reasons = []
+					range = true
+
+					$.each rule.exp, (k,v) ->
+
+						if k is 'range' and self.h.isArray(v)
+
+							if v[0]
+								if val.length < v[0]
+									_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
+									range = false
+									return false
+
+							if v[1]
+								if val.length > v[1]
+									_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
+									range = false
+									return false
+
+					if !range
+
+						reason  = _reasons.join(', ')
+											
+						if !rule.reason
+							obj.reason = 'Допустимы ' + reason
+
+						obj.state = false
+						
+						return obj
+
+					# MAX - MIN
+
+					_reasons = []
+					maxmin = true
+
+					$.each rule.exp, (k,v) ->
+
+						if patterns[k]
+
+							if self.h.isArray(v)
+
+								reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
+								match =  val.match(reg)
+
+								if v[0]
+
+									if match and match.length < v[0]
+										_reasons.push 'Допустимы минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+										
+										maxmin = false
+										return false
+
+									else if !match
+										_reasons.push 'Требуется минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+										
+										maxmin = false
+										return false
+
+
+
+								if v[1]
+									if match and match.length > v[1]
+										_reasons.push 'Допустимы максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
+										maxmin = false
+										return false
+
+					if !maxmin
+
+						reason  = _reasons.join(', ')
+											
+						if !rule.reason
+							obj.reason = reason
+
+						obj.state = false
+						
+						return obj
+
+					return obj
+
+				return valid()
+
+			strict: (val,rule) ->
+
+				patterns = @patterns
+
+				obj = state: true
+
+				if rule.reason
+					obj.reason = rule.reason
+		
+				valid = ->
+
+					# MAIN PATTERN
+
+					_patterns = []
+					_reasons = []
+			
+					$.each rule.exp, (k,v) ->
+
+						if patterns[k]
+							_reasons.push patterns[k].type[3]
+							_patterns.push "(?=.*[" + patterns[k].exp + "])"
+
+					reason  = _reasons.join(', ')
+					pattern = _patterns.join('')
+
+					if !rule.reason
+						obj.reason = 'Требуется ' + reason
+
+					if !new RegExp(pattern).test(val)
+						obj.state = false
+						return obj
+
+					# RANGE
+
+					_reasons = []
+					range = true
+
+					$.each rule.exp, (k,v) ->
+
+						if k is 'range' and self.h.isArray(v)
+
+							if v[0]
+								if val.length < v[0]
+									_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
+									range = false
+									return false
+
+							if v[1]
+								if val.length > v[1]
+									_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
+									range = false
+									return false
+
+					if !range
+
+						reason  = _reasons.join(', ')
+											
+						if !rule.reason
+							obj.reason = 'Требуется ' + reason
+
+						obj.state = false
+						
+						return obj
+
+					# MAX - MIN
+
+					_reasons = []
+					maxmin = true
+
+					$.each rule.exp, (k,v) ->
+
+						if patterns[k]
+
+							if self.h.isArray(v)
+
+								reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
+								match =  val.match(reg)
+
+								if v[0]
+									if match and match.length < v[0]
+										_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
+										maxmin = false
+										return false
+
+								if v[1]
+									if match and match.length > v[1]
+										_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
+										maxmin = false
+										return false
+
+					if !maxmin
+
+						reason  = _reasons.join(', ')
+											
+						if !rule.reason
+							obj.reason = 'Требуется ' + reason
+
+						obj.state = false
+						
+						return obj
+
+					return obj
+
+				return valid()
 
 	Submit: ->
 
@@ -964,8 +1457,6 @@ class Form
 		@fields[name] = opt
 		@initField(name,true)
 
-		@validation.init(@)
-
 		@fields[name].new = true
 
 		opt.onInit() if opt.onInit
@@ -1114,523 +1605,5 @@ class Form
 			titles[(if (number % 100 > 4 and number % 100 < 20) then 2 else cases[(if (number % 10 < 5) then number % 10 else 5)])]
 
 		###  Validation ###
-
-	validation:
-
-		init: (form) ->
-
-			@form = $.extend(true, {}, @, form)
-	
-		patterns: 
-			numeric :
-				exp: '0-9'
-				type: ['цифра','цифры','цифр','цифры']
-			alpha 	:
-				exp: 'а-яёА-ЯЁa-zA-Z'
-				type: ['буква','буквы','букв','буквы']
-			rus 		:
-				exp: 'а-яёА-ЯЁ'
-				type: ['русская буква','русские буквы','русских букв','русские буквы']
-			rusLowercase:
-				exp: 'а-яё'
-				type: ['русская маленькая буква','русские маленькой буквы','русских маленьких букв','русские маленькие буквы']
-			rusUppercase:
-				exp: 'А-ЯЁ'
-				type: ['русская большая буква','русские большие буквы','русских больших букв','русские большие буквы']
-			eng 		:
-				exp: 'a-zA-Z'
-				type: ['английская буква','английские буквы','английских букв','английские буквы']
-			engLowercase:
-				exp: 'a-z'
-				type: ['английская маленькая буква','английские маленькие буквы','английских маленьких букв','английские маленькие буквы']
-			engUppercase:
-				exp: 'A-Z'
-				type: ['английская большая буква','английские большие буквы','английских больших букв','английские большие буквы']
-			dot 		:
-				exp: '.'
-				type: ['точка','точки','точек','точки']
-			hyphen 	:
-				exp: '-'
-				type: ['дефис','дефиса','дефисов','дефисы']
-			dash 		:
-				exp: '_'
-				type: ['подчеркивание','подчеркивания','подчеркиваний','подчеркивания']
-			space 	:
-				exp: '\\s'
-				type: ['пробел','пробела','пробелов','пробелы']
-			slash 	:
-				exp: '\\/'
-				type: ['слэш','слэша','слэшей','слэшы']
-			comma 	:
-				exp: ','
-				type: ['запятая','запятой','запятых','запятые']
-			special :
-				exp: '$@$!%*#?&'
-				type: ['специальный символ','специальных символа','специальных символов','специальныe символы']
-
-		required: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Обязательное поле для заполнения"
-
-			valid = ->
-
-				if val isnt false
-
-					if rule.not
-						if self.h.isArray(rule.not)
-							if val? and !self.h.isEmpty(val) and (val not in rule.not)
-								obj.state = true
-						else
-							if val? and !self.h.isEmpty(val) and (val isnt rule.not)
-								obj.state = true
-
-					else
-						if val? and !self.h.isEmpty(val)
-							obj.state = true
-
-				return obj
-
-			return valid()
-
-		numeric : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только цифры"
-
-			valid = ->
-
-				if /^[0-9]+$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		alpha : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только буквы"
-
-			valid = ->
-
-				if /^[a-zA-Zа-яёА-ЯЁ]+$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		eng : (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только английские буквы"
-
-			valid = ->
-
-				if /^[a-zA-Z]+$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		rus: (val, rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Допустимы только русские буквы"
-
-			valid = ->
-
-				if /^[а-яёА-ЯЁ]+$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		max: (val,rule) ->
-
-			self = @form
-
-			obj = {state: false}
-
-			count = rule.count || rule
-
-			if rule.reason
-				obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
-			else
-				obj.reason = "Максимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
-
-			valid = ->
-
-				if val.length <= count
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		min : (val,rule) ->
-
-			self = @form
-
-			obj = {state: false}
-
-			count = rule.count || rule
-
-			if rule.reason
-				obj.reason = rule.reason.replace(/\{count\}/g, rule.count) 
-			else
-				obj.reason = "Минимум #{count} #{self.h.declOfNum(count, ['символ', 'символа', 'символов'])}"
-
-			valid = ->
-
-				if val.length >= count
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		email: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason  || 'Неправильно заполненный E-mail'
-
-			valid = ->
-
-				if /^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		url: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason  || 'Неправильно заполненный url'
-
-			valid = ->
-
-				if /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)
-					obj.state = true
-
-				return obj
-
-			return valid()
-
-		not: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Недопустимое значение"
-
-			valid = ->
-
-				if rule.val?
-
-					if self.h.isArray(rule.val)
-						if val not in rule.val
-							obj.state = true
-						else
-							if val isnt rule.val
-								obj.state = true
-
-				else
-
-					if self.h.isArray(rule)
-						if val not in rule
-							obj.state = true
-					else
-						if val isnt rule
-							obj.state = true
-
-				return obj
-
-			return valid()
-	
-		compare: (val,rule) ->
-
-			self = @form
-
-			obj =
-				state: false
-				reason: rule.reason || "Поля не совпадают"
-
-			valid = ->
-
-				if rule.field and self.fields[rule.field]
-
-					if rule.reason
-						obj.reason = rule.reason.replace(/\{field\}/g, rule.field)
-					else
-						obj.reason = "Поле не совпадает с #{rule.field}"
-
-					if val is self.fields[rule.field].val()
-						obj.state = true
-						return obj
-
-				if rule.val?
-					if self.h.isFunction(rule.val)
-						if val is rule.val()
-							obj.state = true
-					else
-						if val is rule.val
-							obj.state = true
-
-					return obj
-
-				return obj
-
-			return valid()
-
-		only: (val,rule) ->
-
-			self = @form
-			patterns = @patterns
-
-			obj = state: true
-
-			if rule.reason
-				obj.reason = rule.reason
-	
-			valid = ->
-
-				# MAIN PATTERN
-
-				_patterns = []
-				_reasons = []
-		
-				$.each rule.exp, (k,v) ->
-
-					if patterns[k]
-						_reasons.push patterns[k].type[3]
-						_patterns.push patterns[k].exp
-
-				reason  = _reasons.join(', ')
-				pattern = _patterns.join('')
-				pattern = "^[" + pattern + "]+$"
-
-				if !rule.reason
-					obj.reason = 'Допустимы только ' + reason
-
-				if !new RegExp(pattern).test(val)
-					obj.state = false
-					return obj
-
-				# RANGE
-
-				_reasons = []
-				range = true
-
-				$.each rule.exp, (k,v) ->
-
-					if k is 'range' and self.h.isArray(v)
-
-						if v[0]
-							if val.length < v[0]
-								_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
-								range = false
-								return false
-
-						if v[1]
-							if val.length > v[1]
-								_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
-								range = false
-								return false
-
-				if !range
-
-					reason  = _reasons.join(', ')
-										
-					if !rule.reason
-						obj.reason = 'Допустимы ' + reason
-
-					obj.state = false
-					
-					return obj
-
-				# MAX - MIN
-
-				_reasons = []
-				maxmin = true
-
-				$.each rule.exp, (k,v) ->
-
-					if patterns[k]
-
-						if self.h.isArray(v)
-
-							reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
-							match =  val.match(reg)
-
-							if v[0]
-
-								if match and match.length < v[0]
-									_reasons.push 'Допустимы минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
-									
-									maxmin = false
-									return false
-
-								else if !match
-									_reasons.push 'Требуется минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
-									
-									maxmin = false
-									return false
-
-
-
-							if v[1]
-								if match and match.length > v[1]
-									_reasons.push 'Допустимы максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
-									maxmin = false
-									return false
-
-				if !maxmin
-
-					reason  = _reasons.join(', ')
-										
-					if !rule.reason
-						obj.reason = reason
-
-					obj.state = false
-					
-					return obj
-
-				return obj
-
-			return valid()
-
-		strict: (val,rule) ->
-
-			self = @form
-			patterns = @patterns
-
-			obj = state: true
-
-			if rule.reason
-				obj.reason = rule.reason
-	
-			valid = ->
-
-				# MAIN PATTERN
-
-				_patterns = []
-				_reasons = []
-		
-				$.each rule.exp, (k,v) ->
-
-					if patterns[k]
-						_reasons.push patterns[k].type[3]
-						_patterns.push "(?=.*[" + patterns[k].exp + "])"
-
-				reason  = _reasons.join(', ')
-				pattern = _patterns.join('')
-
-				if !rule.reason
-					obj.reason = 'Требуется ' + reason
-
-				if !new RegExp(pattern).test(val)
-					obj.state = false
-					return obj
-
-				# RANGE
-
-				_reasons = []
-				range = true
-
-				$.each rule.exp, (k,v) ->
-
-					if k is 'range' and self.h.isArray(v)
-
-						if v[0]
-							if val.length < v[0]
-								_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов'])
-								range = false
-								return false
-
-						if v[1]
-							if val.length > v[1]
-								_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов'])
-								range = false
-								return false
-
-				if !range
-
-					reason  = _reasons.join(', ')
-										
-					if !rule.reason
-						obj.reason = 'Требуется ' + reason
-
-					obj.state = false
-					
-					return obj
-
-				# MAX - MIN
-
-				_reasons = []
-				maxmin = true
-
-				$.each rule.exp, (k,v) ->
-
-					if patterns[k]
-
-						if self.h.isArray(v)
-
-							reg  =  new RegExp("[" + patterns[k].exp + "]",'g')
-							match =  val.match(reg)
-
-							if v[0]
-								if match and match.length < v[0]
-									_reasons.push 'минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type)
-									maxmin = false
-									return false
-
-							if v[1]
-								if match and match.length > v[1]
-									_reasons.push 'максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type)
-									maxmin = false
-									return false
-
-				if !maxmin
-
-					reason  = _reasons.join(', ')
-										
-					if !rule.reason
-						obj.reason = 'Требуется ' + reason
-
-					obj.state = false
-					
-					return obj
-
-				return obj
-
-			return valid()
-
 
 

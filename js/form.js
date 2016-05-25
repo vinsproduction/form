@@ -286,10 +286,10 @@ Form = (function() {
       console.log(opts);
       console.groupEnd();
     }
+    this.initValidation();
     $.each(this.fields, function(name) {
       return self.initField(name);
     });
-    this.validation.init(this);
     this.onInit();
     $.each(this.fields, function(name) {
       if (self.fields[name].style) {
@@ -394,6 +394,482 @@ Form = (function() {
     this.fields[name].addRule = function(ruleName, rule) {
       self.addFieldRule(name, ruleName, rule);
       return this;
+    };
+  };
+
+  Form.prototype.initValidation = function() {
+    var self;
+    self = this;
+    return self.validation = {
+      patterns: {
+        numeric: {
+          exp: '0-9',
+          type: ['цифра', 'цифры', 'цифр', 'цифры']
+        },
+        alpha: {
+          exp: 'а-яёА-ЯЁa-zA-Z',
+          type: ['буква', 'буквы', 'букв', 'буквы']
+        },
+        rus: {
+          exp: 'а-яёА-ЯЁ',
+          type: ['русская буква', 'русские буквы', 'русских букв', 'русские буквы']
+        },
+        rusLowercase: {
+          exp: 'а-яё',
+          type: ['русская маленькая буква', 'русские маленькой буквы', 'русских маленьких букв', 'русские маленькие буквы']
+        },
+        rusUppercase: {
+          exp: 'А-ЯЁ',
+          type: ['русская большая буква', 'русские большие буквы', 'русских больших букв', 'русские большие буквы']
+        },
+        eng: {
+          exp: 'a-zA-Z',
+          type: ['английская буква', 'английские буквы', 'английских букв', 'английские буквы']
+        },
+        engLowercase: {
+          exp: 'a-z',
+          type: ['английская маленькая буква', 'английские маленькие буквы', 'английских маленьких букв', 'английские маленькие буквы']
+        },
+        engUppercase: {
+          exp: 'A-Z',
+          type: ['английская большая буква', 'английские большие буквы', 'английских больших букв', 'английские большие буквы']
+        },
+        dot: {
+          exp: '.',
+          type: ['точка', 'точки', 'точек', 'точки']
+        },
+        hyphen: {
+          exp: '-',
+          type: ['дефис', 'дефиса', 'дефисов', 'дефисы']
+        },
+        dash: {
+          exp: '_',
+          type: ['подчеркивание', 'подчеркивания', 'подчеркиваний', 'подчеркивания']
+        },
+        space: {
+          exp: '\\s',
+          type: ['пробел', 'пробела', 'пробелов', 'пробелы']
+        },
+        slash: {
+          exp: '\\/',
+          type: ['слэш', 'слэша', 'слэшей', 'слэшы']
+        },
+        comma: {
+          exp: ',',
+          type: ['запятая', 'запятой', 'запятых', 'запятые']
+        },
+        special: {
+          exp: '$@$!%*#?&',
+          type: ['специальный символ', 'специальных символа', 'специальных символов', 'специальныe символы']
+        }
+      },
+      required: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Обязательное поле для заполнения"
+        };
+        valid = function() {
+          if (val !== false) {
+            if (rule.not) {
+              if (self.h.isArray(rule.not)) {
+                if ((val != null) && !self.h.isEmpty(val) && (indexOf.call(rule.not, val) < 0)) {
+                  obj.state = true;
+                }
+              } else {
+                if ((val != null) && !self.h.isEmpty(val) && (val !== rule.not)) {
+                  obj.state = true;
+                }
+              }
+            } else {
+              if ((val != null) && !self.h.isEmpty(val)) {
+                obj.state = true;
+              }
+            }
+          }
+          return obj;
+        };
+        return valid();
+      },
+      numeric: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Допустимы только цифры"
+        };
+        valid = function() {
+          if (/^[0-9]+$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      alpha: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Допустимы только буквы"
+        };
+        valid = function() {
+          if (/^[a-zA-Zа-яёА-ЯЁ]+$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      eng: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Допустимы только английские буквы"
+        };
+        valid = function() {
+          if (/^[a-zA-Z]+$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      rus: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Допустимы только русские буквы"
+        };
+        valid = function() {
+          if (/^[а-яёА-ЯЁ]+$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      max: function(val, rule) {
+        var count, obj, valid;
+        obj = {
+          state: false
+        };
+        count = rule.count || rule;
+        if (rule.reason) {
+          obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        } else {
+          obj.reason = "Максимум " + count + " " + (self.h.declOfNum(count, ['символ', 'символа', 'символов']));
+        }
+        valid = function() {
+          if (val.length <= count) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      min: function(val, rule) {
+        var count, obj, valid;
+        obj = {
+          state: false
+        };
+        count = rule.count || rule;
+        if (rule.reason) {
+          obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
+        } else {
+          obj.reason = "Минимум " + count + " " + (self.h.declOfNum(count, ['символ', 'символа', 'символов']));
+        }
+        valid = function() {
+          if (val.length >= count) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      email: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || 'Неправильно заполненный E-mail'
+        };
+        valid = function() {
+          if (/^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      url: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || 'Неправильно заполненный url'
+        };
+        valid = function() {
+          if (/^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)) {
+            obj.state = true;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      not: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Недопустимое значение"
+        };
+        valid = function() {
+          if (rule.val != null) {
+            if (self.h.isArray(rule.val)) {
+              if (indexOf.call(rule.val, val) < 0) {
+                obj.state = true;
+              } else {
+                if (val !== rule.val) {
+                  obj.state = true;
+                }
+              }
+            }
+          } else {
+            if (self.h.isArray(rule)) {
+              if (indexOf.call(rule, val) < 0) {
+                obj.state = true;
+              }
+            } else {
+              if (val !== rule) {
+                obj.state = true;
+              }
+            }
+          }
+          return obj;
+        };
+        return valid();
+      },
+      compare: function(val, rule) {
+        var obj, valid;
+        obj = {
+          state: false,
+          reason: rule.reason || "Поля не совпадают"
+        };
+        valid = function() {
+          if (rule.field && self.fields[rule.field]) {
+            if (rule.reason) {
+              obj.reason = rule.reason.replace(/\{field\}/g, rule.field);
+            } else {
+              obj.reason = "Поле не совпадает с " + rule.field;
+            }
+            if (val === self.fields[rule.field].val()) {
+              obj.state = true;
+              return obj;
+            }
+          }
+          if (rule.val != null) {
+            if (self.h.isFunction(rule.val)) {
+              if (val === rule.val()) {
+                obj.state = true;
+              }
+            } else {
+              if (val === rule.val) {
+                obj.state = true;
+              }
+            }
+            return obj;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      only: function(val, rule) {
+        var obj, patterns, valid;
+        patterns = this.patterns;
+        obj = {
+          state: true
+        };
+        if (rule.reason) {
+          obj.reason = rule.reason;
+        }
+        valid = function() {
+          var _patterns, _reasons, maxmin, pattern, range, reason;
+          _patterns = [];
+          _reasons = [];
+          $.each(rule.exp, function(k, v) {
+            if (patterns[k]) {
+              _reasons.push(patterns[k].type[3]);
+              return _patterns.push(patterns[k].exp);
+            }
+          });
+          reason = _reasons.join(', ');
+          pattern = _patterns.join('');
+          pattern = "^[" + pattern + "]+$";
+          if (!rule.reason) {
+            obj.reason = 'Допустимы только ' + reason;
+          }
+          if (!new RegExp(pattern).test(val)) {
+            obj.state = false;
+            return obj;
+          }
+          _reasons = [];
+          range = true;
+          $.each(rule.exp, function(k, v) {
+            if (k === 'range' && self.h.isArray(v)) {
+              if (v[0]) {
+                if (val.length < v[0]) {
+                  _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов']));
+                  range = false;
+                  return false;
+                }
+              }
+              if (v[1]) {
+                if (val.length > v[1]) {
+                  _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов']));
+                  range = false;
+                  return false;
+                }
+              }
+            }
+          });
+          if (!range) {
+            reason = _reasons.join(', ');
+            if (!rule.reason) {
+              obj.reason = 'Допустимы ' + reason;
+            }
+            obj.state = false;
+            return obj;
+          }
+          _reasons = [];
+          maxmin = true;
+          $.each(rule.exp, function(k, v) {
+            var match, reg;
+            if (patterns[k]) {
+              if (self.h.isArray(v)) {
+                reg = new RegExp("[" + patterns[k].exp + "]", 'g');
+                match = val.match(reg);
+                if (v[0]) {
+                  if (match && match.length < v[0]) {
+                    _reasons.push('Допустимы минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
+                    maxmin = false;
+                    return false;
+                  } else if (!match) {
+                    _reasons.push('Требуется минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
+                    maxmin = false;
+                    return false;
+                  }
+                }
+                if (v[1]) {
+                  if (match && match.length > v[1]) {
+                    _reasons.push('Допустимы максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type));
+                    maxmin = false;
+                    return false;
+                  }
+                }
+              }
+            }
+          });
+          if (!maxmin) {
+            reason = _reasons.join(', ');
+            if (!rule.reason) {
+              obj.reason = reason;
+            }
+            obj.state = false;
+            return obj;
+          }
+          return obj;
+        };
+        return valid();
+      },
+      strict: function(val, rule) {
+        var obj, patterns, valid;
+        patterns = this.patterns;
+        obj = {
+          state: true
+        };
+        if (rule.reason) {
+          obj.reason = rule.reason;
+        }
+        valid = function() {
+          var _patterns, _reasons, maxmin, pattern, range, reason;
+          _patterns = [];
+          _reasons = [];
+          $.each(rule.exp, function(k, v) {
+            if (patterns[k]) {
+              _reasons.push(patterns[k].type[3]);
+              return _patterns.push("(?=.*[" + patterns[k].exp + "])");
+            }
+          });
+          reason = _reasons.join(', ');
+          pattern = _patterns.join('');
+          if (!rule.reason) {
+            obj.reason = 'Требуется ' + reason;
+          }
+          if (!new RegExp(pattern).test(val)) {
+            obj.state = false;
+            return obj;
+          }
+          _reasons = [];
+          range = true;
+          $.each(rule.exp, function(k, v) {
+            if (k === 'range' && self.h.isArray(v)) {
+              if (v[0]) {
+                if (val.length < v[0]) {
+                  _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов']));
+                  range = false;
+                  return false;
+                }
+              }
+              if (v[1]) {
+                if (val.length > v[1]) {
+                  _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов']));
+                  range = false;
+                  return false;
+                }
+              }
+            }
+          });
+          if (!range) {
+            reason = _reasons.join(', ');
+            if (!rule.reason) {
+              obj.reason = 'Требуется ' + reason;
+            }
+            obj.state = false;
+            return obj;
+          }
+          _reasons = [];
+          maxmin = true;
+          $.each(rule.exp, function(k, v) {
+            var match, reg;
+            if (patterns[k]) {
+              if (self.h.isArray(v)) {
+                reg = new RegExp("[" + patterns[k].exp + "]", 'g');
+                match = val.match(reg);
+                if (v[0]) {
+                  if (match && match.length < v[0]) {
+                    _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
+                    maxmin = false;
+                    return false;
+                  }
+                }
+                if (v[1]) {
+                  if (match && match.length > v[1]) {
+                    _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type));
+                    maxmin = false;
+                    return false;
+                  }
+                }
+              }
+            }
+          });
+          if (!maxmin) {
+            reason = _reasons.join(', ');
+            if (!rule.reason) {
+              obj.reason = 'Требуется ' + reason;
+            }
+            obj.state = false;
+            return obj;
+          }
+          return obj;
+        };
+        return valid();
+      }
     };
   };
 
@@ -943,7 +1419,6 @@ Form = (function() {
   Form.prototype.addField = function(name, opt) {
     this.fields[name] = opt;
     this.initField(name, true);
-    this.validation.init(this);
     this.fields[name]["new"] = true;
     if (opt.onInit) {
       opt.onInit();
@@ -1145,494 +1620,6 @@ Form = (function() {
     }
 
     /*  Validation */
-  };
-
-  Form.prototype.validation = {
-    init: function(form) {
-      return this.form = $.extend(true, {}, this, form);
-    },
-    patterns: {
-      numeric: {
-        exp: '0-9',
-        type: ['цифра', 'цифры', 'цифр', 'цифры']
-      },
-      alpha: {
-        exp: 'а-яёА-ЯЁa-zA-Z',
-        type: ['буква', 'буквы', 'букв', 'буквы']
-      },
-      rus: {
-        exp: 'а-яёА-ЯЁ',
-        type: ['русская буква', 'русские буквы', 'русских букв', 'русские буквы']
-      },
-      rusLowercase: {
-        exp: 'а-яё',
-        type: ['русская маленькая буква', 'русские маленькой буквы', 'русских маленьких букв', 'русские маленькие буквы']
-      },
-      rusUppercase: {
-        exp: 'А-ЯЁ',
-        type: ['русская большая буква', 'русские большие буквы', 'русских больших букв', 'русские большие буквы']
-      },
-      eng: {
-        exp: 'a-zA-Z',
-        type: ['английская буква', 'английские буквы', 'английских букв', 'английские буквы']
-      },
-      engLowercase: {
-        exp: 'a-z',
-        type: ['английская маленькая буква', 'английские маленькие буквы', 'английских маленьких букв', 'английские маленькие буквы']
-      },
-      engUppercase: {
-        exp: 'A-Z',
-        type: ['английская большая буква', 'английские большие буквы', 'английских больших букв', 'английские большие буквы']
-      },
-      dot: {
-        exp: '.',
-        type: ['точка', 'точки', 'точек', 'точки']
-      },
-      hyphen: {
-        exp: '-',
-        type: ['дефис', 'дефиса', 'дефисов', 'дефисы']
-      },
-      dash: {
-        exp: '_',
-        type: ['подчеркивание', 'подчеркивания', 'подчеркиваний', 'подчеркивания']
-      },
-      space: {
-        exp: '\\s',
-        type: ['пробел', 'пробела', 'пробелов', 'пробелы']
-      },
-      slash: {
-        exp: '\\/',
-        type: ['слэш', 'слэша', 'слэшей', 'слэшы']
-      },
-      comma: {
-        exp: ',',
-        type: ['запятая', 'запятой', 'запятых', 'запятые']
-      },
-      special: {
-        exp: '$@$!%*#?&',
-        type: ['специальный символ', 'специальных символа', 'специальных символов', 'специальныe символы']
-      }
-    },
-    required: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Обязательное поле для заполнения"
-      };
-      valid = function() {
-        if (val !== false) {
-          if (rule.not) {
-            if (self.h.isArray(rule.not)) {
-              if ((val != null) && !self.h.isEmpty(val) && (indexOf.call(rule.not, val) < 0)) {
-                obj.state = true;
-              }
-            } else {
-              if ((val != null) && !self.h.isEmpty(val) && (val !== rule.not)) {
-                obj.state = true;
-              }
-            }
-          } else {
-            if ((val != null) && !self.h.isEmpty(val)) {
-              obj.state = true;
-            }
-          }
-        }
-        return obj;
-      };
-      return valid();
-    },
-    numeric: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Допустимы только цифры"
-      };
-      valid = function() {
-        if (/^[0-9]+$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    alpha: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Допустимы только буквы"
-      };
-      valid = function() {
-        if (/^[a-zA-Zа-яёА-ЯЁ]+$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    eng: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Допустимы только английские буквы"
-      };
-      valid = function() {
-        if (/^[a-zA-Z]+$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    rus: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Допустимы только русские буквы"
-      };
-      valid = function() {
-        if (/^[а-яёА-ЯЁ]+$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    max: function(val, rule) {
-      var count, obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false
-      };
-      count = rule.count || rule;
-      if (rule.reason) {
-        obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
-      } else {
-        obj.reason = "Максимум " + count + " " + (self.h.declOfNum(count, ['символ', 'символа', 'символов']));
-      }
-      valid = function() {
-        if (val.length <= count) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    min: function(val, rule) {
-      var count, obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false
-      };
-      count = rule.count || rule;
-      if (rule.reason) {
-        obj.reason = rule.reason.replace(/\{count\}/g, rule.count);
-      } else {
-        obj.reason = "Минимум " + count + " " + (self.h.declOfNum(count, ['символ', 'символа', 'символов']));
-      }
-      valid = function() {
-        if (val.length >= count) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    email: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || 'Неправильно заполненный E-mail'
-      };
-      valid = function() {
-        if (/^[a-zA-Z0-9.!#$%&amp;'*+\-\/=?\^_`{|}~\-]+@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    url: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || 'Неправильно заполненный url'
-      };
-      valid = function() {
-        if (/^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(val)) {
-          obj.state = true;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    not: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Недопустимое значение"
-      };
-      valid = function() {
-        if (rule.val != null) {
-          if (self.h.isArray(rule.val)) {
-            if (indexOf.call(rule.val, val) < 0) {
-              obj.state = true;
-            } else {
-              if (val !== rule.val) {
-                obj.state = true;
-              }
-            }
-          }
-        } else {
-          if (self.h.isArray(rule)) {
-            if (indexOf.call(rule, val) < 0) {
-              obj.state = true;
-            }
-          } else {
-            if (val !== rule) {
-              obj.state = true;
-            }
-          }
-        }
-        return obj;
-      };
-      return valid();
-    },
-    compare: function(val, rule) {
-      var obj, self, valid;
-      self = this.form;
-      obj = {
-        state: false,
-        reason: rule.reason || "Поля не совпадают"
-      };
-      valid = function() {
-        if (rule.field && self.fields[rule.field]) {
-          if (rule.reason) {
-            obj.reason = rule.reason.replace(/\{field\}/g, rule.field);
-          } else {
-            obj.reason = "Поле не совпадает с " + rule.field;
-          }
-          if (val === self.fields[rule.field].val()) {
-            obj.state = true;
-            return obj;
-          }
-        }
-        if (rule.val != null) {
-          if (self.h.isFunction(rule.val)) {
-            if (val === rule.val()) {
-              obj.state = true;
-            }
-          } else {
-            if (val === rule.val) {
-              obj.state = true;
-            }
-          }
-          return obj;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    only: function(val, rule) {
-      var obj, patterns, self, valid;
-      self = this.form;
-      patterns = this.patterns;
-      obj = {
-        state: true
-      };
-      if (rule.reason) {
-        obj.reason = rule.reason;
-      }
-      valid = function() {
-        var _patterns, _reasons, maxmin, pattern, range, reason;
-        _patterns = [];
-        _reasons = [];
-        $.each(rule.exp, function(k, v) {
-          if (patterns[k]) {
-            _reasons.push(patterns[k].type[3]);
-            return _patterns.push(patterns[k].exp);
-          }
-        });
-        reason = _reasons.join(', ');
-        pattern = _patterns.join('');
-        pattern = "^[" + pattern + "]+$";
-        if (!rule.reason) {
-          obj.reason = 'Допустимы только ' + reason;
-        }
-        if (!new RegExp(pattern).test(val)) {
-          obj.state = false;
-          return obj;
-        }
-        _reasons = [];
-        range = true;
-        $.each(rule.exp, function(k, v) {
-          if (k === 'range' && self.h.isArray(v)) {
-            if (v[0]) {
-              if (val.length < v[0]) {
-                _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов']));
-                range = false;
-                return false;
-              }
-            }
-            if (v[1]) {
-              if (val.length > v[1]) {
-                _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов']));
-                range = false;
-                return false;
-              }
-            }
-          }
-        });
-        if (!range) {
-          reason = _reasons.join(', ');
-          if (!rule.reason) {
-            obj.reason = 'Допустимы ' + reason;
-          }
-          obj.state = false;
-          return obj;
-        }
-        _reasons = [];
-        maxmin = true;
-        $.each(rule.exp, function(k, v) {
-          var match, reg;
-          if (patterns[k]) {
-            if (self.h.isArray(v)) {
-              reg = new RegExp("[" + patterns[k].exp + "]", 'g');
-              match = val.match(reg);
-              if (v[0]) {
-                if (match && match.length < v[0]) {
-                  _reasons.push('Допустимы минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
-                  maxmin = false;
-                  return false;
-                } else if (!match) {
-                  _reasons.push('Требуется минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
-                  maxmin = false;
-                  return false;
-                }
-              }
-              if (v[1]) {
-                if (match && match.length > v[1]) {
-                  _reasons.push('Допустимы максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type));
-                  maxmin = false;
-                  return false;
-                }
-              }
-            }
-          }
-        });
-        if (!maxmin) {
-          reason = _reasons.join(', ');
-          if (!rule.reason) {
-            obj.reason = reason;
-          }
-          obj.state = false;
-          return obj;
-        }
-        return obj;
-      };
-      return valid();
-    },
-    strict: function(val, rule) {
-      var obj, patterns, self, valid;
-      self = this.form;
-      patterns = this.patterns;
-      obj = {
-        state: true
-      };
-      if (rule.reason) {
-        obj.reason = rule.reason;
-      }
-      valid = function() {
-        var _patterns, _reasons, maxmin, pattern, range, reason;
-        _patterns = [];
-        _reasons = [];
-        $.each(rule.exp, function(k, v) {
-          if (patterns[k]) {
-            _reasons.push(patterns[k].type[3]);
-            return _patterns.push("(?=.*[" + patterns[k].exp + "])");
-          }
-        });
-        reason = _reasons.join(', ');
-        pattern = _patterns.join('');
-        if (!rule.reason) {
-          obj.reason = 'Требуется ' + reason;
-        }
-        if (!new RegExp(pattern).test(val)) {
-          obj.state = false;
-          return obj;
-        }
-        _reasons = [];
-        range = true;
-        $.each(rule.exp, function(k, v) {
-          if (k === 'range' && self.h.isArray(v)) {
-            if (v[0]) {
-              if (val.length < v[0]) {
-                _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], ['символ', 'символа', 'символов']));
-                range = false;
-                return false;
-              }
-            }
-            if (v[1]) {
-              if (val.length > v[1]) {
-                _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], ['символ', 'символа', 'символов']));
-                range = false;
-                return false;
-              }
-            }
-          }
-        });
-        if (!range) {
-          reason = _reasons.join(', ');
-          if (!rule.reason) {
-            obj.reason = 'Требуется ' + reason;
-          }
-          obj.state = false;
-          return obj;
-        }
-        _reasons = [];
-        maxmin = true;
-        $.each(rule.exp, function(k, v) {
-          var match, reg;
-          if (patterns[k]) {
-            if (self.h.isArray(v)) {
-              reg = new RegExp("[" + patterns[k].exp + "]", 'g');
-              match = val.match(reg);
-              if (v[0]) {
-                if (match && match.length < v[0]) {
-                  _reasons.push('минимум ' + v[0] + " " + self.h.declOfNum(v[0], patterns[k].type));
-                  maxmin = false;
-                  return false;
-                }
-              }
-              if (v[1]) {
-                if (match && match.length > v[1]) {
-                  _reasons.push('максимум ' + v[1] + " " + self.h.declOfNum(v[1], patterns[k].type));
-                  maxmin = false;
-                  return false;
-                }
-              }
-            }
-          }
-        });
-        if (!maxmin) {
-          reason = _reasons.join(', ');
-          if (!rule.reason) {
-            obj.reason = 'Требуется ' + reason;
-          }
-          obj.state = false;
-          return obj;
-        }
-        return obj;
-      };
-      return valid();
-    }
   };
 
   return Form;

@@ -60,7 +60,7 @@ module.exports = function(grunt) {
 
 		watch: {
 			options: {
-				livereload: 777,
+				livereload: true,
 				dateFormat: function(time) {
 					grunt.log.writeln('______ The watch finished in ' + time + 'ms at' + (new Date()).toString());
 					grunt.log.writeln('______ Waiting for more changes...');
