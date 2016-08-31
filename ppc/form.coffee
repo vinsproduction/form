@@ -30,6 +30,8 @@ class Form
 		# Если false - обрабатываться будут только указанные поля!
 		@autoFields = true
 
+		@autoInit = true # Автоматическая инициализация формы
+
 		@enter = true  # Отправка на Enter
 
 		@noSubmitEmpty = false # Не отправлять пустые значение и false
@@ -97,18 +99,28 @@ class Form
 
 		$ ->
 
-			if !self.formEl and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not set"
-			if !self.submitEl and self.logs then return console.log "[Form: #{self.formName}] Warning! submitEl not set"
+			if !self.formEl and self.logs
+				console.warn "[Form: #{self.formName}] formEl not set"
 
-			self.form 		= if self.h.isObject(self.formEl) then self.formEl else $(self.formEl)
-			self.submitBtn 	= if self.h.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
+			self.form = if self.h.isObject(self.formEl) then self.formEl else $(self.formEl)
 
-			if !self.form.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! formEl not found in DOM"
-			if !self.submitBtn.size() and self.logs then return console.log "[Form: #{self.formName}] Warning! submitEl not found in DOM"
+			if !self.form.size() and self.logs
+				console.warn "[Form: #{self.formName}] formEl not found in DOM"
+				return
 
 			self.form.attr('data-form', self.formName)
-			self.submitBtn.attr('data-submit','data-submit')
 
+
+			if !self.submitEl? and self.logs
+				console.warn "[Form: #{self.formName}] submitEl not set"
+
+			self.submitBtn = if self.h.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
+
+			if !self.submitBtn.size() and self.logs 
+				console.warn "[Form: #{self.formName}] submitEl not found in DOM"
+			else
+				self.submitBtn.attr('data-submit','data-submit')
+		
 			if self.autoFields
 				self.form.find('[name]').each ->
 					name = $(@).attr('name')
@@ -117,11 +129,11 @@ class Form
 					else
 						self.fields[name] = if self.params.fields and self.params.fields[name] then self.params.fields[name] else {}
 
-			do self.init
+			self.initForm() if self.autoInit
 
 			return
 
-	init: ->
+	initForm: ->
 
 		self = @
 
@@ -260,10 +272,10 @@ class Form
 		if @enter
 			$(window).keydown (event) ->
 				if self.form.inFocus and event.keyCode is 13
-					self.Submit() if !self._disableSubmit
+					self.Submit()
 
 		@submitBtn.click ->
-			self.Submit() if !self._disableSubmit
+			self.Submit()
 			return false
 
 		if @logs
@@ -885,9 +897,15 @@ class Form
 
 				return valid()
 
+	init: ->
+		self = @
+		$ -> self.initForm()	
+
 	Submit: ->
 
 		self = @
+
+		return if self._disableSubmit
 
 		do @resetData
 		do @resetErrors

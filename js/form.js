@@ -31,6 +31,7 @@ Form = (function() {
     this.formEl = false;
     this.submitEl = false;
     this.autoFields = true;
+    this.autoInit = true;
     this.enter = true;
     this.noSubmitEmpty = false;
     this.disableSubmit = false;
@@ -93,21 +94,23 @@ Form = (function() {
     self = this;
     $(function() {
       if (!self.formEl && self.logs) {
-        return console.log("[Form: " + self.formName + "] Warning! formEl not set");
-      }
-      if (!self.submitEl && self.logs) {
-        return console.log("[Form: " + self.formName + "] Warning! submitEl not set");
+        console.warn("[Form: " + self.formName + "] formEl not set");
       }
       self.form = self.h.isObject(self.formEl) ? self.formEl : $(self.formEl);
-      self.submitBtn = self.h.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
       if (!self.form.size() && self.logs) {
-        return console.log("[Form: " + self.formName + "] Warning! formEl not found in DOM");
-      }
-      if (!self.submitBtn.size() && self.logs) {
-        return console.log("[Form: " + self.formName + "] Warning! submitEl not found in DOM");
+        console.warn("[Form: " + self.formName + "] formEl not found in DOM");
+        return;
       }
       self.form.attr('data-form', self.formName);
-      self.submitBtn.attr('data-submit', 'data-submit');
+      if ((self.submitEl == null) && self.logs) {
+        console.warn("[Form: " + self.formName + "] submitEl not set");
+      }
+      self.submitBtn = self.h.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
+      if (!self.submitBtn.size() && self.logs) {
+        console.warn("[Form: " + self.formName + "] submitEl not found in DOM");
+      } else {
+        self.submitBtn.attr('data-submit', 'data-submit');
+      }
       if (self.autoFields) {
         self.form.find('[name]').each(function() {
           var name;
@@ -119,11 +122,13 @@ Form = (function() {
           }
         });
       }
-      self.init();
+      if (self.autoInit) {
+        self.initForm();
+      }
     });
   }
 
-  Form.prototype.init = function() {
+  Form.prototype.initForm = function() {
     var opts, self;
     self = this;
     this.resetData();
@@ -261,16 +266,12 @@ Form = (function() {
     if (this.enter) {
       $(window).keydown(function(event) {
         if (self.form.inFocus && event.keyCode === 13) {
-          if (!self._disableSubmit) {
-            return self.Submit();
-          }
+          return self.Submit();
         }
       });
     }
     this.submitBtn.click(function() {
-      if (!self._disableSubmit) {
-        self.Submit();
-      }
+      self.Submit();
       return false;
     });
     if (this.logs) {
@@ -873,9 +874,20 @@ Form = (function() {
     };
   };
 
+  Form.prototype.init = function() {
+    var self;
+    self = this;
+    return $(function() {
+      return self.initForm();
+    });
+  };
+
   Form.prototype.Submit = function() {
     var list, self;
     self = this;
+    if (self._disableSubmit) {
+      return;
+    }
     this.resetData();
     this.resetErrors();
     list = {};
