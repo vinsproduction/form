@@ -129,9 +129,16 @@ Form
 	# Обязательные атрибуты
 
 	formEl = false # Элемент формы или класс
-	submitEl = false # Элемент кнопки отправки или класс
+	
 	
 	# Опционально
+
+	logs: true # Логи
+	formName: 'form' Имя формы (опционально)
+
+	submitEl: false # Элемент кнопки отправки или класс
+
+	autoInit: true # Автоматическая инициализация формы
 
 	###
 	autoFields
@@ -139,14 +146,10 @@ Form
 	Если false - обрабатываться будут только указанные поля!
 	###
 	
-	@autoFields = true
+	autoFields: true
 	
 	fields: {} # Проверяемые поля
 	fieldsOptions: {} # Настройки полей
-
-
- 	logs: true # Логи
-	formName: 'nice form' Имя формы (опционально)
 
 	enter: true  # Отправка на Enter (В фокусе формы)
 	noSubmitEmpty: false # Не отправлять пустые значение и false
@@ -332,6 +335,11 @@ form.onReset: ->
 ```
 
 ## Методы формы
+
+Отправка формы
+```
+form.Submit()
+```
 
 Сброс формы
 ```
