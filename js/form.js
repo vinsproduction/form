@@ -102,13 +102,8 @@ Form = (function() {
         return;
       }
       self.form.attr('data-form', self.formName);
-      if ((self.submitEl == null) && self.logs) {
-        console.warn("[Form: " + self.formName + "] submitEl not set");
-      }
       self.submitBtn = self.h.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
-      if (!self.submitBtn.size() && self.logs) {
-        console.warn("[Form: " + self.formName + "] submitEl not found in DOM");
-      } else {
+      if (self.submitBtn.size()) {
         self.submitBtn.attr('data-submit', 'data-submit');
       }
       if (self.autoFields) {
