@@ -942,13 +942,35 @@ class Form
 						self.deleteData(name)
 
 			if opt.fieldGroup
+
 				if self.data.hasOwnProperty(name)
-					if !self.data[opt.fieldGroup]
-						self.data[opt.fieldGroup] = {}
-					self.data[opt.fieldGroup][name] = self.data[name]
+
+					self.data.groups = {} if !self.data.groups
+
+					setGroup = (path,name,val) ->
+
+						arr = path.split('.')
+
+						newObj = {}
+						obj = newObj
+
+						$.each arr, (k,v) ->
+							newObj[v] = {}
+							newObj = newObj[v]
+
+							if k is arr.length-1
+								newObj[name] = val
+
+						return obj
+
+					self.data.groups = $.extend true, {}, self.data.groups, setGroup(opt.fieldGroup, name, self.data[name])
+
 					self.deleteData(name)
 
+		@data = $.extend true, {}, @data, @data.groups
 
+		delete @data['groups'] if @data['groups']
+				
 		console.log(@data) if @logs
 
 		console.groupEnd() if @logs

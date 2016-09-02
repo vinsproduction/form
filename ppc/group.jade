@@ -1,0 +1,49 @@
+
+head
+	meta(name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,user-scalable=0")
+
+	script
+		:coffee-script
+			port = 35729
+			url  = "http://localhost:#{port}/livereload.js"
+			window.document.write('<script type="text/javascript" src="' + url + '"></scr' + 'ipt>')
+			console.debug "[LiveReload] #{url}"
+
+	script(type="text/javascript", src="http://code.jquery.com/jquery-1.12.0.min.js")
+
+	link(rel="stylesheet", type="text/css", href="css/normalize.css")
+
+	script(type="text/javascript", src="js/form.js")
+	link(rel="stylesheet", type="text/css", href="css/form.css")
+
+	script(type="text/javascript", src="js/script-2.js")
+
+body
+
+	.form
+
+		.field
+			.label name-1
+			input(name='name-1' type='text')
+
+		.field
+			.label name-2 [group-1]
+			input(name='name-2' type='text')
+
+		.field
+			.label name-3 [group-1.group-2.group-3]
+			input(name='name-3' type='text')
+
+		.field
+			.label name-4 [group-1.group-2.group-3]
+			input(name='name-4' type='text')
+
+		.field
+			.label name-5 [group-2]
+			input(name='name-5' type='text')
+
+
+		.submit
+			a(href="#"): span Отправить
+
+

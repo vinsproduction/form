@@ -890,7 +890,7 @@ Form = (function() {
       console.groupCollapsed("[Form: " + this.formName + "] submit");
     }
     $.each(this.fields, function(name, opt) {
-      var ref, val;
+      var ref, setGroup, val;
       if (!opt.active) {
         return;
       }
@@ -923,14 +923,32 @@ Form = (function() {
       }
       if (opt.fieldGroup) {
         if (self.data.hasOwnProperty(name)) {
-          if (!self.data[opt.fieldGroup]) {
-            self.data[opt.fieldGroup] = {};
+          if (!self.data.groups) {
+            self.data.groups = {};
           }
-          self.data[opt.fieldGroup][name] = self.data[name];
+          setGroup = function(path, name, val) {
+            var arr, newObj, obj;
+            arr = path.split('.');
+            newObj = {};
+            obj = newObj;
+            $.each(arr, function(k, v) {
+              newObj[v] = {};
+              newObj = newObj[v];
+              if (k === arr.length - 1) {
+                return newObj[name] = val;
+              }
+            });
+            return obj;
+          };
+          self.data.groups = $.extend(true, {}, self.data.groups, setGroup(opt.fieldGroup, name, self.data[name]));
           return self.deleteData(name);
         }
       }
     });
+    this.data = $.extend(true, {}, this.data, this.data.groups);
+    if (this.data['groups']) {
+      delete this.data['groups'];
+    }
     if (this.logs) {
       console.log(this.data);
     }
