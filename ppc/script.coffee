@@ -89,10 +89,7 @@ $ ->
 			rules:
 				email: true
 		
-		'text':
-			rules:
-				required: true
-				min: 2
+		'text': {}
 
 		# 'checkbox_1':
 			# name: 'checkbox new'
@@ -184,6 +181,13 @@ $ ->
 		onSubmit: (data) ->
 
 			$form.find('.errors').empty()
+
+			# if data['text'] is '1'
+			# 	@fields['text'].error(['asdasd', 'sfdsfsdfs'])
+			# else
+			# 	@fields['text'].error(false)
+
+			
 
 		onSuccess: (data) ->
 

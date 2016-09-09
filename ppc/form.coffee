@@ -390,7 +390,16 @@ class Form
 			return @
 
 		@fields[name].error = (errors=false) ->
+
+			if errors
+				self.setError name,
+					ruleName: 'unknown-rule'
+					reason: errors
+			else
+				self.deleteError(name)
+
 			self.errorField(name,errors)
+
 			return @
 
 		@fields[name].validate = (ruleName,opt={}) ->

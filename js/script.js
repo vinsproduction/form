@@ -73,12 +73,7 @@ $(function() {
         email: true
       }
     },
-    'text': {
-      rules: {
-        required: true,
-        min: 2
-      }
-    },
+    'text': {},
     'dropdown': {
       placeholder: 'Выбрать',
       rules: {

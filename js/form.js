@@ -373,6 +373,14 @@ Form = (function() {
       if (errors == null) {
         errors = false;
       }
+      if (errors) {
+        self.setError(name, {
+          ruleName: 'unknown-rule',
+          reason: errors
+        });
+      } else {
+        self.deleteError(name);
+      }
       self.errorField(name, errors);
       return this;
     };
