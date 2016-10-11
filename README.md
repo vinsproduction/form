@@ -1,5 +1,11 @@
 # Form.js
 
+NPM
+
+```sh
+npm install v-form
+```
+
 [Пример test form] (http://vinsproduction.com/dev/form)
 
 [Пример login form] (http://vinsproduction.com/dev/form/login.html)

@@ -1,7 +1,14 @@
 {
-  "name": "form",
-  "version": "0.0.1",
-  "dependencies": {
+  "name": "v-form",
+  "version": "1.0.0",
+  "main": "js/form.js",
+  "license": "MIT",
+  "repository": "vinsproduction/form",
+  "files": [
+    "README.md",
+    "js/form.js"
+  ],
+  "devDependencies": {
     "express": "3.2.0",
     "grunt": "~0.4.1",
     "grunt-contrib-uglify": "*",
