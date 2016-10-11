@@ -1,14 +1,16 @@
 # Form.js
 
+Агрегация и валидация полей формы
+
 NPM
 
 ```sh
 npm install v-form
 ```
 
-[Пример test form] (http://vinsproduction.com/dev/form)
+[Пример test form](http://vinsproduction.com/dev/form)
 
-[Пример login form] (http://vinsproduction.com/dev/form/login.html)
+[Пример login form](http://vinsproduction.com/dev/form/login.html)
 
 [Пример registration form](http://vinsproduction.com/dev/form/registration.html)
 
