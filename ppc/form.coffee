@@ -1656,3 +1656,5 @@ class Form
 		###  Validation ###
 
 
+if typeof module != 'undefined' and typeof module.exports != 'undefined'
+	module.exports = Form

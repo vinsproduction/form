@@ -1658,3 +1658,7 @@ Form = (function() {
   return Form;
 
 })();
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = Form;
+}
