@@ -97,13 +97,13 @@ Form = (function() {
         console.warn("[Form: " + self.formName + "] formEl not set");
       }
       self.form = self.h.isObject(self.formEl) ? self.formEl : $(self.formEl);
-      if (!self.form.size() && self.logs) {
+      if (!self.form.length && self.logs) {
         console.warn("[Form: " + self.formName + "] formEl not found in DOM");
         return;
       }
       self.form.attr('data-form', self.formName);
       self.submitBtn = self.h.isObject(self.submitEl) ? self.submitEl : self.form.find(self.submitEl);
-      if (self.submitBtn.size()) {
+      if (self.submitBtn.length) {
         self.submitBtn.attr('data-submit', 'data-submit');
       }
       if (self.autoFields) {
@@ -183,7 +183,7 @@ Form = (function() {
       } else if (el.attr('type') === 'checkbox') {
         self.createCheckbox(name);
       }
-      if (self.fields[name].sel.size()) {
+      if (self.fields[name].sel.length) {
         el.trigger('Style', {
           name: name,
           sel: self.fields[name].sel
@@ -298,7 +298,7 @@ Form = (function() {
     var el, ref, self;
     self = this;
     el = this.form.find("[name='" + name + "']");
-    if (!el.size()) {
+    if (!el.length) {
       console.log("[Form: " + this.formName + "] Warning! selector '" + name + "' not found");
       return;
     }
@@ -1128,7 +1128,7 @@ Form = (function() {
       $select.attr('data-field', 'styled');
       $select.attr('data-type', 'select');
       $select.attr('data-name', name);
-      if (this.fields[name].el.find('option[selected]').size()) {
+      if (this.fields[name].el.find('option[selected]').length) {
         selectedText = this.fields[name].el.find('option:selected').text();
       } else {
         selectedText = this.fields[name].el.find('option:first-child').text();

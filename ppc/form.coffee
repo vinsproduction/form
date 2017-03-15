@@ -104,7 +104,7 @@ class Form
 
 			self.form = if self.h.isObject(self.formEl) then self.formEl else $(self.formEl)
 
-			if !self.form.size() and self.logs
+			if !self.form.length and self.logs
 				console.warn "[Form: #{self.formName}] formEl not found in DOM"
 				return
 
@@ -115,10 +115,10 @@ class Form
 
 			self.submitBtn = if self.h.isObject(self.submitEl) then self.submitEl else self.form.find(self.submitEl)
 
-			# if !self.submitBtn.size() and self.logs 
+			# if !self.submitBtn.length and self.logs 
 			# 	console.warn "[Form: #{self.formName}] submitEl not found in DOM"
 
-			if self.submitBtn.size()
+			if self.submitBtn.length
 				self.submitBtn.attr('data-submit','data-submit')
 		
 			if self.autoFields
@@ -201,7 +201,7 @@ class Form
 			else if el.attr('type') is 'checkbox'
 				self.createCheckbox(name)
 
-			if self.fields[name].sel.size()
+			if self.fields[name].sel.length
 				el.trigger('Style', {name:name,sel:self.fields[name].sel})
 
 			return true
@@ -314,7 +314,7 @@ class Form
 
 		el = @form.find("[name='#{name}']")
 
-		if !el.size()
+		if !el.length
 			console.log "[Form: #{@formName}] Warning! selector '#{name}' not found"
 			return
 
@@ -1170,7 +1170,7 @@ class Form
 			$select.attr('data-type', 'select')
 			$select.attr('data-name', name)
 
-			if @fields[name].el.find('option[selected]').size()
+			if @fields[name].el.find('option[selected]').length
 				selectedText 	= @fields[name].el.find('option:selected').text()
 			else
 				selectedText 	= @fields[name].el.find('option:first-child').text()
