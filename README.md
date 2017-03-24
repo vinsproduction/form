@@ -421,6 +421,15 @@ form.fields['название поля'].on 'Error', (e,data) ->
 form.on 'Error', '[data-field][data-name="название поля"]', (e,data) ->
 ```
 
+Следить за успехом поля
+```
+form.fields['название поля'].on 'Success', (e,data) ->
+
+Или
+
+form.on 'Success', '[data-field][data-name="название поля"]', (e,data) ->
+```
+
 Следить за сбросом поля
 ```
 form.fields['название поля'].on 'Reset', (e,data) ->
