@@ -217,6 +217,21 @@ Form = (function() {
       }
       return true;
     });
+    this.form.on('success', '[data-field]', function(e) {
+      var el, name, val;
+      el = $(this);
+      name = el.attr('name');
+      if (!self.fields[name]) {
+        return;
+      }
+      val = self.getVal(name);
+      el.trigger('Success', {
+        name: name,
+        val: val,
+        errorGroup: self.fields[name].errorGroup
+      });
+      return true;
+    });
     this.form.on('error', '[data-field]', function(e, errors) {
       var el, name, val;
       el = $(this);
@@ -228,6 +243,7 @@ Form = (function() {
       el.trigger('Error', {
         name: name,
         val: val,
+        errorGroup: self.fields[name].errorGroup,
         errors: errors || []
       });
       return true;
@@ -1258,7 +1274,10 @@ Form = (function() {
     if (showErrors) {
       if (!self.errors[name] || self.h.isEmpty(self.errors[name])) {
         self.fields[name].el.addClass(self.classes.validation);
-        return self.fields[name].sel.addClass(self.classes.validation);
+        self.fields[name].sel.addClass(self.classes.validation);
+        return self.fields[name].el.eq(0).trigger('success');
+      } else {
+        return self.fields[name].el.eq(0).trigger('error', $.extend({}, self.errors[name]));
       }
     }
   };
@@ -1369,7 +1388,7 @@ Form = (function() {
     this.form.find('[data-field]').removeClass(this.classes.errorField);
   };
 
-  Form.prototype.errorField = function(name, errors, withoutTrigger) {
+  Form.prototype.errorField = function(name, errors) {
     var $error, error, self;
     if (!this.fields[name]) {
       return;
@@ -1414,9 +1433,6 @@ Form = (function() {
           error = self.templates.error.replace('{error}', errors.reason);
           $error.html(error);
         }
-      }
-      if (!withoutTrigger) {
-        self.fields[name].el.eq(0).trigger('error', [errors]);
       }
     } else {
       if (this.fields[name].errorGroup) {

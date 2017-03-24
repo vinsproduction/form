@@ -233,6 +233,19 @@ class Form
 
 			return true
 
+		@form.on 'success', '[data-field]', (e) ->
+
+			el = $(@)
+			name = el.attr('name')
+
+			return if !self.fields[name]
+
+			val  = self.getVal(name)
+
+			el.trigger('Success', {name:name,val:val,errorGroup: self.fields[name].errorGroup})
+
+			return true
+
 		@form.on 'error', '[data-field]', (e,errors) ->
 
 			el = $(@)
@@ -242,7 +255,7 @@ class Form
 
 			val  = self.getVal(name)
 
-			el.trigger('Error', {name:name,val:val,errors: errors || []})
+			el.trigger('Error', {name:name,val:val,errorGroup: self.fields[name].errorGroup, errors: errors || []})
 
 			return true
 
@@ -1289,6 +1302,7 @@ class Form
 
 			if rule and self.validation[ruleName]
 				valid = self.validation[ruleName](val, rule)
+
 				if !valid.state
 					self.setError(name,{ruleName,reason:valid.reason})
 
@@ -1300,11 +1314,19 @@ class Form
 							else if self.errors[name][0]
 								self.errorField(name,self.errors[name][0])
 
+
 		if showErrors
 
 			if !self.errors[name] or self.h.isEmpty(self.errors[name])
+
 				self.fields[name].el.addClass(self.classes.validation)
 				self.fields[name].sel.addClass(self.classes.validation)
+
+				self.fields[name].el.eq(0).trigger('success')
+
+			else
+
+				self.fields[name].el.eq(0).trigger('error', $.extend({},self.errors[name]))
 
 	setVal: (name,val,withoutTrigger=false) ->
 
@@ -1413,7 +1435,8 @@ class Form
 
 		return
 
-	errorField: (name,errors,withoutTrigger) ->
+	errorField: (name,errors) ->
+
 
 		return if !@fields[name]
 
@@ -1459,9 +1482,6 @@ class Form
 					error = self.templates.error.replace('{error}',errors.reason)
 					$error.html(error)
 
-			
-			if !withoutTrigger
-				self.fields[name].el.eq(0).trigger('error',[errors])
 
 		else
 
@@ -1485,7 +1505,6 @@ class Form
 
 				else
 					@form.find('.' + @classes.error + '-' + name).empty()
-
 
 
 
