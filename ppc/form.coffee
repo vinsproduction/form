@@ -374,7 +374,7 @@ class Form
 		# Добавление кастомного правила, если его нет в библиотеке
 
 		$.each @fields[name].rules, (ruleName,rule) ->
-			if !self.validation[ruleName]
+			if self.validation and !self.validation[ruleName]
 				self.addFieldRule(name,ruleName,rule)
 
 		# Field functions

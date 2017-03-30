@@ -351,7 +351,7 @@ Form = (function() {
       return el.attr(name, val);
     });
     $.each(this.fields[name].rules, function(ruleName, rule) {
-      if (!self.validation[ruleName]) {
+      if (self.validation && !self.validation[ruleName]) {
         return self.addFieldRule(name, ruleName, rule);
       }
     });
