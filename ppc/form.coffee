@@ -67,7 +67,7 @@ class Form
 			errorField: "error-field" # Класс ошибки поля
 			error: "error" # Класс элемента вывода ошибки поля
 			preloader: "preloader" # Класс прелоадера формы
-			validation: "valid" # Класс успешного поля
+			validation: "valid-field" # Класс успешного поля
 
 		@templates =
 			hidden: """<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>"""
@@ -371,9 +371,12 @@ class Form
 		$.each @fields[name].attrs, (name,val) ->
 			el.attr(name,val)
 
+		@fields[name].valid = true
+
 		# Добавление кастомного правила, если его нет в библиотеке
 
 		$.each @fields[name].rules, (ruleName,rule) ->
+
 			if self.validation and !self.validation[ruleName]
 				self.addFieldRule(name,ruleName,rule)
 
@@ -1262,18 +1265,17 @@ class Form
 
 	validateField: (name,event) ->
 
-		if !@fields[name] or !@fields[name].rules or @h.isEmpty(@fields[name].rules)
-			return
-
 		self = @
 
+		if !@fields[name]
+			return
+
+		@deleteError(name)
+		@errorField(name,false)
+
+		return if !@fields[name].rules or @h.isEmpty(@fields[name].rules)
+
 		val = self.getVal(name)
-
-		self.deleteError(name)
-		self.errorField(name,false)
-
-		self.fields[name].el.removeClass(self.classes.validation)
-		self.fields[name].sel.removeClass(self.classes.validation)
 
 		showErrors = true
 
@@ -1304,6 +1306,7 @@ class Form
 				valid = self.validation[ruleName](val, rule)
 
 				if !valid.state
+
 					self.setError(name,{ruleName,reason:valid.reason})
 
 					if showErrors
@@ -1314,20 +1317,7 @@ class Form
 							else if self.errors[name][0]
 								self.errorField(name,self.errors[name][0])
 
-
-		if showErrors
-
-			if !self.errors[name] or self.h.isEmpty(self.errors[name])
-
-				self.fields[name].el.addClass(self.classes.validation)
-				self.fields[name].sel.addClass(self.classes.validation)
-
-				self.fields[name].el.eq(0).trigger('success')
-
-			else
-
-				self.fields[name].el.eq(0).trigger('error', $.extend({},self.errors[name]))
-
+				
 	setVal: (name,val,withoutTrigger=false) ->
 
 		return if !@fields[name]
@@ -1437,24 +1427,19 @@ class Form
 
 	errorField: (name,errors) ->
 
-
 		return if !@fields[name]
 
 		self = @
 
 		if errors
 
-			if @fields[name].errorGroup
+			@fields[name].valid = false
 
-				$.each @fields, (fieldName) ->
+			@fields[name].el.addClass(@classes.errorField)
+			@fields[name].sel.addClass(@classes.errorField)
 
-					if self.fields[fieldName].errorGroup is self.fields[name].errorGroup
-						self.fields[fieldName].el.addClass(self.classes.errorField)
-						self.fields[fieldName].sel.addClass(self.classes.errorField)
-			else
-
-				@fields[name].el.addClass(@classes.errorField)
-				@fields[name].sel.addClass(@classes.errorField)
+			@fields[name].el.removeClass(self.classes.validation)
+			@fields[name].sel.removeClass(self.classes.validation)
 
 			if @fields[name].autoErrors
 
@@ -1482,31 +1467,42 @@ class Form
 					error = self.templates.error.replace('{error}',errors.reason)
 					$error.html(error)
 
+			@fields[name].el.eq(0).trigger('error',[errors])
 
 		else
 
+			@fields[name].valid = true
+
 			if @fields[name].errorGroup
+
+				errorsGroupsFields = false
 
 				$.each @fields, (fieldName) ->
 
 					if self.fields[fieldName].errorGroup is self.fields[name].errorGroup
-						self.fields[fieldName].el.removeClass(self.classes.errorField)
-						self.fields[fieldName].sel.removeClass(self.classes.errorField)
+						 if !self.fields[fieldName].valid
+							 errorsGroupsFields = true 
+							 return
+			
+				if !errorsGroupsFields
+
+					if @fields[name].autoErrors
+						@form.find('.' + @classes.error + '-' + @fields[name].errorGroup).empty()
+
 
 			else
 
-				@fields[name].el.removeClass(@classes.errorField)
-				@fields[name].sel.removeClass(@classes.errorField)
-
-			if @fields[name].autoErrors
-
-				if @fields[name].errorGroup
-					@form.find('.' + @classes.error + '-' + @fields[name].errorGroup).empty()
-
-				else
+				if @fields[name].autoErrors
 					@form.find('.' + @classes.error + '-' + name).empty()
 
 
+			@fields[name].el.removeClass(@classes.errorField)
+			@fields[name].sel.removeClass(@classes.errorField)
+
+			@fields[name].el.addClass(self.classes.validation)
+			@fields[name].sel.addClass(self.classes.validation)
+
+			@fields[name].el.eq(0).trigger('success')
 
 		return
 

@@ -67,7 +67,7 @@ Form = (function() {
       errorField: "error-field",
       error: "error",
       preloader: "preloader",
-      validation: "valid"
+      validation: "valid-field"
     };
     this.templates = {
       hidden: "<div style='position:absolute;width:0;height:0;overflow:hidden;'></div>",
@@ -350,6 +350,7 @@ Form = (function() {
     $.each(this.fields[name].attrs, function(name, val) {
       return el.attr(name, val);
     });
+    this.fields[name].valid = true;
     $.each(this.fields[name].rules, function(ruleName, rule) {
       if (self.validation && !self.validation[ruleName]) {
         return self.addFieldRule(name, ruleName, rule);
@@ -1216,15 +1217,16 @@ Form = (function() {
 
   Form.prototype.validateField = function(name, event) {
     var ref, self, showErrors, val;
-    if (!this.fields[name] || !this.fields[name].rules || this.h.isEmpty(this.fields[name].rules)) {
+    self = this;
+    if (!this.fields[name]) {
       return;
     }
-    self = this;
+    this.deleteError(name);
+    this.errorField(name, false);
+    if (!this.fields[name].rules || this.h.isEmpty(this.fields[name].rules)) {
+      return;
+    }
     val = self.getVal(name);
-    self.deleteError(name);
-    self.errorField(name, false);
-    self.fields[name].el.removeClass(self.classes.validation);
-    self.fields[name].sel.removeClass(self.classes.validation);
     showErrors = true;
     if (!self.fields[name].rules.required && self.h.isEmpty(val)) {
       return;
@@ -1250,7 +1252,7 @@ Form = (function() {
         showErrors = false;
       }
     }
-    $.each(self.fields[name].rules, function(ruleName, rule) {
+    return $.each(self.fields[name].rules, function(ruleName, rule) {
       var valid;
       if (rule && self.validation[ruleName]) {
         valid = self.validation[ruleName](val, rule);
@@ -1271,15 +1273,6 @@ Form = (function() {
         }
       }
     });
-    if (showErrors) {
-      if (!self.errors[name] || self.h.isEmpty(self.errors[name])) {
-        self.fields[name].el.addClass(self.classes.validation);
-        self.fields[name].sel.addClass(self.classes.validation);
-        return self.fields[name].el.eq(0).trigger('success');
-      } else {
-        return self.fields[name].el.eq(0).trigger('error', $.extend({}, self.errors[name]));
-      }
-    }
   };
 
   Form.prototype.setVal = function(name, val, withoutTrigger) {
@@ -1389,23 +1382,17 @@ Form = (function() {
   };
 
   Form.prototype.errorField = function(name, errors) {
-    var $error, error, self;
+    var $error, error, errorsGroupsFields, self;
     if (!this.fields[name]) {
       return;
     }
     self = this;
     if (errors) {
-      if (this.fields[name].errorGroup) {
-        $.each(this.fields, function(fieldName) {
-          if (self.fields[fieldName].errorGroup === self.fields[name].errorGroup) {
-            self.fields[fieldName].el.addClass(self.classes.errorField);
-            return self.fields[fieldName].sel.addClass(self.classes.errorField);
-          }
-        });
-      } else {
-        this.fields[name].el.addClass(this.classes.errorField);
-        this.fields[name].sel.addClass(this.classes.errorField);
-      }
+      this.fields[name].valid = false;
+      this.fields[name].el.addClass(this.classes.errorField);
+      this.fields[name].sel.addClass(this.classes.errorField);
+      this.fields[name].el.removeClass(self.classes.validation);
+      this.fields[name].sel.removeClass(self.classes.validation);
       if (this.fields[name].autoErrors) {
         if (this.fields[name].errorGroup) {
           $error = this.form.find('.' + this.classes.error + '-' + this.fields[name].errorGroup);
@@ -1434,25 +1421,33 @@ Form = (function() {
           $error.html(error);
         }
       }
+      this.fields[name].el.eq(0).trigger('error', [errors]);
     } else {
+      this.fields[name].valid = true;
       if (this.fields[name].errorGroup) {
+        errorsGroupsFields = false;
         $.each(this.fields, function(fieldName) {
           if (self.fields[fieldName].errorGroup === self.fields[name].errorGroup) {
-            self.fields[fieldName].el.removeClass(self.classes.errorField);
-            return self.fields[fieldName].sel.removeClass(self.classes.errorField);
+            if (!self.fields[fieldName].valid) {
+              errorsGroupsFields = true;
+            }
           }
         });
+        if (!errorsGroupsFields) {
+          if (this.fields[name].autoErrors) {
+            this.form.find('.' + this.classes.error + '-' + this.fields[name].errorGroup).empty();
+          }
+        }
       } else {
-        this.fields[name].el.removeClass(this.classes.errorField);
-        this.fields[name].sel.removeClass(this.classes.errorField);
-      }
-      if (this.fields[name].autoErrors) {
-        if (this.fields[name].errorGroup) {
-          this.form.find('.' + this.classes.error + '-' + this.fields[name].errorGroup).empty();
-        } else {
+        if (this.fields[name].autoErrors) {
           this.form.find('.' + this.classes.error + '-' + name).empty();
         }
       }
+      this.fields[name].el.removeClass(this.classes.errorField);
+      this.fields[name].sel.removeClass(this.classes.errorField);
+      this.fields[name].el.addClass(self.classes.validation);
+      this.fields[name].sel.addClass(self.classes.validation);
+      this.fields[name].el.eq(0).trigger('success');
     }
   };
 
